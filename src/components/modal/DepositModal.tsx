@@ -72,7 +72,8 @@ const DepositModal: React.FC<DepositModalProps> = ({ cosmosAddress, onClose, onD
     }, [depositError]);
 
     const amountBigInt = useMemo(() => convertAmountToBigInt(amount, decimals), [amount, decimals]);
-    const isAllowed = amountBigInt > 0n && approvedAmount >= amountBigInt;
+    const isExceedingBalance = balance !== undefined && amountBigInt > balance;
+    const isAllowed = amountBigInt > 0n && approvedAmount >= amountBigInt && !isExceedingBalance;
     const isApproving = isApproveSubmitting || isApprovePending;
     const isDepositing = isDepositSubmitting || isDepositPending;
 
@@ -180,8 +181,13 @@ const DepositModal: React.FC<DepositModalProps> = ({ cosmosAddress, onClose, onD
                                 placeholder="0.00"
                                 min="0"
                                 step="0.000001"
-                                className={styles.input}
+                                className={`${styles.input} ${isExceedingBalance ? styles.inputError : ""}`}
                             />
+                            {isExceedingBalance && (
+                                <p className={`${styles.inputHint} ${styles.inputHintError}`}>
+                                    Amount exceeds available balance
+                                </p>
+                            )}
                         </div>
 
                         <div className={styles.addressBox}>
@@ -198,11 +204,11 @@ const DepositModal: React.FC<DepositModalProps> = ({ cosmosAddress, onClose, onD
                                 Cancel
                             </button>
                             {isAllowed ? (
-                                <button onClick={handleDeposit} disabled={amountBigInt === 0n || isDepositing} className={styles.primaryButton}>
+                                <button onClick={handleDeposit} disabled={amountBigInt === 0n || isDepositing || isExceedingBalance} className={styles.primaryButton}>
                                     {isDepositing ? "Depositing..." : "Deposit"}
                                 </button>
                             ) : (
-                                <button onClick={handleApprove} disabled={amountBigInt === 0n || isApproving} className={styles.primaryButton}>
+                                <button onClick={handleApprove} disabled={amountBigInt === 0n || isApproving || isExceedingBalance} className={styles.primaryButton}>
                                     {isApproving ? "Approving..." : "Approve"}
                                 </button>
                             )}
