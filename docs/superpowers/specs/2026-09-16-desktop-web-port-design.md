@@ -1,54 +1,76 @@
-# Desktop web port — Stage 1 (wallet layer) design
+# Desktop web port — Stage 1 (Web3 deposit) design
+
+## Revision note
+
+This spec originally assumed `desktop`'s wallet layer was an early, partial
+implementation that needed `ui`'s "more complete" version ported in. Reading both
+codebases in full (not just file names) during plan-writing showed that premise was
+wrong: `desktop` already has a working generate/import wallet flow, send, and a
+fully-implemented two-step Cosmos→Ethereum bridge withdrawal (`WithdrawModal.tsx`) —
+in places more advanced than `ui`, which has no equivalent send/withdraw modals at
+all. The one real gap is **deposits**: `desktop`'s "Deposit" button just navigates to
+the wallet generation page: there is no deposit UI. This revision rescopes Stage 1
+to that actual gap. Sections below replace the original scope/file-changes content.
 
 ## Context
 
-`desktop` (`<repo>`) is an early-stage Electron Forge + Vite
-app. `ui` (`../ui`, package `block52-poker-ui`) is the mature
-React web frontend for the same Block52 poker platform — ~330 files, React 19 +
-`react-router-dom` `BrowserRouter` + wagmi/viem/`@reown/appkit` +
-`@block52/poker-vm-sdk`, on `vite@8`/`typescript@7`/`eslint@10` (flat config).
+`desktop` (`<repo>`) is an Electron Forge + Vite app with a
+substantially-built Cosmos wallet layer already in place: `NetworkContext`,
+`useCosmosWallet`, a `GameWallet` dashboard panel, a `/wallet` page for
+generate/import with seed-phrase display, `SendModal`, and `WithdrawModal` (a full
+two-step bridge: initiate on Block52/Cosmos chain → poll for validator signature →
+complete via `useWriteContract` against the bridge contract on Ethereum).
+
+`ui` (`../ui`, package `block52-poker-ui`) is the mature React
+web frontend for the same platform — ~330 files, React 19 + `react-router-dom` +
+wagmi/viem/`@reown/appkit` + `@block52/poker-vm-sdk`, on
+`vite@8`/`typescript@7`/`eslint@10` (flat config). Its wallet UI is structured
+differently from `desktop`'s (`WalletPanel.tsx` + `CosmosWalletPage.tsx`, no
+send/withdraw modals), but it has a deposit flow `desktop` lacks entirely: ERC20
+approve+deposit into the same bridge contract `desktop`'s `WithdrawModal` already
+talks to (`BRIDGE_ADDRESS = 0xE4E22A524f2b104cB71fB154f72736bd02722fF4`, confirmed
+identical in both codebases).
 
 `desktop` was pinned on `vite@5.4`/`typescript@~4.5`/`eslint@8` during an earlier,
-separate dependency upgrade (see git history) specifically to avoid this jump without
-a reason to take it. Porting `ui` code into `desktop` is that reason.
+separate dependency upgrade specifically to avoid that jump without a reason to take
+it. Porting the deposit flow's dependencies (wagmi hooks already used elsewhere in
+`desktop`, no new toolchain requirement per se) doesn't strictly require the bump,
+but `desktop`'s `.eslintrc.json`/`tsconfig.json` are looser than `ui`'s
+(`noImplicitAny` only vs `strict: true`), and matching `ui`'s tooling keeps the two
+codebases easier to compare/port between going forward. Kept in scope as a
+prerequisite task.
 
-There is no existing shared-code package between the two apps — `ui/packages/` only
-holds `@block52/e2e` (Playwright) and `@block52/pvm-stub` (backend stub for e2e).
+There is no shared-code package between the two apps — `ui/packages/` only holds
+`@block52/e2e` (Playwright) and `@block52/pvm-stub` (backend stub for e2e). Ported
+code becomes `desktop`'s own copy, adapted for Electron; the two codebases diverge
+over time, fixes apply twice. Accepted tradeoff, per the earlier code-sharing
+decision.
 
 ## Scope
 
-**In scope (Stage 1, this spec):** the wallet layer only — generating/connecting a
-wallet, viewing balance, sending, withdrawing. This is the subset `desktop` already
-has a partial implementation of (`GameWallet.tsx`, `SendModal.tsx`,
-`WithdrawModal.tsx`, `AppKitProvider.tsx`, `useCosmosWallet.ts`,
-`utils/cosmos/{client,storage,urls}.ts`), so replacing/upgrading it is a smaller,
-independently testable increment than the full player flow.
-
-**Two wallet paths, both in scope:**
-1. **Generated Cosmos wallet (primary).** An in-app wallet created on first use —
-   mirrors `ui`'s `src/index.tsx` mnemonic-generation-on-load pattern via
-   `@cosmjs/proto-signing`. This is the "no wallet found → Generate wallet" entry
-   point shown in the Lobby screen of
-   `claude.ai/artifact/RiALvNDa2Vu9xQWD24QBPD` (design updated mid-session — see
-   that artifact for the current visual reference, it may continue to change).
-   Used for deposits and joining tables.
-2. **External wallet connect (secondary).** wagmi/Reown `AppKitProvider` flow
-   already stubbed in `desktop` — likely for on-chain settlement/bridging, matches
-   `ui`'s existing `useUserWalletConnect.ts`.
+**In scope (Stage 1): Web3 direct deposit only.** ERC20 approve + deposit of
+USDC/USDT from a connected Ethereum wallet into the bridge contract, minting the
+equivalent to the user's Cosmos wallet address. This mirrors `WithdrawModal`'s
+existing bridge pattern in reverse, and needs no new backend dependency — it's
+wagmi/viem contract calls against infrastructure `desktop` already integrates with.
 
 **Explicitly out of scope for this spec:**
-- Table/game flow (`GameMessageBus`, `context/gameState/*`,
-  `hooks/{game,playerActions}`, `components/playPage/*`) — Stage 2, separate spec.
-  The "Available tables" list shown alongside the wallet panel in the current design
-  artifact is visual context only for Stage 1 — not built until Stage 2.
-- Admin/explorer surface (`/admin/*`, `/explorer/*`) — desktop app is for players,
-  not operators; not planned.
-- Guest mode ("Enter as guest" / "Guest" nav badge in the design artifact) —
-  explicitly deferred by the user, not part of this port.
-- A shared code package between `ui` and `desktop` — ported code becomes `desktop`'s
-  own copy in `desktop/src`, adapted for Electron. The two codebases will diverge
-  over time; fixes apply twice. Accepted tradeoff for now, revisit if divergence
-  becomes painful.
+- **"Pay with Crypto" (BTCPay) deposit path.** `ui`'s `DepositCore.tsx` bundles a
+  second deposit method: a third-party payment processor flow requiring
+  `PaymentApiContext` (a backend payment-session API `desktop` has no client for),
+  QR code display, and payment-status polling. Explicitly deferred — separate piece
+  of work if/when a backend payment-session endpoint exists for `desktop` to call.
+- `ProfileAvatarContext` coupling. `ui`'s `DepositCore.tsx` calls
+  `refreshWalletNfts()` from `ProfileAvatarContext` on wallet connect — an
+  NFT/avatar-profile side effect unrelated to depositing funds. Not ported;
+  `desktop` has no avatar/profile system and none is being added here.
+- Table/game flow, admin/explorer surface, guest mode, a shared `ui`/`desktop`
+  package — all as previously scoped out (unchanged from the original spec).
+- The landing/lobby visual designs shared during brainstorming
+  (`claude.ai/artifact/RiALvNDa2Vu9xQWD24QBPD`) — visual reference only, not
+  something this spec implements; `desktop`'s dashboard already has its own
+  layout (`GameWallet` sidebar + `TableList` main panel) that the deposit UI
+  slots into.
 
 ## Toolchain upgrade (prerequisite, before any feature code moves)
 
@@ -63,75 +85,84 @@ Bump `desktop`'s tooling to match `ui`:
   `noUnusedLocals`/`noUnusedParameters`, `moduleDetection: "force"` (`desktop`'s
   current config only sets `noImplicitAny`)
 
-Verify with `yarn install && yarn lint && yarn start` before any feature code changes,
-same discipline as the earlier dependency-version upgrade in this repo (compare lint
-output before/after; a pre-existing gap should stay a pre-existing gap, not silently
-picked up as a "fix").
+Verify with `yarn install && yarn lint && yarn start` before any feature code changes
+— compare lint output before/after; a pre-existing gap should stay a pre-existing
+gap, not silently picked up as a "fix" (same discipline as the earlier
+dependency-version upgrade in this repo).
 
-## Renderer adjustments
+## Renderer adjustment
 
 **Node-core polyfills.** `desktop/vite.renderer.config.ts` is currently empty
-(`defineConfig({})`). `ui`'s `vite.config.ts` aliases `crypto→crypto-browserify`,
-`stream→stream-browserify`, `buffer`, `process→process/browser.js`, `util`, `events`,
-plus `define: { global: "globalThis", "process.env": {} }` — required because
-`ethers`/wagmi/`@cosmjs` pull in Node built-ins that don't exist in Chromium, and
-Electron's renderer is Chromium too (no `nodeIntegration`, per this repo's CLAUDE.md).
-Copy the same aliases into `vite.renderer.config.ts`; without them the wallet code
-will fail at runtime the moment it's ported in, not at build time.
+(`defineConfig({})`). The deposit code adds no new Node-core-dependent imports
+beyond what `WithdrawModal.tsx` already uses successfully (`wagmi`/`viem` contract
+calls) — so this is lower-risk than originally assessed, but `ui`'s
+`vite.config.ts` polyfill aliases (`crypto`, `stream`, `buffer`, `process`, `util`,
+`events` → their browserify/polyfill equivalents, plus
+`define: { global: "globalThis" }`) should still be added defensively, since the new
+`erc20ABI`/`bigunit`-based amount conversion is new surface area. Verify with
+`yarn start` after the deposit code lands, not just at toolchain-upgrade time.
 
-**Routing.** Switch `desktop`'s router to `HashRouter` (`ui` uses `BrowserRouter`,
-which is right for a served web app). `desktop/src/main.ts` already loads production
-builds via `mainWindow.loadFile(...)` on `file://`. `HashRouter` avoids any
-path-resolution edge case on relaunch or persisted route state, at zero cost since
-there's no server-side routing to lose in a packaged app.
-
-**Wallet-connect popups.** `desktop/src/main.ts`'s CSP already allowlists
-`wss://relay.walletconnect.org`/`.com`, and `preload.ts` already exposes
-`electronAPI.openExternal` wired to `shell.openExternal` via the `open-external` IPC
-channel. The one gap: add
-`mainWindow.webContents.setWindowOpenHandler(...)` in `main.ts` routing any
-`window.open()` call (e.g. from Reown's Coinbase/WalletConnect modal) to
-`shell.openExternal` — Electron denies `window.open` by default in a sandboxed
-`BrowserWindow`, so without this handler those popups silently fail instead of
-opening the user's browser.
-
-`AppKitProvider.tsx` already mirrors `ui`'s Reown/wagmi setup closely (same
-`createAppKit` pattern, wagmi adapter) — expect small adjustments, not a rewrite.
+Routing and wallet-popup handling are **not** touched by this spec: `desktop`
+already uses `MemoryRouter` (not `BrowserRouter`), and `WithdrawModal.tsx`'s
+existing `openAppKit()` call already works in production-quality code without any
+`setWindowOpenHandler` — no observed problem to fix.
 
 ## Stage 1 file changes
 
-**Port from `ui` (new to `desktop`):**
-- `utils/cosmos/{settlementTx,signing,helpers,index}.ts`
-- `hooks/wallet/useCosmosWallet.ts` (replaces `desktop`'s single-file version)
-- `hooks/wallet/useUserWalletConnect.ts`
+**New files, ported from `ui` (self-contained, no `PaymentApiContext`/
+`ProfileAvatarContext` dependency):**
+- `src/hooks/wallet/useDepositUSDC.ts` — wraps `useWriteContract`/
+  `useWaitForTransactionReceipt` for the bridge contract's `depositUnderlying`
+  (USDC direct) and `deposit` (any ERC20, auto-swaps) functions.
+- `src/hooks/wallet/useApprove.ts` — ERC20 `approve()` via `useWriteContract`.
+- `src/hooks/wallet/useAllowance.ts` — ERC20 `allowance()` via `useReadContract`.
+- `src/hooks/wallet/useDecimals.ts` — ERC20 `decimals()` via `useReadContract`,
+  defaults to 6 (USDC standard) while loading.
+- `src/hooks/wallet/useWalletBalance.ts` — ERC20 `balanceOf()` via
+  `useReadContract`.
+- `src/abis/erc20ABI.ts` — standard ERC20 ABI (`approve`, `allowance`, `decimals`,
+  `balanceOf`, `transfer`, `transferFrom`, `Approval`/`Transfer` events).
 
-**Replace in `desktop` with `ui`'s more complete versions, adapted:**
-- `GameWallet.tsx`, `SendModal.tsx`, `WithdrawModal.tsx`
-- Adaptation is limited to anything assuming `BrowserRouter` or a served origin;
-  `localStorage` usage in `ui`'s `NetworkContext.tsx`/`avatarStorage.ts` needs no
-  change, it works the same in Electron's renderer.
-- New: a "no wallet found → Generate wallet" empty state, per the design artifact's
-  Lobby-screen wallet panel — doesn't exist yet in `desktop` or, per the ui survey,
-  as a distinct component in `ui` either (`ui` generates the wallet unconditionally
-  on load rather than gating it behind an empty-state panel). Treat this panel as
-  new UI wrapping the existing generation logic, not a straight port.
+**Modified existing file:**
+- `src/abis/contractABI.ts` — add a `depositAbi` (`depositUnderlying(uint256,
+  string)`, `deposit(uint256, string, address)`) alongside the existing
+  `withdrawAbi`/`BRIDGE_ADDRESS` (same contract, same address, already present).
 
-**Env vars:** port the subset of `ui/.env.example`'s ~40 `VITE_*` keys Stage 1
-actually needs (node RPC/WS URLs, treasury/BTCPay keys for withdrawals, etc.) —
-`VITE_PROJECT_ID` already exists in `desktop/.env`. Precise key list is an
-implementation-plan task, not enumerated here to avoid guessing at values.
+**New constants** (`desktop` has no `config/constants.ts` equivalent yet — add one):
+- `ETH_CHAIN_ID = 1`, `ETH_USDC_ADDRESS`, `ETH_USDT_ADDRESS` — same values as `ui`'s
+  `src/config/constants.ts`.
+
+**New dependency:** `bigunit` (`^1.2.5`, matches `ui`'s version) — for
+`convertAmountToBigInt`, the decimal-to-bigint conversion `ui` uses for deposit
+amounts. Ported alongside it rather than reimplemented, since the existing
+implementation carries deliberate precision-safety handling.
+
+**New UI, adapted from `ui`'s `DepositCore.tsx` (Web3 half only — the
+`depositMethod === "usdc"` branch, method selector and crypto-payment branch
+dropped):**
+- New component (exact path/name decided in the implementation plan) rendering:
+  token selector (USDC/USDT), Web3 wallet connect status (reuses `desktop`'s
+  existing `useAppKit`/`useAppKitAccount` pattern already in `GameWallet.tsx`/
+  `WithdrawModal.tsx` — no need for `ui`'s separate `useUserWalletConnect`
+  wrapper), amount input, approve/deposit button pair, and the Cosmos-address
+  destination display (`cosmosWallet.address`, "b52USDC will be minted to your
+  Block52 address").
+- Wired into `Dashboard.tsx`'s existing `onDeposit` prop (currently
+  `goToWallet`) — opens this new deposit modal/panel instead of navigating to
+  `/wallet`.
 
 ## Testing
 
-- Adopt `ui`'s `jest.config.js` pattern for unit tests on ported utils (mirrors
-  `ui`'s `convertUtils.test.ts` style).
-- No Playwright/e2e port for `desktop` in this phase.
-- Manual verification per the existing project discipline: `yarn lint`, `yarn start`,
-  exercise connect wallet → view balance → send → withdraw against whatever backend
-  `ui` currently points at.
+- Unit tests for the new hooks/utils following `desktop`'s existing pattern
+  (`src/utils/convertUtils.test.ts` is the closest precedent in this repo).
+- Manual verification: `yarn lint`, `yarn start`, exercise connect Web3 wallet →
+  approve → deposit → confirm Cosmos balance increases (via `useCosmosWallet`'s
+  existing `refreshBalance`).
 
 ## Stage 2 (not detailed here)
 
 Table/game flow: `bus/GameMessageBus.ts` + decorators, `context/gameState/*`,
 `hooks/{game,player,playerActions}`, `components/playPage/*`. Gets its own spec once
-Stage 1 is verified working, per the staged-sequencing decision.
+Stage 1 is verified working, per the staged-sequencing decision. The BTCPay deposit
+path (explicitly out of scope above) is a candidate for its own future spec, separate
+from Stage 2.
