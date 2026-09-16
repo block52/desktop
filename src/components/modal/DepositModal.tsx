@@ -40,7 +40,7 @@ const DepositModal: React.FC<DepositModalProps> = ({ cosmosAddress, onClose, onD
     const { balance } = useWalletBalance(tokenAddress);
     const { allowance } = useAllowance(tokenAddress);
     const { approve, isLoading: isApproveSubmitting, isApprovePending, isApproveConfirmed, approveError } = useApprove();
-    const { deposit, depositToken, isPending: isDepositSubmitting, isDepositPending, isDepositConfirmed, depositError } = useDepositUSDC();
+    const { deposit, depositToken, isPending: isDepositSubmitting, isDepositPending, isDepositConfirmed, depositError, hash: depositHash } = useDepositUSDC();
 
     useEffect(() => {
         if (allowance !== undefined) setApprovedAmount(allowance);
@@ -119,8 +119,14 @@ const DepositModal: React.FC<DepositModalProps> = ({ cosmosAddress, onClose, onD
                         </button>
                     </div>
                     <p className={styles.doneText}>
-                        {selectedToken} has been deposited and will appear in your Block52 wallet shortly.
+                        b52USDC has been deposited and will appear in your Block52 wallet shortly.
                     </p>
+                    {depositHash && (
+                        <div style={{ background: "#111827", border: "1px solid #374151", borderRadius: 8, padding: "10px 12px", marginBottom: 20 }}>
+                            <p style={{ color: "#6b7280", fontSize: 11, margin: "0 0 4px" }}>Transaction hash</p>
+                            <p style={{ color: "#fff", fontFamily: "monospace", fontSize: 12, wordBreak: "break-all", margin: 0 }}>{depositHash}</p>
+                        </div>
+                    )}
                     <button onClick={onClose} className={styles.primaryButton} style={{ width: "100%" }}>
                         Done
                     </button>
@@ -192,7 +198,7 @@ const DepositModal: React.FC<DepositModalProps> = ({ cosmosAddress, onClose, onD
 
                         <div className={styles.addressBox}>
                             <span className={styles.hint} style={{ marginBottom: 0 }}>
-                                b52{selectedToken} will be minted to your Block52 address:
+                                b52USDC will be minted to your Block52 address:
                             </span>
                             <span className={styles.addressText}>{cosmosAddress}</span>
                         </div>
@@ -204,11 +210,11 @@ const DepositModal: React.FC<DepositModalProps> = ({ cosmosAddress, onClose, onD
                                 Cancel
                             </button>
                             {isAllowed ? (
-                                <button onClick={handleDeposit} disabled={amountBigInt === 0n || isDepositing || isExceedingBalance} className={styles.primaryButton}>
+                                <button onClick={handleDeposit} disabled={amountBigInt <= 0n || isDepositing || isExceedingBalance} className={styles.primaryButton}>
                                     {isDepositing ? "Depositing..." : "Deposit"}
                                 </button>
                             ) : (
-                                <button onClick={handleApprove} disabled={amountBigInt === 0n || isApproving || isExceedingBalance} className={styles.primaryButton}>
+                                <button onClick={handleApprove} disabled={amountBigInt <= 0n || isApproving || isExceedingBalance} className={styles.primaryButton}>
                                     {isApproving ? "Approving..." : "Approve"}
                                 </button>
                             )}
