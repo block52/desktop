@@ -1,11 +1,15 @@
 import { useCallback, useMemo } from "react";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { depositAbi, BRIDGE_ADDRESS } from "../../abis/contractABI";
+import { ETH_CHAIN_ID } from "../../config/constants";
 
 const useDepositUSDC = () => {
     const { data: hash, mutateAsync, isPending, error } = useWriteContract();
 
-    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+    const { data: receipt, isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+    // isSuccess only means a receipt was fetched, not that the transaction succeeded on-chain —
+    // it stays true even for a reverted transaction. Require receipt.status === "success".
+    const isConfirmed = isSuccess && receipt?.status === "success";
 
     // Deposit USDC directly - receiver is a Cosmos address string (e.g. "b521...")
     const deposit = useCallback(
@@ -15,6 +19,7 @@ const useDepositUSDC = () => {
                 abi: depositAbi,
                 functionName: "depositUnderlying",
                 args: [amount, cosmosReceiver],
+                chainId: ETH_CHAIN_ID,
             });
         },
         [mutateAsync]
@@ -28,6 +33,7 @@ const useDepositUSDC = () => {
                 abi: depositAbi,
                 functionName: "deposit",
                 args: [amount, cosmosReceiver, tokenAddress as `0x${string}`],
+                chainId: ETH_CHAIN_ID,
             });
         },
         [mutateAsync]

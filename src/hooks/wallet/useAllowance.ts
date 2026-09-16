@@ -13,6 +13,7 @@ const useAllowance = (tokenAddress: string = ETH_USDC_ADDRESS) => {
         chainId: ETH_CHAIN_ID,
         functionName: "allowance",
         args: [address as `0x${string}`, BRIDGE_ADDRESS as `0x${string}`],
+        query: { enabled: !!address },
     });
 
     return { allowance };

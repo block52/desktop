@@ -13,6 +13,7 @@ const useWalletBalance = (tokenAddress: string = ETH_USDC_ADDRESS) => {
         chainId: ETH_CHAIN_ID,
         functionName: "balanceOf",
         args: [address as `0x${string}`],
+        query: { enabled: !!address },
     });
 
     return useMemo(() => ({ balance, isLoading, isError }), [balance, isLoading, isError]);
