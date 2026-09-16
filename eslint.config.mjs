@@ -33,7 +33,6 @@ export default tseslint.config(
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/static-components": "warn",
       "no-console": ["warn", { "allow": ["error"] }],
-      "no-unused-vars": "warn",
       "preserve-caught-error": "warn",
     },
   },
