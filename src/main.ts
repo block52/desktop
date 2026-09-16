@@ -1,13 +1,13 @@
-import { app, BrowserWindow, nativeImage, ipcMain, shell, session } from 'electron';
-import path from 'node:path';
-import started from 'electron-squirrel-startup';
+import { app, BrowserWindow, nativeImage, ipcMain, shell, session } from "electron";
+import path from "node:path";
+import started from "electron-squirrel-startup";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
 }
 
-const iconPath = path.join(__dirname, '../../assets/icon.png');
+const iconPath = path.join(__dirname, "../../assets/icon.png");
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
@@ -15,7 +15,7 @@ const createWindow = () => {
     height: 600,
     icon: iconPath,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 
@@ -44,20 +44,20 @@ app.whenReady().then(() => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': [
-          `default-src 'self'; ` +
+        "Content-Security-Policy": [
+          "default-src 'self'; " +
           `script-src ${scriptSrc}; ` +
-          `style-src 'self' 'unsafe-inline'; ` +
-          `img-src 'self' data: https: blob:; ` +
-          `font-src 'self' data: https:; ` +
-          `connect-src 'self' ws://localhost:* wss://localhost:* http://localhost:* https: wss://relay.walletconnect.org wss://relay.walletconnect.com; ` +
-          `worker-src 'self' blob:;`
+          "style-src 'self' 'unsafe-inline'; " +
+          "img-src 'self' data: https: blob:; " +
+          "font-src 'self' data: https:; " +
+          "connect-src 'self' ws://localhost:* wss://localhost:* http://localhost:* https: wss://relay.walletconnect.org wss://relay.walletconnect.com; " +
+          "worker-src 'self' blob:;"
         ],
       },
     });
   });
 
-  if (process.platform === 'darwin') {
+  if (process.platform === "darwin") {
     app.dock.setIcon(nativeImage.createFromPath(iconPath));
   }
   createWindow();
@@ -66,13 +66,13 @@ app.whenReady().then(() => {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-app.on('activate', () => {
+app.on("activate", () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {

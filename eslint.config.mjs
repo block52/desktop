@@ -30,7 +30,11 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-expressions": "warn",
       "react-hooks/rules-of-hooks": "warn",
       "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/static-components": "warn",
       "no-console": ["warn", { "allow": ["error"] }],
+      "no-unused-vars": "warn",
+      "preserve-caught-error": "warn",
     },
   },
 );
