@@ -10,7 +10,8 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx ."
+    "lint": "eslint --ext .ts,.tsx .",
+    "test": "vitest run"
   },
   "keywords": [],
   "author": {
@@ -38,13 +39,15 @@
     "globals": "^17.4.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.57.2",
-    "vite": "^8.1.4"
+    "vite": "^8.1.4",
+    "vitest": "^5.0.1"
   },
   "dependencies": {
     "@block52/poker-vm-sdk": "^1.4.0",
     "@reown/appkit": "^1.8.23",
     "@reown/appkit-adapter-wagmi": "^1.8.23",
     "@tanstack/react-query": "^5.103.0",
+    "bigunit": "^1.2.5",
     "electron-squirrel-startup": "^1.0.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
