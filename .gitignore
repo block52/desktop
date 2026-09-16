@@ -90,3 +90,6 @@ typings/
 
 # Electron-Forge
 out/
+
+# Git worktrees (superpowers subagent-driven development)
+.worktrees/
