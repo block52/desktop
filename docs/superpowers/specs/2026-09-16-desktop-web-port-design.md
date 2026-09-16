@@ -17,21 +17,34 @@ holds `@block52/e2e` (Playwright) and `@block52/pvm-stub` (backend stub for e2e)
 
 ## Scope
 
-**In scope (Stage 1, this spec):** the wallet layer only — connecting a wallet,
-viewing balance, sending, withdrawing. This is the subset `desktop` already has a
-partial implementation of (`GameWallet.tsx`, `SendModal.tsx`, `WithdrawModal.tsx`,
-`AppKitProvider.tsx`, `useCosmosWallet.ts`, `utils/cosmos/{client,storage,urls}.ts`),
-so replacing/upgrading it is a smaller, independently testable increment than the
-full player flow.
+**In scope (Stage 1, this spec):** the wallet layer only — generating/connecting a
+wallet, viewing balance, sending, withdrawing. This is the subset `desktop` already
+has a partial implementation of (`GameWallet.tsx`, `SendModal.tsx`,
+`WithdrawModal.tsx`, `AppKitProvider.tsx`, `useCosmosWallet.ts`,
+`utils/cosmos/{client,storage,urls}.ts`), so replacing/upgrading it is a smaller,
+independently testable increment than the full player flow.
+
+**Two wallet paths, both in scope:**
+1. **Generated Cosmos wallet (primary).** An in-app wallet created on first use —
+   mirrors `ui`'s `src/index.tsx` mnemonic-generation-on-load pattern via
+   `@cosmjs/proto-signing`. This is the "no wallet found → Generate wallet" entry
+   point shown in the Lobby screen of
+   `claude.ai/artifact/RiALvNDa2Vu9xQWD24QBPD` (design updated mid-session — see
+   that artifact for the current visual reference, it may continue to change).
+   Used for deposits and joining tables.
+2. **External wallet connect (secondary).** wagmi/Reown `AppKitProvider` flow
+   already stubbed in `desktop` — likely for on-chain settlement/bridging, matches
+   `ui`'s existing `useUserWalletConnect.ts`.
 
 **Explicitly out of scope for this spec:**
 - Table/game flow (`GameMessageBus`, `context/gameState/*`,
   `hooks/{game,playerActions}`, `components/playPage/*`) — Stage 2, separate spec.
+  The "Available tables" list shown alongside the wallet panel in the current design
+  artifact is visual context only for Stage 1 — not built until Stage 2.
 - Admin/explorer surface (`/admin/*`, `/explorer/*`) — desktop app is for players,
   not operators; not planned.
-- The landing/connect-wallet visual design shared mid-session
-  (`claude.ai/artifact/RiALvNDa2Vu9xQWD24QBPD`) — explicitly deferred by the user,
-  not part of this port.
+- Guest mode ("Enter as guest" / "Guest" nav badge in the design artifact) —
+  explicitly deferred by the user, not part of this port.
 - A shared code package between `ui` and `desktop` — ported code becomes `desktop`'s
   own copy in `desktop/src`, adapted for Electron. The two codebases will diverge
   over time; fixes apply twice. Accepted tradeoff for now, revisit if divergence
@@ -97,6 +110,11 @@ opening the user's browser.
 - Adaptation is limited to anything assuming `BrowserRouter` or a served origin;
   `localStorage` usage in `ui`'s `NetworkContext.tsx`/`avatarStorage.ts` needs no
   change, it works the same in Electron's renderer.
+- New: a "no wallet found → Generate wallet" empty state, per the design artifact's
+  Lobby-screen wallet panel — doesn't exist yet in `desktop` or, per the ui survey,
+  as a distinct component in `ui` either (`ui` generates the wallet unconditionally
+  on load rather than gating it behind an empty-state panel). Treat this panel as
+  new UI wrapping the existing generation logic, not a straight port.
 
 **Env vars:** port the subset of `ui/.env.example`'s ~40 `VITE_*` keys Stage 1
 actually needs (node RPC/WS URLs, treasury/BTCPay keys for withdrawals, etc.) —
