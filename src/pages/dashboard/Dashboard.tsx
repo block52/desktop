@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import GameWallet from "../../components/gameWallet/GameWallet";
 import SendModal from "../../components/modal/SendModal";
 import WithdrawModal from "../../components/modal/WithdrawModal";
+import DepositModal from "../../components/modal/DepositModal";
 import { useCosmosWallet } from "../../hooks/useCosmosWallet";
 import TableList from "../../components/tableList/TableList";
 import {
@@ -26,6 +27,7 @@ const Dashboard: React.FC = () => {
 
   const [showSendModal, setShowSendModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
 
   const goToWallet = useCallback(() => navigate("/wallet"), [navigate]);
 
@@ -75,7 +77,7 @@ const Dashboard: React.FC = () => {
               balance.find((b) => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)
                 ?.amount ?? "0"
             }
-            onDeposit={goToWallet}
+            onDeposit={() => setShowDepositModal(true)}
             onWithdraw={() => setShowWithdrawModal(true)}
             onSend={() => setShowSendModal(true)}
             onCreateWallet={goToWallet}
@@ -107,6 +109,14 @@ const Dashboard: React.FC = () => {
               ?.amount ?? "0"
           }
           onClose={() => setShowWithdrawModal(false)}
+        />
+      )}
+
+      {showDepositModal && cosmosAddress && (
+        <DepositModal
+          cosmosAddress={cosmosAddress}
+          onClose={() => setShowDepositModal(false)}
+          onDepositConfirmed={refreshBalance}
         />
       )}
     </div>
