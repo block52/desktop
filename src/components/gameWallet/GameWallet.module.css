@@ -1,0 +1,266 @@
+.container {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.header {
+    background-color: #111827;
+    border-bottom: 1px solid #374151;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.headerTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.iconButton {
+    background: transparent;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.iconButton:hover {
+    background-color: #374151;
+    color: #fff;
+}
+
+.iconButton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+.body {
+    padding: 20px;
+}
+
+/* Empty state */
+.emptyText {
+    color: #9ca3af;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.setupButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Address row */
+.fieldLabel {
+    color: #9ca3af;
+    font-size: 12px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.addressRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.addressInput {
+    flex: 1;
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    color: #fff;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 8px 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Balance card */
+.balanceCard {
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.balanceLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.balanceIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(99, 102, 241, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #818cf8;
+}
+
+.balanceName {
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    margin: 0 0 2px;
+}
+
+.balanceSub {
+    color: #9ca3af;
+    font-size: 12px;
+    margin: 0;
+}
+
+.balanceAmount {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* Action buttons */
+.actionRow {
+    display: flex;
+    gap: 8px;
+}
+
+/* Buttons */
+.primaryButton {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    transition: opacity 0.15s;
+}
+
+.primaryButton:hover {
+    opacity: 0.85;
+}
+
+.primaryButton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.secondaryButton {
+    background: transparent;
+    border: 1px solid #4b5563;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    transition: background-color 0.15s;
+}
+
+.secondaryButton:hover {
+    background-color: #374151;
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.flex1 {
+    flex: 1;
+}
+
+/* Web3 divider */
+.divider {
+    border: none;
+    border-top: 1px solid #374151;
+    margin: 16px 0;
+}
+
+/* Web3 section */
+.web3Label {
+    color: #9ca3af;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.web3Connected {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.web3Address {
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    color: #fff;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 7px 10px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.disconnectButton {
+    background: transparent;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 7px 10px;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.disconnectButton:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
