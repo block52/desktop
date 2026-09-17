@@ -2,7 +2,7 @@
  * WS ingest types — envelope and event shapes for the simplified (logical-track-only)
  * game message pipeline. Snapshot/action/format/variant types come from the SDK.
  */
-import type { TexasHoldemStateDTO, ActionDTO, WinnerDTO, TexasHoldemRound } from "@block52/poker-vm-sdk";
+import type { ActionDTO, WinnerDTO, TexasHoldemRound } from "@block52/poker-vm-sdk";
 import type { ClassifiedMessage } from "./ingest";
 
 /** Typed transitions derived by diffing prev/next snapshot at ingest (see deriveEvents). */

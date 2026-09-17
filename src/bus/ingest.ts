@@ -6,11 +6,16 @@
  * exactly what the caller should do with it — no React, no side effects, fully
  * unit-testable.
  *
- * Two distinct validation outcomes (surface, never silently default):
+ * Two distinct validation outcomes are modeled in the type (surface, never silently default):
  *   - a message with NO gameState → `validationErrorNoState` (nothing committed)
  *   - a message with an invalid-but-present gameState → `state` with a non-null
  *     `validationError` (the snapshot is still committed so the table renders
- *     what it can, while the error is surfaced).
+ *     what it can, while the error is surfaced)
+ *
+ * This port does not yet implement the gameOptions/format/variant validation `ui`'s
+ * `validateGameState` performs — `validationError` on the `state` branch is therefore
+ * always `null` today. The type and the provider's branch handling it are kept as-is
+ * so this behavior can be added later without changing the contract.
  */
 import { TexasHoldemStateDTO, GameFormat, GameVariant } from "@block52/poker-vm-sdk";
 import type { ValidationError, PendingAction } from "./types";

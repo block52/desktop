@@ -97,6 +97,10 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
             ws.onopen = async () => {
                 const authPayload = await createAuthPayload();
 
+                if (wsRef.current !== ws || ws.readyState !== WebSocket.OPEN) {
+                    return;
+                }
+
                 const subscriptionMessage = {
                     type: "subscribe",
                     gameId: tableId,
@@ -139,10 +143,9 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
                     return;
                 }
 
-                setLatestEvents(item.events);
-
                 switch (item.classified.kind) {
                     case "state": {
+                        setLatestEvents(item.events);
                         setGameState(item.classified.snapshot);
                         setGameFormat(item.classified.format);
                         setGameVariant(item.classified.variant);
