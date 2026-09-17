@@ -50,7 +50,7 @@ app.whenReady().then(() => {
           "style-src 'self' 'unsafe-inline'; " +
           "img-src 'self' data: https: blob:; " +
           "font-src 'self' data: https:; " +
-          "connect-src 'self' ws://localhost:* wss://localhost:* http://localhost:* https: wss://relay.walletconnect.org wss://relay.walletconnect.com; " +
+          "connect-src 'self' ws://localhost:* wss://localhost:* http://localhost:* https: wss://relay.walletconnect.org wss://relay.walletconnect.com wss://node1.block52.xyz wss://node.texashodl.net wss://node.tommillerservices.com; " +
           "worker-src 'self' blob:;"
         ],
       },
