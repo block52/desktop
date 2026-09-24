@@ -45,6 +45,7 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
     const hasReceivedMessageRef = useRef<boolean>(false);
     const fallbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const busRef = useRef<GameMessageBus | null>(null);
+    const generationRef = useRef(0);
     if (busRef.current === null) {
         busRef.current = new GameMessageBus();
     }
@@ -54,13 +55,15 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
             if (currentTableIdRef.current === tableId && wsRef.current?.readyState === WebSocket.OPEN) {
                 return;
             }
-            if (wsRef.current?.readyState === WebSocket.CONNECTING) {
+            if (currentTableIdRef.current === tableId && wsRef.current?.readyState === WebSocket.CONNECTING) {
                 return;
             }
             if (wsRef.current) {
                 wsRef.current.close();
                 wsRef.current = null;
             }
+
+            const generation = ++generationRef.current;
 
             setIsLoading(true);
             setError(null);
@@ -97,7 +100,7 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
             ws.onopen = async () => {
                 const authPayload = await createAuthPayload();
 
-                if (wsRef.current !== ws || ws.readyState !== WebSocket.OPEN) {
+                if (wsRef.current !== ws || ws.readyState !== WebSocket.OPEN || generationRef.current !== generation) {
                     return;
                 }
 
@@ -113,6 +116,9 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
                 setIsLoading(false);
 
                 fallbackTimeoutRef.current = setTimeout(() => {
+                    if (generationRef.current !== generation) {
+                        return;
+                    }
                     if (!hasReceivedMessageRef.current && currentTableIdRef.current === tableId) {
                         console.error("[GameStateContext] WebSocket server did not respond within 5 seconds");
                         setError(
@@ -127,6 +133,10 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
             };
 
             ws.onmessage = event => {
+                if (generationRef.current !== generation) {
+                    return;
+                }
+
                 let message: RawWsMessage;
                 try {
                     message = JSON.parse(event.data);
@@ -191,6 +201,9 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
             };
 
             ws.onerror = wsError => {
+                if (generationRef.current !== generation) {
+                    return;
+                }
                 console.error("WebSocket error:", wsError);
                 setError(new Error(`WebSocket connection error for table ${tableId}`));
                 setIsLoading(false);
@@ -200,6 +213,7 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
     );
 
     const unsubscribeFromTable = useCallback(() => {
+        generationRef.current += 1;
         if (fallbackTimeoutRef.current) {
             clearTimeout(fallbackTimeoutRef.current);
             fallbackTimeoutRef.current = null;
@@ -224,6 +238,7 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
 
     useEffect(() => {
         return () => {
+            generationRef.current += 1;
             if (fallbackTimeoutRef.current) {
                 clearTimeout(fallbackTimeoutRef.current);
             }
