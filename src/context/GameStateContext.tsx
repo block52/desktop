@@ -19,6 +19,7 @@ export interface GameStateValue {
     latestEvents: GameEvent[];
     subscribeToTable: (tableId: string) => void;
     unsubscribeFromTable: () => void;
+    getLatestSnapshot: () => TexasHoldemStateDTO | undefined;
 }
 
 const GameStateContext = createContext<GameStateValue | null>(null);
@@ -236,6 +237,10 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
         setPendingAction(null);
     }, []);
 
+    const getLatestSnapshot = useCallback((): TexasHoldemStateDTO | undefined => {
+        return busRef.current?.getLastSnapshot();
+    }, []);
+
     useEffect(() => {
         return () => {
             generationRef.current += 1;
@@ -262,6 +267,7 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
                 latestEvents,
                 subscribeToTable,
                 unsubscribeFromTable,
+                getLatestSnapshot,
             }}
         >
             {children}
