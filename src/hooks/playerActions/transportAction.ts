@@ -72,7 +72,7 @@ export async function executeTransportAction(
                 return await broadcastAction(tableId, action, amount, network, data);
             } catch (retryErr) {
                 if (isStaleIndexError(retryErr)) {
-                    throw new Error(STALE_INDEX_MESSAGE);
+                    throw new Error(STALE_INDEX_MESSAGE, { cause: retryErr });
                 }
                 throw retryErr;
             }
@@ -81,7 +81,7 @@ export async function executeTransportAction(
         // prompt. A rejected action was NOT applied, so re-submitting is
         // safe. Every other error propagates unchanged.
         if (isStaleIndexError(err)) {
-            throw new Error(STALE_INDEX_MESSAGE);
+            throw new Error(STALE_INDEX_MESSAGE, { cause: err });
         }
         throw err;
     }
