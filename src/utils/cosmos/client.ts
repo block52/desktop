@@ -10,6 +10,7 @@ import {
   createSigningClientFromMnemonic,
   getDefaultCosmosConfig as getDefaultCosmosConfigSDK,
   COSMOS_CONSTANTS,
+  SigningCosmosClient,
 } from "@block52/poker-vm-sdk";
 import { getCosmosAddress, getCosmosMnemonic } from "./storage";
 import { getCosmosUrls, NetworkEndpoints } from "./urls";
@@ -130,19 +131,25 @@ export const clearCosmosClient = (): void => {
   currentEndpoints = null;
 };
 
+export interface SigningClientResult {
+  signingClient: SigningCosmosClient;
+  userAddress: string;
+}
+
+let signingClientCache: {
+  key: string;
+  promise: Promise<SigningClientResult>;
+} | null = null;
+
 /**
- * Creates a signing client for performing player actions on the Cosmos blockchain.
+ * Get (or build and cache) the signing client for the current wallet + network.
  *
- * This is a wrapper around createSigningClientFromMnemonic that:
- * - Retrieves the mnemonic from storage
- * - Configures the client with the correct network endpoints
- * - Uses consistent chain configuration (chainId, prefix, denom, gasPrice)
+ * Returns the same Promise across concurrent calls within a session, so the
+ * expensive PBKDF2 derivation runs once per (wallet, network) pair.
  *
- * @param network - The network configuration to use
- * @returns Promise with the signing client
  * @throws Error if Cosmos wallet is not initialized (no mnemonic or address)
  */
-export async function getSigningClient(network: NetworkEndpoints) {
+export async function getSigningClient(network: NetworkEndpoints): Promise<SigningClientResult> {
   const userAddress = getCosmosAddress();
   const mnemonic = getCosmosMnemonic();
 
@@ -153,8 +160,13 @@ export async function getSigningClient(network: NetworkEndpoints) {
   }
 
   const { rpcEndpoint, restEndpoint } = getCosmosUrls(network);
+  const key = `${userAddress}|${rpcEndpoint}|${restEndpoint}`;
 
-  const signingClient = await createSigningClientFromMnemonic(
+  if (signingClientCache?.key === key) {
+    return signingClientCache.promise;
+  }
+
+  const promise = createSigningClientFromMnemonic(
     {
       rpcEndpoint,
       restEndpoint,
@@ -164,7 +176,115 @@ export async function getSigningClient(network: NetworkEndpoints) {
       gasPrice: "0stake", // Gasless
     },
     mnemonic,
-  );
+  ).then((signingClient) => ({ signingClient, userAddress }));
 
-  return { signingClient, userAddress };
+  // If construction rejects, drop the cache so the next call retries
+  // instead of returning a permanently-failed promise.
+  promise.catch(() => {
+    if (signingClientCache?.promise === promise) {
+      signingClientCache = null;
+    }
+  });
+
+  signingClientCache = { key, promise };
+  return promise;
+}
+
+/**
+ * Clear the cached signing client.
+ *
+ * Call on: logout, wallet import/change, network switch, and from
+ * withMoneyMoverRetry's error-recovery path below.
+ */
+export function clearSigningClientCache(): void {
+  const previous = signingClientCache;
+  signingClientCache = null;
+  // Best-effort cleanup — disconnect if the SDK exposes it.
+  previous?.promise
+    .then((c) => (c.signingClient as { disconnect?: () => void }).disconnect?.())
+    .catch(() => {
+      /* already-rejected promise, nothing to disconnect */
+    });
+}
+
+/**
+ * Does this error look like a Cosmos account-sequence mismatch (SDK code 32,
+ * "account sequence mismatch, expected N, got M")?
+ *
+ * Every tx from an account carries an account sequence. When a prior tx is
+ * still pending in the mempool (accepted by CheckTx but not yet committed),
+ * a fresh getSequence query still returns the pre-increment value, so the
+ * next tx signs a sequence that collides and the chain rejects it with this
+ * error. Repeatable while the pending tx sits uncommitted.
+ */
+export function isSequenceMismatchError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  return /account sequence mismatch/i.test(message);
+}
+
+/**
+ * Heuristic: does this error look like a dead RPC connection rather than a
+ * chain-level rejection? Errs on the side of NOT retrying — a false
+ * negative just means we don't retry a recoverable failure; a false
+ * positive could double-submit a tx that was actually rejected.
+ */
+export function isTransportError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const message = (err as { message?: unknown }).message;
+  if (typeof message !== "string") return false;
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("network") ||
+    lower.includes("fetch") ||
+    lower.includes("socket") ||
+    lower.includes("econnreset") ||
+    lower.includes("econnrefused") ||
+    lower.includes("etimedout") ||
+    lower.includes("disconnected") ||
+    lower.includes("connection")
+  );
+}
+
+export const SEQUENCE_RETRY_DELAY_MS = 1500;
+
+/**
+ * Run a chain-direct MONEY-MOVER (join / leave / top-up) with recovery for
+ * the two ways a cached client + ordered sequence can transiently fail:
+ *
+ *   - Transport error (stale RPC socket): clear the cache, reconnect, retry.
+ *   - Sequence mismatch (a prior money-mover still pending in the mempool):
+ *     clear the cache so the retry reconnects and re-queries the sequence,
+ *     wait a beat for the pending tx to commit and bump the on-chain
+ *     sequence, then retry.
+ *
+ * A single retry after a short delay clears the common "pending tx not yet
+ * committed" case. This does NOT loop — a persistently wedged account
+ * surfaces the error so it isn't silently masked.
+ *
+ * Gameplay actions must NOT use this — they're unordered and never carry a
+ * sequence, so they can't hit a sequence mismatch. See executeTransportAction
+ * in transportAction.ts for the gameplay-action retry path instead.
+ */
+export async function withMoneyMoverRetry<T>(
+  network: NetworkEndpoints,
+  fn: (client: SigningClientResult) => Promise<T>,
+): Promise<T> {
+  const client = await getSigningClient(network);
+  try {
+    return await fn(client);
+  } catch (err) {
+    const sequenceMismatch = isSequenceMismatchError(err);
+    if (!isTransportError(err) && !sequenceMismatch) {
+      throw err;
+    }
+    // Force a fresh client so the retry re-queries the account sequence.
+    clearSigningClientCache();
+    if (sequenceMismatch) {
+      // Give the pending money-mover a chance to commit so the re-query
+      // returns the advanced sequence instead of the same stale value.
+      await new Promise((resolve) => setTimeout(resolve, SEQUENCE_RETRY_DELAY_MS));
+    }
+    const fresh = await getSigningClient(network);
+    return fn(fresh);
+  }
 }
