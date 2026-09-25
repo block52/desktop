@@ -216,6 +216,12 @@ export function clearSigningClientCache(): void {
  * a fresh getSequence query still returns the pre-increment value, so the
  * next tx signs a sequence that collides and the chain rejects it with this
  * error. Repeatable while the pending tx sits uncommitted.
+ *
+ * This is NOT limited to money-movers (join/leave). Any gameplay action
+ * (bet/call/raise/fold/sit-out/etc.) that races a still-pending prior
+ * transaction from the same account can hit it too, which is why
+ * executeTransportAction (src/hooks/playerActions/transportAction.ts) also
+ * recovers from it, via its own separate retry path.
  */
 export function isSequenceMismatchError(err: unknown): boolean {
   const message = err instanceof Error ? err.message : String(err ?? "");
@@ -261,9 +267,11 @@ export const SEQUENCE_RETRY_DELAY_MS = 1500;
  * committed" case. This does NOT loop — a persistently wedged account
  * surfaces the error so it isn't silently masked.
  *
- * Gameplay actions must NOT use this — they're unordered and never carry a
- * sequence, so they can't hit a sequence mismatch. See executeTransportAction
- * in transportAction.ts for the gameplay-action retry path instead.
+ * Gameplay actions must NOT use this — they have their own retry path (see
+ * executeTransportAction in transportAction.ts), which also recovers from a
+ * sequence mismatch and additionally rewrites a stale action-index error
+ * into a user-facing retryable prompt specific to gameplay's replay
+ * protection scheme.
  */
 export async function withMoneyMoverRetry<T>(
   network: NetworkEndpoints,

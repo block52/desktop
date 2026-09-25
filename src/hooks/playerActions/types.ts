@@ -1,4 +1,4 @@
-import type { LegalActionDTO, PlayerStatus } from "@block52/poker-vm-sdk";
+import type { LegalActionDTO, PlayerStatus, SitInMethod } from "@block52/poker-vm-sdk";
 
 export interface PlayerLegalActionsResult {
     legalActions: LegalActionDTO[];
@@ -8,7 +8,7 @@ export interface PlayerLegalActionsResult {
     isPlayerTurn: boolean;
     playerStatus: PlayerStatus | null;
     playerSeat: number | null;
-    sitInMethod: string | null;
+    sitInMethod: SitInMethod | null;
     pendingSitOut: string | null;
     foldActionIndex: number | null;
     actionTurnIndex: number;
