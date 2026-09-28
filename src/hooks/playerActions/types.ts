@@ -16,3 +16,9 @@ export interface PlayerLegalActionsResult {
     isLoading: boolean;
     error: Error | null;
 }
+
+/** Options for joinTable — buy-in amount as decimal-USDC text, plus an optional requested seat. */
+export interface JoinTableOptions {
+    amount: string;
+    seatNumber?: number;
+}
