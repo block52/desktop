@@ -37,6 +37,7 @@ const Table: React.FC = () => {
     const [seatNumber, setSeatNumber] = useState<string>("");
     const [actionStatus, setActionStatus] = useState<string>("");
     const [actionError, setActionError] = useState<string>("");
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
     useEffect(() => {
         if (!id) {
@@ -49,6 +50,7 @@ const Table: React.FC = () => {
     }, [id, subscribeToTable, unsubscribeFromTable]);
 
     const runAction = async (label: string, action: () => Promise<PlayerActionResult | JoinTableResult | LeaveTableResult>) => {
+        setIsSubmitting(true);
         setActionStatus(`${label}…`);
         setActionError("");
         try {
@@ -57,6 +59,8 @@ const Table: React.FC = () => {
         } catch (err) {
             setActionError(err instanceof Error ? err.message : String(err));
             setActionStatus("");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -109,6 +113,7 @@ const Table: React.FC = () => {
                 <input placeholder="Buy-in (USDC)" value={buyInAmount} onChange={e => setBuyInAmount(e.target.value)} />
                 <input placeholder="Seat (optional)" value={seatNumber} onChange={e => setSeatNumber(e.target.value)} />
                 <button
+                    disabled={isSubmitting}
                     onClick={() =>
                         runAction("Join", () =>
                             joinTable(
@@ -122,30 +127,56 @@ const Table: React.FC = () => {
                 >
                     Join
                 </button>
-                <button onClick={() => runAction("Leave", () => leaveTable(tableId, currentNetwork))}>Leave</button>
+                <button disabled={isSubmitting} onClick={() => runAction("Leave", () => leaveTable(tableId, currentNetwork))}>
+                    Leave
+                </button>
             </div>
 
             <h2>In-hand actions</h2>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <input placeholder="Bet (USDC)" value={betAmount} onChange={e => setBetAmount(e.target.value)} />
-                <button onClick={() => runAction("Bet", () => betHand(tableId, parseUsdcToMicro(betAmount), currentNetwork))}>Bet</button>
+                <button disabled={isSubmitting} onClick={() => runAction("Bet", () => betHand(tableId, parseUsdcToMicro(betAmount), currentNetwork))}>
+                    Bet
+                </button>
                 <input placeholder="Call (USDC)" value={callAmount} onChange={e => setCallAmount(e.target.value)} />
-                <button onClick={() => runAction("Call", () => callHand(tableId, parseUsdcToMicro(callAmount), currentNetwork))}>Call</button>
+                <button
+                    disabled={isSubmitting}
+                    onClick={() => runAction("Call", () => callHand(tableId, parseUsdcToMicro(callAmount), currentNetwork))}
+                >
+                    Call
+                </button>
                 <input placeholder="Raise (USDC)" value={raiseAmount} onChange={e => setRaiseAmount(e.target.value)} />
-                <button onClick={() => runAction("Raise", () => raiseHand(tableId, parseUsdcToMicro(raiseAmount), currentNetwork))}>
+                <button
+                    disabled={isSubmitting}
+                    onClick={() => runAction("Raise", () => raiseHand(tableId, parseUsdcToMicro(raiseAmount), currentNetwork))}
+                >
                     Raise
                 </button>
-                <button onClick={() => runAction("Check", () => checkHand(tableId, currentNetwork))}>Check</button>
-                <button onClick={() => runAction("Fold", () => foldHand(tableId, currentNetwork))}>Fold</button>
-                <button onClick={() => runAction("Muck", () => muckCards(tableId, currentNetwork))}>Muck</button>
-                <button onClick={() => runAction("Show", () => showCards(tableId, currentNetwork))}>Show</button>
+                <button disabled={isSubmitting} onClick={() => runAction("Check", () => checkHand(tableId, currentNetwork))}>
+                    Check
+                </button>
+                <button disabled={isSubmitting} onClick={() => runAction("Fold", () => foldHand(tableId, currentNetwork))}>
+                    Fold
+                </button>
+                <button disabled={isSubmitting} onClick={() => runAction("Muck", () => muckCards(tableId, currentNetwork))}>
+                    Muck
+                </button>
+                <button disabled={isSubmitting} onClick={() => runAction("Show", () => showCards(tableId, currentNetwork))}>
+                    Show
+                </button>
             </div>
 
             <h2>Sit in / out</h2>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <button onClick={() => runAction("Sit in", () => sitIn(tableId, currentNetwork))}>Sit In</button>
-                <button onClick={() => runAction("Sit in and wait", () => sitInAndWait(tableId, currentNetwork))}>Sit In And Wait</button>
-                <button onClick={() => runAction("Sit out", () => sitOut(tableId, currentNetwork))}>Sit Out</button>
+                <button disabled={isSubmitting} onClick={() => runAction("Sit in", () => sitIn(tableId, currentNetwork))}>
+                    Sit In
+                </button>
+                <button disabled={isSubmitting} onClick={() => runAction("Sit in and wait", () => sitInAndWait(tableId, currentNetwork))}>
+                    Sit In And Wait
+                </button>
+                <button disabled={isSubmitting} onClick={() => runAction("Sit out", () => sitOut(tableId, currentNetwork))}>
+                    Sit Out
+                </button>
             </div>
 
             <h2>Legal actions</h2>
