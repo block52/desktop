@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { PlayerActionType, NonPlayerActionType, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
+import { useNavigate, useParams } from "react-router-dom";
+import { PlayerActionType, NonPlayerActionType, TexasHoldemRound, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
 import { useGameState } from "../../context/GameStateContext";
 import { useNetwork } from "../../context/NetworkContext";
 import { usePlayerLegalActions } from "../../hooks/playerActions/usePlayerLegalActions";
@@ -35,6 +35,7 @@ function formatMicro(value: string): string {
 }
 
 const Table: React.FC = () => {
+    const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const tableId = id ?? "";
     const { currentNetwork } = useNetwork();
@@ -132,10 +133,18 @@ const Table: React.FC = () => {
     const isUserSeated = gameState.players.some(p => p.address.toLowerCase() === localAddress);
     const hasEmptySeats = gameState.players.length < gameState.gameOptions.maxPlayers;
     const sitAndGoWaiting =
-        isSitAndGoFormat(gameFormat) && isUserSeated && hasEmptySeats
+        isSitAndGoFormat(gameFormat) && isUserSeated && hasEmptySeats && gameState.round === TexasHoldemRound.ANTE
             ? {
                   prizePool: formatMicro(gameState.totalPot),
                   seated: gameState.players.length,
+                  maxPlayers: gameState.gameOptions.maxPlayers,
+              }
+            : undefined;
+    const waitingForPlayers =
+        hasEmptySeats && gameState.players.length < gameState.gameOptions.minPlayers
+            ? {
+                  seated: gameState.players.length,
+                  minPlayers: gameState.gameOptions.minPlayers,
                   maxPlayers: gameState.gameOptions.maxPlayers,
               }
             : undefined;
@@ -171,15 +180,7 @@ const Table: React.FC = () => {
                     pot={formatMicro(gameState.totalPot)}
                     round={gameState.round}
                     sitAndGoWaiting={sitAndGoWaiting}
-                    waitingForPlayers={
-                        hasEmptySeats && gameState.players.length < gameState.gameOptions.minPlayers
-                            ? {
-                                  seated: gameState.players.length,
-                                  minPlayers: gameState.gameOptions.minPlayers,
-                                  maxPlayers: gameState.gameOptions.maxPlayers,
-                              }
-                            : undefined
-                    }
+                    waitingForPlayers={waitingForPlayers}
                 />
                 <TableSidebar legalActions={legalActions.legalActions} isPlayerTurn={legalActions.isPlayerTurn} />
             </div>
@@ -202,33 +203,37 @@ const Table: React.FC = () => {
                     Join
                 </button>
             </div>
-            <PlayerActionButtons
-                isSubmitting={isSubmitting}
-                betAmount={betAmount}
-                onBetAmountChange={setBetAmount}
-                callAmount={callAmount}
-                onCallAmountChange={setCallAmount}
-                raiseAmount={raiseAmount}
-                onRaiseAmountChange={setRaiseAmount}
-                onBet={() => runAction("Bet", () => betHand(tableId, parseUsdcToMicro(betAmount), currentNetwork))}
-                onCall={() => runAction("Call", () => callHand(tableId, parseUsdcToMicro(callAmount), currentNetwork))}
-                onRaise={() => runAction("Raise", () => raiseHand(tableId, parseUsdcToMicro(raiseAmount), currentNetwork))}
-                onCheck={() => runAction("Check", () => checkHand(tableId, currentNetwork))}
-                onFold={() => runAction("Fold", () => foldHand(tableId, currentNetwork))}
-                onMuck={() => runAction("Muck", () => muckCards(tableId, currentNetwork))}
-                onShow={() => runAction("Show", () => showCards(tableId, currentNetwork))}
-                onSitIn={() => runAction("Sit in", () => sitIn(tableId, currentNetwork))}
-                onSitInAndWait={() => runAction("Sit in and wait", () => sitInAndWait(tableId, currentNetwork))}
-                onSitOut={() => runAction("Sit out", () => sitOut(tableId, currentNetwork))}
-                autoStatusNote="Auto: blinds/deal/new-hand fire automatically"
-            />
+            {!waitingForPlayers && !sitAndGoWaiting && (
+                <PlayerActionButtons
+                    isSubmitting={isSubmitting}
+                    legalActions={legalActions.legalActions}
+                    isPlayerTurn={legalActions.isPlayerTurn}
+                    betAmount={betAmount}
+                    onBetAmountChange={setBetAmount}
+                    callAmount={callAmount}
+                    onCallAmountChange={setCallAmount}
+                    raiseAmount={raiseAmount}
+                    onRaiseAmountChange={setRaiseAmount}
+                    onBet={() => runAction("Bet", () => betHand(tableId, parseUsdcToMicro(betAmount), currentNetwork))}
+                    onCall={() => runAction("Call", () => callHand(tableId, parseUsdcToMicro(callAmount), currentNetwork))}
+                    onRaise={() => runAction("Raise", () => raiseHand(tableId, parseUsdcToMicro(raiseAmount), currentNetwork))}
+                    onCheck={() => runAction("Check", () => checkHand(tableId, currentNetwork))}
+                    onFold={() => runAction("Fold", () => foldHand(tableId, currentNetwork))}
+                    onMuck={() => runAction("Muck", () => muckCards(tableId, currentNetwork))}
+                    onShow={() => runAction("Show", () => showCards(tableId, currentNetwork))}
+                    onSitIn={() => runAction("Sit in", () => sitIn(tableId, currentNetwork))}
+                    onSitInAndWait={() => runAction("Sit in and wait", () => sitInAndWait(tableId, currentNetwork))}
+                    onSitOut={() => runAction("Sit out", () => sitOut(tableId, currentNetwork))}
+                    autoStatusNote="Auto: blinds/deal/new-hand fire automatically"
+                />
+            )}
         </>
     );
 
     return (
         <div className={styles.page}>
             {content}
-            {!hasWallet && <NoWalletOverlay onConnect={() => window.location.assign("#/wallet")} />}
+            {!hasWallet && <NoWalletOverlay onConnect={() => navigate("/wallet")} />}
         </div>
     );
 };

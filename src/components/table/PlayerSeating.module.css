@@ -1,12 +1,17 @@
 .plane {
     position: relative;
     flex: 1;
-    /* Horizontal padding must be >= half of Seat's own width (78px / 2 =
-       39px) so the leftmost/rightmost seats (left: 0% / left: 100%) don't
-       bleed past this container's own edge — their own translateX(-50%)
-       extends half their width past the literal coordinate. 46px clears
-       it with a small margin. */
-    padding: 22px 46px;
+    /* Must be margin, not padding: seat children are positioned with
+       left/top percentages, which for an absolutely positioned descendant
+       resolve against this element's containing block (its padding box),
+       not its content box — padding never moves where 0%/100% land, so a
+       seat at left:0%/100% would still sit on the raw edge and bleed half
+       its own width (78px / 2 = 39px) past it via translateX(-50%).
+       Margin instead shrinks this box itself from the outside, which DOES
+       change the containing block absolutely-positioned children resolve
+       against, insetting 0%/100% by the margin. 46px clears the seat's
+       half-width with a small margin. */
+    margin: 22px 46px;
     min-height: 420px;
     display: flex;
     align-items: center;

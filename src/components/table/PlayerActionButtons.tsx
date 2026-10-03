@@ -1,8 +1,12 @@
 import React from "react";
+import { PlayerActionType, hasAction } from "@block52/poker-vm-sdk";
+import type { LegalActionDTO } from "@block52/poker-vm-sdk";
 import styles from "./PlayerActionButtons.module.css";
 
 export interface PlayerActionButtonsProps {
     isSubmitting: boolean;
+    legalActions: LegalActionDTO[];
+    isPlayerTurn: boolean;
     betAmount: string;
     onBetAmountChange: (value: string) => void;
     callAmount: string;
@@ -24,6 +28,8 @@ export interface PlayerActionButtonsProps {
 
 export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     isSubmitting,
+    legalActions,
+    isPlayerTurn,
     betAmount,
     onBetAmountChange,
     callAmount,
@@ -50,7 +56,11 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                 value={betAmount}
                 onChange={e => onBetAmountChange(e.target.value)}
             />
-            <button className={styles.btn} disabled={isSubmitting} onClick={onBet}>
+            <button
+                className={styles.btn}
+                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.BET)}
+                onClick={onBet}
+            >
                 Bet
             </button>
             <input
@@ -59,7 +69,11 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                 value={callAmount}
                 onChange={e => onCallAmountChange(e.target.value)}
             />
-            <button className={styles.btn} disabled={isSubmitting} onClick={onCall}>
+            <button
+                className={styles.btn}
+                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.CALL)}
+                onClick={onCall}
+            >
                 Call
             </button>
             <input
@@ -68,19 +82,39 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                 value={raiseAmount}
                 onChange={e => onRaiseAmountChange(e.target.value)}
             />
-            <button className={styles.btn} disabled={isSubmitting} onClick={onRaise}>
+            <button
+                className={styles.btn}
+                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.RAISE)}
+                onClick={onRaise}
+            >
                 Raise
             </button>
-            <button className={styles.btn} disabled={isSubmitting} onClick={onCheck}>
+            <button
+                className={styles.btn}
+                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.CHECK)}
+                onClick={onCheck}
+            >
                 Check
             </button>
-            <button className={`${styles.btn} ${styles.danger}`} disabled={isSubmitting} onClick={onFold}>
+            <button
+                className={`${styles.btn} ${styles.danger}`}
+                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.FOLD)}
+                onClick={onFold}
+            >
                 Fold
             </button>
-            <button className={styles.btn} disabled={isSubmitting} onClick={onMuck}>
+            <button
+                className={styles.btn}
+                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.MUCK)}
+                onClick={onMuck}
+            >
                 Muck
             </button>
-            <button className={styles.btn} disabled={isSubmitting} onClick={onShow}>
+            <button
+                className={styles.btn}
+                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.SHOW)}
+                onClick={onShow}
+            >
                 Show
             </button>
             <button className={styles.btn} disabled={isSubmitting} onClick={onSitIn}>
