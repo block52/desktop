@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { PlayerActionType, NonPlayerActionType, hasAction } from "@block52/poker-vm-sdk";
+import { PlayerActionType, NonPlayerActionType, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
 import { useGameState } from "../../context/GameStateContext";
 import { useNetwork } from "../../context/NetworkContext";
 import { usePlayerLegalActions } from "../../hooks/playerActions/usePlayerLegalActions";
@@ -20,13 +20,25 @@ import { useAutoDeal } from "../../hooks/playerActions/useAutoDeal";
 import { useAutoPostBlinds } from "../../hooks/playerActions/useAutoPostBlinds";
 import { useAutoNewHand } from "../../hooks/playerActions/useAutoNewHand";
 import { parseUsdcToMicro } from "../../utils/currency";
+import { getCosmosAddress } from "../../utils/cosmos/storage";
 import type { PlayerActionResult, JoinTableResult, LeaveTableResult } from "../../types";
+import { TableHeader } from "../../components/table/TableHeader";
+import { TableBoard } from "../../components/table/TableBoard";
+import { TableSidebar } from "../../components/table/TableSidebar";
+import { PlayerActionButtons } from "../../components/table/PlayerActionButtons";
+import { NoWalletOverlay } from "../../components/table/NoWalletOverlay";
+import { TableErrorPage } from "../../components/table/TableErrorPage";
+import styles from "./Table.module.css";
+
+function formatMicro(value: string): string {
+    return (Number(value) / 1_000_000).toFixed(3);
+}
 
 const Table: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const tableId = id ?? "";
     const { currentNetwork } = useNetwork();
-    const { gameState, isLoading, error, validationError, latestEvents, subscribeToTable, unsubscribeFromTable, getLatestSnapshot } =
+    const { gameState, gameFormat, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot } =
         useGameState();
     const legalActions = usePlayerLegalActions();
 
@@ -98,18 +110,80 @@ const Table: React.FC = () => {
         err => setActionError(err.message)
     );
 
-    return (
-        <div style={{ padding: 16, fontFamily: "monospace", color: "#fff" }}>
-            <h1>Table {id}</h1>
-            {isLoading && <p>Connecting…</p>}
-            {error && <p style={{ color: "#ef4444" }}>Error: {error.message}</p>}
-            {validationError && <p style={{ color: "#f59e0b" }}>Validation: {validationError.message}</p>}
-            {isDealingNewHand && <p style={{ color: "#22d3ee" }}>Dealing next hand…</p>}
-            {actionStatus && <p style={{ color: "#22c55e" }}>{actionStatus}</p>}
-            {actionError && <p style={{ color: "#ef4444" }}>Action error: {actionError}</p>}
+    const hasWallet = !!getCosmosAddress();
+    const localAddress = getCosmosAddress()?.toLowerCase() ?? null;
 
-            <h2>Join / Leave</h2>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+    if (error) {
+        return (
+            <div className={styles.page}>
+                <TableErrorPage message={error.message} onRetry={() => id && subscribeToTable(id)} />
+            </div>
+        );
+    }
+
+    if (isLoading || !gameState) {
+        return (
+            <div className={styles.page}>
+                <div className={styles.connecting}>Connecting…</div>
+            </div>
+        );
+    }
+
+    const isUserSeated = gameState.players.some(p => p.address.toLowerCase() === localAddress);
+    const hasEmptySeats = gameState.players.length < gameState.gameOptions.maxPlayers;
+    const sitAndGoWaiting =
+        isSitAndGoFormat(gameFormat) && isUserSeated && hasEmptySeats
+            ? {
+                  prizePool: formatMicro(gameState.totalPot),
+                  seated: gameState.players.length,
+                  maxPlayers: gameState.gameOptions.maxPlayers,
+              }
+            : undefined;
+
+    const content = (
+        <>
+            <TableHeader
+                tableLabel={`Table ${tableId}`}
+                smallBlind={formatMicro(gameState.gameOptions.smallBlind)}
+                bigBlind={formatMicro(gameState.gameOptions.bigBlind)}
+                handNumber={gameState.handNumber}
+                round={gameState.round}
+                playerCount={gameState.players.length}
+                maxPlayers={gameState.gameOptions.maxPlayers}
+                onLeave={() => runAction("Leave", () => leaveTable(tableId, currentNetwork))}
+                leaveDisabled={isSubmitting}
+            />
+            {validationError && <div className={styles.validationError}>Validation: {validationError.message}</div>}
+            {isDealingNewHand && <div className={styles.autoIndicator}>Dealing next hand…</div>}
+            {actionStatus && <div className={styles.autoIndicator}>{actionStatus}</div>}
+            {actionError && <div className={styles.validationError}>{actionError}</div>}
+            <div className={styles.boardRow}>
+                <TableBoard
+                    players={gameState.players}
+                    maxPlayers={gameState.gameOptions.maxPlayers}
+                    localAddress={localAddress}
+                    nextToAct={gameState.nextToAct}
+                    smallBlindPosition={gameState.smallBlindPosition}
+                    bigBlindPosition={gameState.bigBlindPosition}
+                    dealer={gameState.dealer}
+                    formatStack={formatMicro}
+                    communityCards={gameState.communityCards}
+                    pot={formatMicro(gameState.totalPot)}
+                    round={gameState.round}
+                    sitAndGoWaiting={sitAndGoWaiting}
+                    waitingForPlayers={
+                        hasEmptySeats && gameState.players.length < gameState.gameOptions.minPlayers
+                            ? {
+                                  seated: gameState.players.length,
+                                  minPlayers: gameState.gameOptions.minPlayers,
+                                  maxPlayers: gameState.gameOptions.maxPlayers,
+                              }
+                            : undefined
+                    }
+                />
+                <TableSidebar legalActions={legalActions.legalActions} isPlayerTurn={legalActions.isPlayerTurn} />
+            </div>
+            <div className={styles.joinRow}>
                 <input placeholder="Buy-in (USDC)" value={buyInAmount} onChange={e => setBuyInAmount(e.target.value)} />
                 <input placeholder="Seat (optional)" value={seatNumber} onChange={e => setSeatNumber(e.target.value)} />
                 <button
@@ -127,65 +201,34 @@ const Table: React.FC = () => {
                 >
                     Join
                 </button>
-                <button disabled={isSubmitting} onClick={() => runAction("Leave", () => leaveTable(tableId, currentNetwork))}>
-                    Leave
-                </button>
             </div>
+            <PlayerActionButtons
+                isSubmitting={isSubmitting}
+                betAmount={betAmount}
+                onBetAmountChange={setBetAmount}
+                callAmount={callAmount}
+                onCallAmountChange={setCallAmount}
+                raiseAmount={raiseAmount}
+                onRaiseAmountChange={setRaiseAmount}
+                onBet={() => runAction("Bet", () => betHand(tableId, parseUsdcToMicro(betAmount), currentNetwork))}
+                onCall={() => runAction("Call", () => callHand(tableId, parseUsdcToMicro(callAmount), currentNetwork))}
+                onRaise={() => runAction("Raise", () => raiseHand(tableId, parseUsdcToMicro(raiseAmount), currentNetwork))}
+                onCheck={() => runAction("Check", () => checkHand(tableId, currentNetwork))}
+                onFold={() => runAction("Fold", () => foldHand(tableId, currentNetwork))}
+                onMuck={() => runAction("Muck", () => muckCards(tableId, currentNetwork))}
+                onShow={() => runAction("Show", () => showCards(tableId, currentNetwork))}
+                onSitIn={() => runAction("Sit in", () => sitIn(tableId, currentNetwork))}
+                onSitInAndWait={() => runAction("Sit in and wait", () => sitInAndWait(tableId, currentNetwork))}
+                onSitOut={() => runAction("Sit out", () => sitOut(tableId, currentNetwork))}
+                autoStatusNote="Auto: blinds/deal/new-hand fire automatically"
+            />
+        </>
+    );
 
-            <h2>In-hand actions</h2>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <input placeholder="Bet (USDC)" value={betAmount} onChange={e => setBetAmount(e.target.value)} />
-                <button disabled={isSubmitting} onClick={() => runAction("Bet", () => betHand(tableId, parseUsdcToMicro(betAmount), currentNetwork))}>
-                    Bet
-                </button>
-                <input placeholder="Call (USDC)" value={callAmount} onChange={e => setCallAmount(e.target.value)} />
-                <button
-                    disabled={isSubmitting}
-                    onClick={() => runAction("Call", () => callHand(tableId, parseUsdcToMicro(callAmount), currentNetwork))}
-                >
-                    Call
-                </button>
-                <input placeholder="Raise (USDC)" value={raiseAmount} onChange={e => setRaiseAmount(e.target.value)} />
-                <button
-                    disabled={isSubmitting}
-                    onClick={() => runAction("Raise", () => raiseHand(tableId, parseUsdcToMicro(raiseAmount), currentNetwork))}
-                >
-                    Raise
-                </button>
-                <button disabled={isSubmitting} onClick={() => runAction("Check", () => checkHand(tableId, currentNetwork))}>
-                    Check
-                </button>
-                <button disabled={isSubmitting} onClick={() => runAction("Fold", () => foldHand(tableId, currentNetwork))}>
-                    Fold
-                </button>
-                <button disabled={isSubmitting} onClick={() => runAction("Muck", () => muckCards(tableId, currentNetwork))}>
-                    Muck
-                </button>
-                <button disabled={isSubmitting} onClick={() => runAction("Show", () => showCards(tableId, currentNetwork))}>
-                    Show
-                </button>
-            </div>
-
-            <h2>Sit in / out</h2>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <button disabled={isSubmitting} onClick={() => runAction("Sit in", () => sitIn(tableId, currentNetwork))}>
-                    Sit In
-                </button>
-                <button disabled={isSubmitting} onClick={() => runAction("Sit in and wait", () => sitInAndWait(tableId, currentNetwork))}>
-                    Sit In And Wait
-                </button>
-                <button disabled={isSubmitting} onClick={() => runAction("Sit out", () => sitOut(tableId, currentNetwork))}>
-                    Sit Out
-                </button>
-            </div>
-
-            <h2>Legal actions</h2>
-            <pre style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>{JSON.stringify(legalActions, null, 2)}</pre>
-
-            <h2>Latest events ({latestEvents.length})</h2>
-            <pre style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>{JSON.stringify(latestEvents, null, 2)}</pre>
-            <h2>Raw game state</h2>
-            <pre style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>{gameState ? JSON.stringify(gameState, null, 2) : "(no state yet)"}</pre>
+    return (
+        <div className={styles.page}>
+            {content}
+            {!hasWallet && <NoWalletOverlay onConnect={() => window.location.assign("#/wallet")} />}
         </div>
     );
 };

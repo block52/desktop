@@ -1,0 +1,49 @@
+.page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--bg-app);
+    color: var(--text);
+    font-family: Barlow, system-ui, sans-serif;
+    /* Hard backstop for the horizontal-bleed bug: nothing inside this page
+       (seats positioned at the literal 0%/100% x-coordinate of their
+       container, extending half their own width past it) can ever spill
+       past the page's own edge, regardless of any padding miscalculation
+       in a component nested inside. */
+    overflow: hidden;
+}
+
+.boardRow {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+.joinRow {
+    display: flex;
+    gap: 8px;
+    padding: 8px 22px;
+}
+
+.connecting {
+    padding: 24px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.validationError {
+    padding: 8px 18px;
+    font-size: 12px;
+    color: var(--danger);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+}
+
+.autoIndicator {
+    padding: 8px 18px;
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+}
