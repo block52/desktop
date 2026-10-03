@@ -1,0 +1,143 @@
+.seat {
+    position: absolute;
+    width: 78px;
+    /* Anchor on the avatar's own fixed half-height (44px / 2 = 22px), not
+       the seat box's own total height. The box's height varies — a bet
+       chip or hole cards add height below the avatar — so translateY(-50%)
+       would center the WHOLE variable-height box, pushing taller seats'
+       avatars higher than shorter ones at the identical nominal row. The
+       avatar is always the first element in this top-aligned flex column
+       regardless of what renders below it, so a fixed -22px consistently
+       keeps the avatar itself pinned to the seat's coordinate. Do not
+       change this to -50% and do not add any element ABOVE the avatar in
+       this flex column without revisiting this value. */
+    transform: translate(-50%, -22px);
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg-card);
+    outline: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.avatarIcon {
+    width: 26px;
+    height: 26px;
+    color: var(--accent-text);
+}
+
+.seat.active .avatar,
+.active .avatar {
+    outline: 2px solid var(--accent);
+}
+
+.badge {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: "Barlow Condensed", system-ui, sans-serif;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--accent-text);
+    background: var(--accent);
+    border-radius: 999px;
+    padding: 1px 6px;
+    white-space: nowrap;
+    z-index: 4;
+}
+
+.badgeDealer {
+    color: var(--text);
+    background: var(--bg-app);
+    border: 1px solid var(--border-strong);
+}
+
+.nameplate {
+    margin-top: -6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px 10px 2px;
+    text-align: center;
+    max-width: 100%;
+}
+
+.name {
+    font-family: Barlow, system-ui, sans-serif;
+    font-size: 9.5px;
+    font-weight: 600;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stack {
+    font-family: "Barlow Condensed", system-ui, sans-serif;
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.cards {
+    display: flex;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.miniCard {
+    width: 12px;
+    height: 16px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+}
+
+.bet {
+    margin-top: 4px;
+    font-family: Barlow, system-ui, sans-serif;
+    font-size: 9px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    background: var(--bg-app);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 1px 7px;
+}
+
+.vacant .avatar {
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--border-strong);
+    outline: none;
+}
+
+.plus {
+    font-size: 18px;
+    color: var(--text-muted);
+}
+
+.vacant .nameplate {
+    border-style: dashed;
+    color: var(--text-muted);
+}
+
+.vacant .name {
+    color: var(--text-muted);
+    font-size: 9.5px;
+}
