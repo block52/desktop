@@ -1,0 +1,38 @@
+.sidebar {
+    width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 22px 22px 22px 0;
+    border-left: 1px solid var(--border);
+    margin-left: -1px;
+}
+
+.panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 14px;
+}
+
+.heading {
+    font-family: "Barlow Condensed", system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0 0 10px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.row:last-child {
+    border-bottom: none;
+}
+
+.rowKey {
+    color: var(--text-muted);
+}

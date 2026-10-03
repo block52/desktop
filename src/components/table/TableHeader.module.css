@@ -1,0 +1,49 @@
+.header {
+    display: flex;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    gap: 20px;
+    background: var(--bg-app);
+}
+
+.club {
+    font-family: "Barlow Condensed", system-ui, sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.meta {
+    display: flex;
+    gap: 18px;
+}
+
+.metaItem .label {
+    font-size: 9.5px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.metaItem .value {
+    font-family: "Barlow Condensed", system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.leaveButton {
+    margin-left: auto;
+    font-family: "Barlow Condensed", system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    padding: 5px 12px;
+    cursor: pointer;
+}
+
+.leaveButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
