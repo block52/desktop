@@ -1660,6 +1660,7 @@ This task is responsible for not regressing the **horizontal-bleed bug** at the 
 
 ```css
 .page {
+    position: relative;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -1678,6 +1679,12 @@ This task is responsible for not regressing the **horizontal-bleed bug** at the 
     display: flex;
     flex: 1;
     min-height: 0;
+}
+
+.joinRow {
+    display: flex;
+    gap: 8px;
+    padding: 8px 22px;
 }
 
 .connecting {
@@ -1920,7 +1927,7 @@ const Table: React.FC = () => {
     void joinTable;
 
     return (
-        <div className={styles.page} style={{ position: "relative" }}>
+        <div className={styles.page}>
             {content}
             {!hasWallet && <NoWalletOverlay onConnect={() => window.location.assign("#/wallet")} />}
         </div>
@@ -1936,10 +1943,10 @@ export default Table;
 
 Add `sitAndGoWaiting={sitAndGoWaiting}` to the `<TableBoard ...>` call from Step 2's draft (it takes precedence over `waitingForPlayers` inside `TableBoard`'s own branching, per Task 5 — a Sit & Go table that's seated-but-not-full should show the prize pool, not the generic cash-table waiting message, even though both conditions could technically be true at once; `TableBoard`'s `sitAndGoWaiting` prop check comes first in its own JSX, so passing both is safe and this precedence falls out naturally — no extra logic needed in `Table.tsx` itself beyond computing both values correctly).
 
-Add the Join/Leave row using `buyInAmount`/`seatNumber` (currently unused placeholders) — add this as a new row above `PlayerActionButtons`, matching the current debug page's existing Join UI pattern:
+Add the Join/Leave row using `buyInAmount`/`seatNumber` (currently unused placeholders) — add this as a new row above `PlayerActionButtons`, matching the current debug page's existing Join UI pattern. Use the `.joinRow` class added to `Table.module.css` in Step 1 (not an inline `style` prop — this codebase's styling convention is CSS Modules only):
 
 ```tsx
-<div className={styles.boardRow} style={{ padding: "8px 22px", gap: 8 }}>
+<div className={styles.joinRow}>
     <input
         placeholder="Buy-in (USDC)"
         value={buyInAmount}
