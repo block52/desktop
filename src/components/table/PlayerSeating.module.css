@@ -1,0 +1,14 @@
+.plane {
+    position: relative;
+    flex: 1;
+    /* Horizontal padding must be >= half of Seat's own width (78px / 2 =
+       39px) so the leftmost/rightmost seats (left: 0% / left: 100%) don't
+       bleed past this container's own edge — their own translateX(-50%)
+       extends half their width past the literal coordinate. 46px clears
+       it with a small margin. */
+    padding: 22px 46px;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
