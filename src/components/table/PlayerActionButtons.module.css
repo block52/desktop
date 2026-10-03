@@ -1,0 +1,48 @@
+.bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 22px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-app);
+    flex-wrap: wrap;
+}
+
+.input {
+    font-family: "Barlow Condensed", system-ui, sans-serif;
+    font-size: 14px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-card);
+    color: var(--text);
+    padding: 7px 10px;
+    width: 90px;
+}
+
+.btn {
+    font-family: "Barlow Condensed", system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 14px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.danger {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.autoNote {
+    margin-left: auto;
+    font-family: Barlow, system-ui, sans-serif;
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-style: italic;
+}
