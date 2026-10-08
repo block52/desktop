@@ -423,6 +423,12 @@ export default Sidebar;
     font-variant-numeric: tabular-nums;
 }
 
+.statusText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .statusDot {
     width: 7px;
     height: 7px;
