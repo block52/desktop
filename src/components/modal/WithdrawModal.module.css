@@ -18,6 +18,7 @@
     max-width: 440px;
     font-family: Barlow, system-ui, sans-serif;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
+    border-radius: var(--radius);
 }
 
 /* Header */
@@ -104,6 +105,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    border-radius: var(--radius);
 }
 
 .cardLabel  { color: var(--text-muted); font-size: 13px; }
@@ -114,6 +116,7 @@
     border: 1px solid var(--border);
     padding: 12px 14px;
     margin-bottom: 16px;
+    border-radius: var(--radius);
 }
 
 .infoRow {
@@ -135,6 +138,7 @@
     border: 1px solid rgba(22, 163, 74, 0.35);
     padding: 12px 14px;
     margin-bottom: 16px;
+    border-radius: var(--radius);
 }
 
 .alertSuccessTitle { color: #4ade80; font-weight: 600; font-size: 14px; margin: 0 0 4px; }
@@ -145,6 +149,7 @@
     border: 1px solid rgba(245, 158, 11, 0.3);
     padding: 12px 14px;
     margin-top: 16px;
+    border-radius: var(--radius);
 }
 
 .alertWarningText { color: #fbbf24; font-size: 13px; margin: 0; }
@@ -156,6 +161,7 @@
     color: var(--danger);
     font-size: 13px;
     margin-bottom: 16px;
+    border-radius: var(--radius);
 }
 
 /* Address box */
@@ -168,6 +174,7 @@
     color: var(--text);
     word-break: break-all;
     margin-bottom: 4px;
+    border-radius: var(--radius);
 }
 
 /* Fields */
@@ -194,6 +201,7 @@
     outline: none;
     box-sizing: border-box;
     transition: border-color 0.15s;
+    border-radius: var(--radius);
 }
 
 .input:focus { border-color: var(--accent); }
@@ -252,6 +260,7 @@
     font-weight: 600;
     padding: 12px 16px;
     transition: opacity 0.15s;
+    border-radius: var(--radius);
 }
 
 .primaryButton:hover { opacity: 0.85; }
@@ -267,6 +276,7 @@
     font-weight: 600;
     padding: 12px 16px;
     transition: background-color 0.15s;
+    border-radius: var(--radius);
 }
 
 .cancelButton:hover { background-color: var(--border); }

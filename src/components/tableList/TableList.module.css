@@ -9,6 +9,7 @@
     overflow: hidden;
     font-family: Barlow, system-ui, sans-serif;
     animation: zoomIn 0.25s ease forwards;
+    border-radius: var(--radius);
 }
 
 /* ── Header ── */
@@ -66,6 +67,7 @@
     outline: none;
     box-sizing: border-box;
     transition: border-color 0.15s;
+    border-radius: var(--radius);
 }
 
 .searchInput:focus { border-color: var(--accent); }
@@ -81,6 +83,7 @@
     align-items: center;
     flex-shrink: 0;
     transition: color 0.15s, border-color 0.15s;
+    border-radius: var(--radius);
 }
 
 .refreshBtn:hover:not(:disabled) { color: var(--text); border-color: var(--accent); }
@@ -181,6 +184,7 @@
     display: flex;
     align-items: center;
     transition: color 0.12s;
+    border-radius: var(--radius);
 }
 
 .copyBtn:hover { color: var(--text); }
@@ -238,6 +242,7 @@
     border: 1px solid var(--accent);
     cursor: pointer;
     transition: opacity 0.15s;
+    border-radius: var(--radius);
 }
 
 .joinBtn:hover { opacity: 0.85; }
@@ -283,6 +288,7 @@
     padding: 8px 20px;
     margin-top: 12px;
     transition: opacity 0.15s;
+    border-radius: var(--radius);
 }
 
 .retryBtn:hover { opacity: 0.85; }
@@ -308,6 +314,7 @@
     padding: 4px 10px;
     font-size: 12px;
     transition: color 0.15s, border-color 0.15s;
+    border-radius: var(--radius);
 }
 
 .pageBtn:hover:not(:disabled) { color: var(--text); border-color: var(--accent); }

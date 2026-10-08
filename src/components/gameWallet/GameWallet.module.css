@@ -3,6 +3,7 @@
     border: 1px solid var(--border);
     overflow: hidden;
     font-family: Barlow, system-ui, sans-serif;
+    border-radius: var(--radius);
 }
 
 .header {
@@ -102,6 +103,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    border-radius: var(--radius);
 }
 
 /* Balance card */
@@ -113,6 +115,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    border-radius: var(--radius);
 }
 
 .balanceLeft {
@@ -171,6 +174,7 @@
     font-weight: 600;
     padding: 10px 16px;
     transition: opacity 0.15s;
+    border-radius: var(--radius);
 }
 
 .primaryButton:hover {
@@ -192,6 +196,7 @@
     font-weight: 600;
     padding: 10px 16px;
     transition: background-color 0.15s;
+    border-radius: var(--radius);
 }
 
 .secondaryButton:hover {
@@ -242,6 +247,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    border-radius: var(--radius);
 }
 
 .disconnectButton {
@@ -253,6 +259,7 @@
     padding: 7px 10px;
     transition: border-color 0.15s, color 0.15s;
     white-space: nowrap;
+    border-radius: var(--radius);
 }
 
 .disconnectButton:hover {
