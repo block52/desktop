@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { generateWallet, createWalletFromMnemonic, getAddressFromMnemonic, isValidMnemonic } from "@block52/poker-vm-sdk";
+import {
+    generateWallet,
+    createWalletFromMnemonic,
+    getAddressFromMnemonic,
+    isValidMnemonic,
+    createSigningClientFromMnemonic,
+    COSMOS_CONSTANTS,
+} from "@block52/poker-vm-sdk";
 import {
     getCosmosMnemonic,
     getCosmosAddress,
@@ -8,6 +15,12 @@ import {
     setCosmosAddress,
     clearCosmosData
 } from "../utils/cosmos/storage";
+import { useCosmosWallet } from "../hooks/useCosmosWallet";
+import { useNetwork } from "../context/NetworkContext";
+import GameWallet from "../components/gameWallet/GameWallet";
+import SendModal from "../components/modal/SendModal";
+import WithdrawModal from "../components/modal/WithdrawModal";
+import DepositModal from "../components/modal/DepositModal";
 import styles from "./Wallet.module.css";
 
 const SeedPhraseGrid = ({ mnemonic, hidden = false }: { mnemonic: string; hidden?: boolean }) => {
@@ -26,6 +39,49 @@ const SeedPhraseGrid = ({ mnemonic, hidden = false }: { mnemonic: string; hidden
 
 const Wallet: React.FC = () => {
     const navigate = useNavigate();
+    const { address: cosmosAddress, balance, refreshBalance } = useCosmosWallet();
+    const { currentNetwork } = useNetwork();
+
+    const [showSendModal, setShowSendModal] = useState(false);
+    const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+    const [showDepositModal, setShowDepositModal] = useState(false);
+
+    const usdcBalanceAmount =
+        balance.find(b => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)?.amount ?? "0";
+
+    const handleSend = useCallback(
+        async (recipient: string, amountUsdc: number): Promise<string> => {
+            const mnemonic = getCosmosMnemonic();
+            const fromAddress = getCosmosAddress();
+
+            if (!mnemonic || !fromAddress) {
+                throw new Error("No wallet found. Please create or import a wallet first.");
+            }
+
+            const signingClient = await createSigningClientFromMnemonic(
+                {
+                    rpcEndpoint: currentNetwork.rpc,
+                    restEndpoint: currentNetwork.rest,
+                    chainId: COSMOS_CONSTANTS.CHAIN_ID,
+                    prefix: COSMOS_CONSTANTS.ADDRESS_PREFIX,
+                    denom: COSMOS_CONSTANTS.GAS_DENOM,
+                    gasPrice: COSMOS_CONSTANTS.DEFAULT_GAS_PRICE,
+                },
+                mnemonic,
+            );
+
+            const amountMicro = BigInt(
+                Math.floor(amountUsdc * Math.pow(10, COSMOS_CONSTANTS.USDC_DECIMALS)),
+            );
+            return signingClient.sendTokens(
+                fromAddress,
+                recipient,
+                amountMicro,
+                COSMOS_CONSTANTS.TOKEN_DENOM,
+            );
+        },
+        [currentNetwork],
+    );
 
     const [existingMnemonic, setExistingMnemonic] = useState<string | null>(null);
     const [existingAddress, setExistingAddress] = useState<string | null>(null);
@@ -124,6 +180,22 @@ const Wallet: React.FC = () => {
             <div className={styles.inner}>
                 <h1 className={styles.pageTitle}>Block52 Wallet</h1>
                 <p className={styles.pageSubtitle}>Generate or import a wallet to play poker</p>
+
+                {/* Game wallet — balance, deposit/withdraw/send, web3 connect */}
+                {existingAddress && (
+                    <div style={{ marginBottom: 16 }}>
+                        <GameWallet
+                            cosmosAddress={cosmosAddress}
+                            usdcBalance={usdcBalanceAmount}
+                            onDeposit={() => setShowDepositModal(true)}
+                            onWithdraw={() => setShowWithdrawModal(true)}
+                            onSend={() => setShowSendModal(true)}
+                            onCreateWallet={() => {}}
+                            onImportWallet={() => {}}
+                            onRefresh={refreshBalance}
+                        />
+                    </div>
+                )}
 
                 {/* Current wallet */}
                 {existingAddress && (
@@ -277,6 +349,30 @@ const Wallet: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {showSendModal && cosmosAddress && (
+                <SendModal
+                    fromAddress={cosmosAddress}
+                    usdcBalance={usdcBalanceAmount}
+                    onSend={handleSend}
+                    onClose={() => setShowSendModal(false)}
+                />
+            )}
+
+            {showWithdrawModal && (
+                <WithdrawModal
+                    usdcBalance={usdcBalanceAmount}
+                    onClose={() => setShowWithdrawModal(false)}
+                />
+            )}
+
+            {showDepositModal && cosmosAddress && (
+                <DepositModal
+                    cosmosAddress={cosmosAddress}
+                    onClose={() => setShowDepositModal(false)}
+                    onDepositConfirmed={refreshBalance}
+                />
+            )}
         </div>
     );
 };

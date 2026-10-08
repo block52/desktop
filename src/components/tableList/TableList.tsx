@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { isTournamentFormat, formatGameFormatDisplay, formatGameVariantDisplay, COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
+import { isTournamentFormat, formatGameFormatDisplay, COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
 import { useFindGames } from "../../hooks/useFindGames";
 import type { GameWithFormat } from "../../hooks/useFindGames";
 import { useToast } from "../../context/ToastContext";
@@ -204,16 +204,15 @@ const TableList: React.FC = () => {
                                     Format<SortArrow col="format" />
                                 </button>
                             </th>
-                            <th className={`${styles.th} ${styles.thCenter}`}>Variant</th>
-                            <th className={`${styles.th} ${styles.thCenter}`}>Stakes</th>
-                            <th className={`${styles.th} ${styles.thCenter}`}>
-                                <button className={styles.sortBtn} onClick={() => handleSort("buyIn")}>
-                                    Buy-In<SortArrow col="buyIn" />
-                                </button>
-                            </th>
                             <th className={`${styles.th} ${styles.thCenter}`}>
                                 <button className={styles.sortBtn} onClick={() => handleSort("players")}>
                                     Players<SortArrow col="players" />
+                                </button>
+                            </th>
+                            <th className={`${styles.th} ${styles.thCenter}`}>Blinds</th>
+                            <th className={`${styles.th} ${styles.thCenter}`}>
+                                <button className={styles.sortBtn} onClick={() => handleSort("buyIn")}>
+                                    Buy-In<SortArrow col="buyIn" />
                                 </button>
                             </th>
                             <th className={`${styles.th} ${styles.thCenter}`}>Action</th>
@@ -222,7 +221,7 @@ const TableList: React.FC = () => {
                     <tbody>
                         {paged.length === 0 ? (
                             <tr>
-                                <td colSpan={7} className={styles.td}>
+                                <td colSpan={6} className={styles.td}>
                                     <div className={styles.stateBox}>
                                         <div className={styles.emptyIcon}>
                                             <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,7 +262,15 @@ const TableList: React.FC = () => {
                                     </td>
 
                                     <td className={`${styles.td} ${styles.tdCenter}`}>
-                                        <span className={styles.variant}>{formatGameVariantDisplay(game.gameVariant)}</span>
+                                        <div className={styles.playerBar}>
+                                            <span className={styles.playerCount}>{game.currentPlayers}/{game.maxPlayers}</span>
+                                            <div className={styles.playerTrack}>
+                                                <div
+                                                    className={`${styles.playerFill} ${isFull ? styles.playerFillFull : ""}`}
+                                                    style={{ width: `${fillPct}%` }}
+                                                />
+                                            </div>
+                                        </div>
                                     </td>
 
                                     <td className={`${styles.td} ${styles.tdCenter}`}>
@@ -278,18 +285,6 @@ const TableList: React.FC = () => {
 
                                     <td className={`${styles.td} ${styles.tdCenter}`}>
                                         <span className={styles.buyIn}>{formatBuyIn(game)}</span>
-                                    </td>
-
-                                    <td className={`${styles.td} ${styles.tdCenter}`}>
-                                        <div className={styles.playerBar}>
-                                            <span className={styles.playerCount}>{game.currentPlayers}/{game.maxPlayers}</span>
-                                            <div className={styles.playerTrack}>
-                                                <div
-                                                    className={`${styles.playerFill} ${isFull ? styles.playerFillFull : ""}`}
-                                                    style={{ width: `${fillPct}%` }}
-                                                />
-                                            </div>
-                                        </div>
                                     </td>
 
                                     <td className={`${styles.td} ${styles.tdCenter}`}>

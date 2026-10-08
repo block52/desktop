@@ -3,73 +3,35 @@
     position: relative;
     z-index: 1;
     color: var(--text);
-    font-family: Barlow, system-ui, sans-serif;
-}
-
-.layout {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    font-family: Inter, system-ui, sans-serif;
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px 16px;
-    align-items: stretch;
 }
 
-/* Tablet: 640px+ — sidebar on top, fixed narrower width */
 @media (min-width: 640px) {
-    .layout {
+    .page {
         padding: 24px 20px;
-        gap: 24px;
     }
 }
 
-/* Desktop: 1024px+ — two-column side-by-side */
 @media (min-width: 1024px) {
-    .layout {
-        flex-direction: row;
+    .page {
         padding: 32px 32px;
-        align-items: flex-start;
     }
 }
 
 @media (min-width: 1280px) {
-    .layout {
+    .page {
         padding: 40px 48px;
     }
-}
-
-.sidebar {
-    width: 100%;
-    flex-shrink: 0;
-}
-
-@media (min-width: 640px) {
-    .sidebar {
-        width: 100%;
-        max-width: 420px;
-        margin: 0 auto;
-    }
-}
-
-@media (min-width: 1024px) {
-    .sidebar {
-        width: 360px;
-        max-width: none;
-        margin: 0;
-    }
-}
-
-.main {
-    flex: 1;
-    min-width: 0;
 }
 
 .header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    padding: 20px 24px;
+    margin-bottom: 20px;
     gap: 16px;
 }
 
