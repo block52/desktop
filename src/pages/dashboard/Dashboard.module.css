@@ -139,3 +139,9 @@
     font-weight: 700;
     flex-shrink: 0;
 }
+
+.overviewRow {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}

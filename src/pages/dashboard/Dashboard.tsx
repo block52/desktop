@@ -7,6 +7,11 @@ import DepositModal from "../../components/modal/DepositModal";
 import { useCosmosWallet } from "../../hooks/useCosmosWallet";
 import { useNetwork } from "../../context/NetworkContext";
 import TableList from "../../components/tableList/TableList";
+import FeaturedTable from "../../components/featuredTable/FeaturedTable";
+import LiveStats from "../../components/liveStats/LiveStats";
+import { useFindGames } from "../../hooks/useFindGames";
+import { useAvgBlockTime } from "../../hooks/useAvgBlockTime";
+import { selectFeaturedGame } from "../../utils/selectFeaturedGame";
 import {
   getCosmosMnemonic,
   getCosmosAddress,
@@ -34,6 +39,11 @@ const Dashboard: React.FC = () => {
   const avatarInitials = cosmosAddress
     ? cosmosAddress.slice(2, 4).toUpperCase()
     : null;
+
+  const { games } = useFindGames();
+  const { avgBlockTimeSeconds } = useAvgBlockTime();
+  const featuredGame = selectFeaturedGame(games);
+  const seatedPlayers = games.reduce((sum, g) => sum + g.currentPlayers, 0);
 
   const handleSend = useCallback(
     async (recipient: string, amountUsdc: number): Promise<string> => {
@@ -103,6 +113,14 @@ const Dashboard: React.FC = () => {
           />
         </aside>
         <main className={styles.main}>
+          <div className={styles.overviewRow}>
+            <FeaturedTable game={featuredGame} />
+            <LiveStats
+              openTables={games.length}
+              seatedPlayers={seatedPlayers}
+              avgBlockTimeSeconds={avgBlockTimeSeconds}
+            />
+          </div>
           <TableList />
         </main>
       </div>
