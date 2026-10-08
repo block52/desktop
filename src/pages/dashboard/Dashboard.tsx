@@ -28,6 +28,13 @@ const Dashboard: React.FC = () => {
 
   const goToWallet = useCallback(() => navigate("/wallet"), [navigate]);
 
+  const usdcBalanceAmount =
+    balance.find((b) => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)?.amount ?? "0";
+
+  const avatarInitials = cosmosAddress
+    ? cosmosAddress.slice(2, 4).toUpperCase()
+    : null;
+
   const handleSend = useCallback(
     async (recipient: string, amountUsdc: number): Promise<string> => {
       const mnemonic = getCosmosMnemonic();
@@ -66,14 +73,27 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className={styles.page}>
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.title}>Lobby</h1>
+          <p className={styles.subtitle}>Every shuffle verified on-chain. Pick a seat.</p>
+        </div>
+        <div className={styles.headerActions}>
+          <div className={styles.balancePill}>
+            ${(Number(usdcBalanceAmount) / Math.pow(10, COSMOS_CONSTANTS.USDC_DECIMALS)).toFixed(2)}
+          </div>
+          <button className={styles.depositButton} onClick={() => setShowDepositModal(true)}>
+            Deposit
+          </button>
+          {avatarInitials && <div className={styles.avatar}>{avatarInitials}</div>}
+        </div>
+      </div>
+
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
           <GameWallet
             cosmosAddress={cosmosAddress}
-            usdcBalance={
-              balance.find((b) => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)
-                ?.amount ?? "0"
-            }
+            usdcBalance={usdcBalanceAmount}
             onDeposit={() => setShowDepositModal(true)}
             onWithdraw={() => setShowWithdrawModal(true)}
             onSend={() => setShowSendModal(true)}
@@ -90,10 +110,7 @@ const Dashboard: React.FC = () => {
       {showSendModal && cosmosAddress && (
         <SendModal
           fromAddress={cosmosAddress}
-          usdcBalance={
-            balance.find((b) => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)
-              ?.amount ?? "0"
-          }
+          usdcBalance={usdcBalanceAmount}
           onSend={handleSend}
           onClose={() => setShowSendModal(false)}
         />
@@ -101,10 +118,7 @@ const Dashboard: React.FC = () => {
 
       {showWithdrawModal && (
         <WithdrawModal
-          usdcBalance={
-            balance.find((b) => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)
-              ?.amount ?? "0"
-          }
+          usdcBalance={usdcBalanceAmount}
           onClose={() => setShowWithdrawModal(false)}
         />
       )}
