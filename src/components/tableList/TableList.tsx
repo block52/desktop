@@ -222,7 +222,7 @@ const TableList: React.FC = () => {
                                     </td>
 
                                     <td className={`${styles.td} ${styles.tdCenter}`}>
-                                        <span style={{ color: "#9ca3af" }}>{formatGameVariantDisplay(game.gameVariant)}</span>
+                                        <span className={styles.variant}>{formatGameVariantDisplay(game.gameVariant)}</span>
                                     </td>
 
                                     <td className={`${styles.td} ${styles.tdCenter}`}>
@@ -236,7 +236,7 @@ const TableList: React.FC = () => {
                                     </td>
 
                                     <td className={`${styles.td} ${styles.tdCenter}`}>
-                                        <span style={{ fontFamily: "monospace", fontSize: 12 }}>{formatBuyIn(game)}</span>
+                                        <span className={styles.buyIn}>{formatBuyIn(game)}</span>
                                     </td>
 
                                     <td className={`${styles.td} ${styles.tdCenter}`}>

@@ -53,14 +53,14 @@ const SendModal: React.FC<SendModalProps> = ({ fromAddress, usdcBalance, onSend,
                             </svg>
                         </button>
                     </div>
-                    <p style={{ color: "#9ca3af", fontSize: 13, marginBottom: 12 }}>
+                    <p className={styles.successText}>
                         Your transaction was submitted successfully.
                     </p>
-                    <div style={{ background: "#111827", border: "1px solid #374151", borderRadius: 8, padding: "10px 12px", marginBottom: 20 }}>
-                        <p style={{ color: "#6b7280", fontSize: 11, margin: "0 0 4px" }}>Transaction hash</p>
-                        <p style={{ color: "#fff", fontFamily: "monospace", fontSize: 12, wordBreak: "break-all", margin: 0 }}>{txHash}</p>
+                    <div className={styles.hashBox}>
+                        <p className={styles.hashLabel}>Transaction hash</p>
+                        <p className={styles.hashValue}>{txHash}</p>
                     </div>
-                    <button onClick={onClose} className={styles.primaryButton} style={{ width: "100%" }}>
+                    <button onClick={onClose} className={`${styles.primaryButton} ${styles.fullWidth}`}>
                         Done
                     </button>
                 </div>

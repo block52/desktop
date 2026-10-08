@@ -122,12 +122,12 @@ const DepositModal: React.FC<DepositModalProps> = ({ cosmosAddress, onClose, onD
                         b52USDC has been deposited and will appear in your Block52 wallet shortly.
                     </p>
                     {depositHash && (
-                        <div style={{ background: "#111827", border: "1px solid #374151", borderRadius: 8, padding: "10px 12px", marginBottom: 20 }}>
-                            <p style={{ color: "#6b7280", fontSize: 11, margin: "0 0 4px" }}>Transaction hash</p>
-                            <p style={{ color: "#fff", fontFamily: "monospace", fontSize: 12, wordBreak: "break-all", margin: 0 }}>{depositHash}</p>
+                        <div className={styles.hashBox}>
+                            <p className={styles.hashLabel}>Transaction hash</p>
+                            <p className={styles.hashValue}>{depositHash}</p>
                         </div>
                     )}
-                    <button onClick={onClose} className={styles.primaryButton} style={{ width: "100%" }}>
+                    <button onClick={onClose} className={`${styles.primaryButton} ${styles.fullWidth}`}>
                         Done
                     </button>
                 </div>
@@ -150,7 +150,7 @@ const DepositModal: React.FC<DepositModalProps> = ({ cosmosAddress, onClose, onD
                 {!isWeb3Connected ? (
                     <>
                         <p className={styles.hint}>Connect a Web3 wallet to deposit funds.</p>
-                        <button onClick={() => openAppKit()} className={styles.primaryButton} style={{ width: "100%" }}>
+                        <button onClick={() => openAppKit()} className={`${styles.primaryButton} ${styles.fullWidth}`}>
                             Connect Web3 Wallet
                         </button>
                     </>
@@ -197,7 +197,7 @@ const DepositModal: React.FC<DepositModalProps> = ({ cosmosAddress, onClose, onD
                         </div>
 
                         <div className={styles.addressBox}>
-                            <span className={styles.hint} style={{ marginBottom: 0 }}>
+                            <span className={`${styles.hint} ${styles.hintInline}`}>
                                 b52USDC will be minted to your Block52 address:
                             </span>
                             <span className={styles.addressText}>{cosmosAddress}</span>

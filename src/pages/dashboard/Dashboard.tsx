@@ -5,6 +5,7 @@ import SendModal from "../../components/modal/SendModal";
 import WithdrawModal from "../../components/modal/WithdrawModal";
 import DepositModal from "../../components/modal/DepositModal";
 import { useCosmosWallet } from "../../hooks/useCosmosWallet";
+import { useNetwork } from "../../context/NetworkContext";
 import TableList from "../../components/tableList/TableList";
 import {
   getCosmosMnemonic,
@@ -16,14 +17,10 @@ import {
 } from "@block52/poker-vm-sdk";
 import styles from "./Dashboard.module.css";
 
-const RPC_ENDPOINT =
-  import.meta.env.VITE_RPC_ENDPOINT ?? "http://localhost:26657";
-const REST_ENDPOINT =
-  import.meta.env.VITE_REST_ENDPOINT ?? "http://localhost:1317";
-
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { address: cosmosAddress, balance, refreshBalance } = useCosmosWallet();
+  const { currentNetwork } = useNetwork();
 
   const [showSendModal, setShowSendModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -44,8 +41,8 @@ const Dashboard: React.FC = () => {
 
       const signingClient = await createSigningClientFromMnemonic(
         {
-          rpcEndpoint: RPC_ENDPOINT,
-          restEndpoint: REST_ENDPOINT,
+          rpcEndpoint: currentNetwork.rpc,
+          restEndpoint: currentNetwork.rest,
           chainId: COSMOS_CONSTANTS.CHAIN_ID,
           prefix: COSMOS_CONSTANTS.ADDRESS_PREFIX,
           denom: COSMOS_CONSTANTS.GAS_DENOM,
@@ -64,7 +61,7 @@ const Dashboard: React.FC = () => {
         COSMOS_CONSTANTS.TOKEN_DENOM,
       );
     },
-    [],
+    [currentNetwork],
   );
 
   return (

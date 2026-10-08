@@ -6,10 +6,9 @@ import { getCosmosMnemonic, getCosmosAddress } from "../../utils/cosmos/storage"
 import { base64ToHex } from "../../utils/encodingUtils";
 import { withdrawAbi, BRIDGE_ADDRESS } from "../../abis/contractABI";
 import { useToast } from "../../context/ToastContext";
+import { useNetwork } from "../../context/NetworkContext";
 import styles from "./WithdrawModal.module.css";
 
-const RPC_ENDPOINT  = import.meta.env.VITE_RPC_ENDPOINT  ?? "http://localhost:26657";
-const REST_ENDPOINT = import.meta.env.VITE_REST_ENDPOINT ?? "http://localhost:1317";
 const POLL_MS       = 3000;
 const SLOW_THRESHOLD = 20;
 
@@ -31,6 +30,7 @@ const WithdrawModal: React.FC<Props> = ({ usdcBalance, onClose }) => {
     const { showSuccess, showError } = useToast();
     const { address: web3Address, isConnected: isWeb3Connected } = useAppKitAccount();
     const { open: openAppKit } = useAppKit();
+    const { currentNetwork } = useNetwork();
 
     const { data: ethTxHash, writeContract, error: writeError } = useWriteContract();
     const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({ hash: ethTxHash });
@@ -74,13 +74,13 @@ const WithdrawModal: React.FC<Props> = ({ usdcBalance, onClose }) => {
         if (!mnemonic || !fromAddress) throw new Error("No wallet found. Create or import a wallet first.");
 
         const client = await createSigningClientFromMnemonic(
-            { rpcEndpoint: RPC_ENDPOINT, restEndpoint: REST_ENDPOINT,
+            { rpcEndpoint: currentNetwork.rpc, restEndpoint: currentNetwork.rest,
               chainId: COSMOS_CONSTANTS.CHAIN_ID, prefix: COSMOS_CONSTANTS.ADDRESS_PREFIX,
               denom: COSMOS_CONSTANTS.GAS_DENOM, gasPrice: COSMOS_CONSTANTS.DEFAULT_GAS_PRICE },
             mnemonic
         );
         return { client, fromAddress };
-    }, []);
+    }, [currentNetwork]);
 
     const startPolling = useCallback((microAmount: string, targetAddress: string) => {
         clearPoll();
@@ -207,7 +207,7 @@ const WithdrawModal: React.FC<Props> = ({ usdcBalance, onClose }) => {
                             </div>
                         ) : (
                             <div className={styles.field}>
-                                <p className={styles.hint} style={{ marginBottom: 10 }}>
+                                <p className={`${styles.hint} ${styles.fieldSpaced}`}>
                                     Connect your Web3 wallet to receive the withdrawal.
                                 </p>
                                 <button onClick={() => openAppKit()} className={styles.primaryButton}>
@@ -324,7 +324,7 @@ const WithdrawModal: React.FC<Props> = ({ usdcBalance, onClose }) => {
                         <div className={styles.alertSuccess}>
                             <p className={styles.alertSuccessTitle}>Withdrawal Complete!</p>
                             <p className={styles.alertSuccessText}>USDC has been transferred to your Ethereum wallet.</p>
-                            {ethTxHash && <p style={{ color: "#6b7280", fontFamily: "monospace", fontSize: 11, marginTop: 6 }}>
+                            {ethTxHash && <p className={styles.ethTxHash}>
                                 Tx: {ethTxHash.slice(0, 18)}…
                             </p>}
                         </div>

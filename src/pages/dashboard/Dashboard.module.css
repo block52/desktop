@@ -2,8 +2,8 @@
     min-height: 100vh;
     position: relative;
     z-index: 1;
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    font-family: Barlow, system-ui, sans-serif;
 }
 
 .layout {
@@ -63,25 +63,4 @@
 .main {
     flex: 1;
     min-width: 0;
-}
-
-.mainPlaceholder {
-    background-color: rgba(31, 41, 55, 0.6);
-    border: 1px solid #374151;
-    border-radius: 10px;
-    padding: 48px 24px;
-    text-align: center;
-    color: #6b7280;
-    font-size: 14px;
-    backdrop-filter: blur(4px);
-    min-height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-@media (min-width: 1024px) {
-    .mainPlaceholder {
-        min-height: 320px;
-    }
 }
