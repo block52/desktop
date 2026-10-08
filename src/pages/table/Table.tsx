@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { PlayerActionType, NonPlayerActionType, TexasHoldemRound, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
+import { COSMOS_CONSTANTS, PlayerActionType, NonPlayerActionType, TexasHoldemRound, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
 import { useGameState } from "../../context/GameStateContext";
 import { useNetwork } from "../../context/NetworkContext";
+import { useCosmosWallet } from "../../hooks/useCosmosWallet";
 import { usePlayerLegalActions } from "../../hooks/playerActions/usePlayerLegalActions";
 import { betHand } from "../../hooks/playerActions/betHand";
 import { callHand } from "../../hooks/playerActions/callHand";
@@ -42,6 +43,7 @@ const Table: React.FC = () => {
     const { gameState, gameFormat, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot } =
         useGameState();
     const legalActions = usePlayerLegalActions();
+    const { balance: cosmosBalance } = useCosmosWallet();
 
     const [betAmount, setBetAmount] = useState<string>("");
     const [callAmount, setCallAmount] = useState<string>("");
@@ -52,15 +54,20 @@ const Table: React.FC = () => {
     const [actionError, setActionError] = useState<string>("");
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+    const hasWallet = !!getCosmosAddress();
+    const localAddress = getCosmosAddress()?.toLowerCase() ?? null;
+    const usdcBalanceAmount = cosmosBalance.find(b => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)?.amount ?? "0";
+    const hasUsdcBalance = BigInt(usdcBalanceAmount) > 0n;
+
     useEffect(() => {
-        if (!id) {
+        if (!id || !hasWallet) {
             return;
         }
         subscribeToTable(id);
         return () => {
             unsubscribeFromTable();
         };
-    }, [id, subscribeToTable, unsubscribeFromTable]);
+    }, [id, hasWallet, subscribeToTable, unsubscribeFromTable]);
 
     const runAction = async (label: string, action: () => Promise<PlayerActionResult | JoinTableResult | LeaveTableResult>) => {
         setIsSubmitting(true);
@@ -111,13 +118,18 @@ const Table: React.FC = () => {
         err => setActionError(err.message)
     );
 
-    const hasWallet = !!getCosmosAddress();
-    const localAddress = getCosmosAddress()?.toLowerCase() ?? null;
+    if (!hasWallet) {
+        return (
+            <div className={styles.page}>
+                <NoWalletOverlay onConnect={() => navigate("/wallet")} onBack={() => navigate("/")} />
+            </div>
+        );
+    }
 
     if (error) {
         return (
             <div className={styles.page}>
-                <TableErrorPage message={error.message} onRetry={() => id && subscribeToTable(id)} />
+                <TableErrorPage message={error.message} onRetry={() => id && subscribeToTable(id)} onBack={() => navigate("/")} />
             </div>
         );
     }
@@ -188,7 +200,7 @@ const Table: React.FC = () => {
                 <input placeholder="Buy-in (USDC)" value={buyInAmount} onChange={e => setBuyInAmount(e.target.value)} />
                 <input placeholder="Seat (optional)" value={seatNumber} onChange={e => setSeatNumber(e.target.value)} />
                 <button
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !hasUsdcBalance}
                     onClick={() =>
                         runAction("Join", () =>
                             joinTable(
@@ -203,6 +215,7 @@ const Table: React.FC = () => {
                     Join
                 </button>
             </div>
+            {!hasUsdcBalance && <div className={styles.validationError}>Fund your wallet before joining — USDC balance is 0.</div>}
             {!waitingForPlayers && !sitAndGoWaiting && (
                 <PlayerActionButtons
                     isSubmitting={isSubmitting}
@@ -230,12 +243,7 @@ const Table: React.FC = () => {
         </>
     );
 
-    return (
-        <div className={styles.page}>
-            {content}
-            {!hasWallet && <NoWalletOverlay onConnect={() => navigate("/wallet")} />}
-        </div>
-    );
+    return <div className={styles.page}>{content}</div>;
 };
 
 export default Table;
