@@ -12,6 +12,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     padding: 14px;
+    border-radius: var(--radius);
 }
 
 .heading {

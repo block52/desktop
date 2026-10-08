@@ -41,6 +41,7 @@
     color: var(--text);
     padding: 5px 12px;
     cursor: pointer;
+    border-radius: var(--radius);
 }
 
 .leaveButton:disabled {

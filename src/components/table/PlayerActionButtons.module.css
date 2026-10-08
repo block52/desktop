@@ -16,6 +16,7 @@
     color: var(--text);
     padding: 7px 10px;
     width: 90px;
+    border-radius: var(--radius);
 }
 
 .btn {
@@ -27,6 +28,7 @@
     background: transparent;
     color: var(--text);
     cursor: pointer;
+    border-radius: var(--radius);
 }
 
 .btn:disabled {

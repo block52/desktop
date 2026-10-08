@@ -2,10 +2,10 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - 48px);
+    min-height: 100vh;
     background: var(--bg-app);
     color: var(--text);
-    font-family: Barlow, system-ui, sans-serif;
+    font-family: Inter, system-ui, sans-serif;
     /* Hard backstop for the horizontal-bleed bug: nothing inside this page
        (seats positioned at the literal 0%/100% x-coordinate of their
        container, extending half their own width past it) can ever spill

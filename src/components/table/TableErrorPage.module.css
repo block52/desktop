@@ -39,6 +39,11 @@
     margin: 0;
 }
 
+.actions {
+    display: flex;
+    gap: 10px;
+}
+
 .button {
     font-family: "Barlow Condensed", system-ui, sans-serif;
     font-size: 14px;
@@ -48,4 +53,17 @@
     color: var(--accent-text);
     padding: 10px 24px;
     cursor: pointer;
+    border-radius: var(--radius);
+}
+
+.backButton {
+    font-family: "Barlow Condensed", system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    padding: 10px 24px;
+    cursor: pointer;
+    border-radius: var(--radius);
 }
