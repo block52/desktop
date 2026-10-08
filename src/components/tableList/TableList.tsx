@@ -39,6 +39,7 @@ const TableList: React.FC = () => {
 
     const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch]         = useState("");
+    const [formatFilter, setFormatFilter] = useState<"all" | "cash" | "sit-and-go">("all");
     const [sortKey, setSortKey]       = useState<SortKey>(null);
     const [sortDir, setSortDir]       = useState<SortDir>("desc");
     const [page, setPage]             = useState(1);
@@ -65,6 +66,14 @@ const TableList: React.FC = () => {
 
     const games = useMemo(() => {
         let list = rawGames;
+        if (formatFilter !== "all") {
+            list = list.filter(g => {
+                if (isTournamentFormat(g.gameFormat)) return false;
+                const label = String(g.gameFormat).toLowerCase();
+                const isSng = label.includes("sng") || label.includes("sit");
+                return formatFilter === "sit-and-go" ? isSng : !isSng;
+            });
+        }
         if (search.trim()) {
             const q = search.trim().toLowerCase();
             list = list.filter(g => g.gameId.toLowerCase().includes(q));
@@ -85,7 +94,19 @@ const TableList: React.FC = () => {
             });
         }
         return list;
-    }, [rawGames, search, sortKey, sortDir]);
+    }, [rawGames, search, sortKey, sortDir, formatFilter]);
+
+    const cashCount = useMemo(() => rawGames.filter(g => {
+        if (isTournamentFormat(g.gameFormat)) return false;
+        const label = String(g.gameFormat).toLowerCase();
+        return !(label.includes("sng") || label.includes("sit"));
+    }).length, [rawGames]);
+
+    const sngCount = useMemo(() => rawGames.filter(g => {
+        if (isTournamentFormat(g.gameFormat)) return false;
+        const label = String(g.gameFormat).toLowerCase();
+        return label.includes("sng") || label.includes("sit");
+    }).length, [rawGames]);
 
     const totalPages = Math.max(1, Math.ceil(games.length / PAGE_SIZE));
     const paged = games.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -129,6 +150,26 @@ const TableList: React.FC = () => {
 
     return (
         <div className={styles.container}>
+            <div className={styles.tabsRow}>
+                <button
+                    className={formatFilter === "all" ? styles.tabActive : styles.tab}
+                    onClick={() => setFormatFilter("all")}
+                >
+                    All <span className={styles.tabCount}>{rawGames.length}</span>
+                </button>
+                <button
+                    className={formatFilter === "cash" ? styles.tabActive : styles.tab}
+                    onClick={() => setFormatFilter("cash")}
+                >
+                    Cash <span className={styles.tabCount}>{cashCount}</span>
+                </button>
+                <button
+                    className={formatFilter === "sit-and-go" ? styles.tabActive : styles.tab}
+                    onClick={() => setFormatFilter("sit-and-go")}
+                >
+                    Sit &amp; Go <span className={styles.tabCount}>{sngCount}</span>
+                </button>
+            </div>
             <div className={styles.header}>
                 <h2 className={styles.title}>Available Tables</h2>
                 <span className={styles.count}>{games.length}</span>

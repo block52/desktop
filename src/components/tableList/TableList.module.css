@@ -12,6 +12,45 @@
     border-radius: var(--radius);
 }
 
+/* ── Tabs Row ── */
+.tabsRow {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px 0;
+}
+
+.tab,
+.tabActive {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+    color: var(--text);
+    background-color: var(--border);
+}
+
+.tabActive {
+    color: var(--accent-text);
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.tabCount {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
 /* ── Header ── */
 .header {
     background-color: var(--bg-app);
