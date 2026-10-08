@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import styles from "./Navbar.module.css";
 import { useNetwork } from "../../context/NetworkContext";
 import { getCosmosClient } from "../../utils/cosmos/client";
+import { NetworkSelector } from "./NetworkSelector";
 
 const Logo: React.FC = () => {
   const [imgError, setImgError] = useState(false);
@@ -56,38 +57,6 @@ const ExternalLinkIcon: React.FC = () => (
     <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
     <polyline points="15 3 21 3 21 9" />
     <line x1="10" y1="14" x2="21" y2="3" />
-  </svg>
-);
-
-const GlobeIcon: React.FC = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <line x1="2" y1="12" x2="22" y2="12" />
-    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-  </svg>
-);
-
-const ChevronIcon: React.FC = () => (
-  <svg
-    width="11"
-    height="11"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polyline points="6 9 12 15 18 9" />
   </svg>
 );
 
@@ -182,11 +151,7 @@ const Navbar: React.FC = () => {
             </div>
           )}
 
-          <div className={styles.networkBadge}>
-            <GlobeIcon />
-            <span>Block52</span>
-            <ChevronIcon />
-          </div>
+          <NetworkSelector />
 
           <button
             className={`${styles.iconBtn} ${spinning ? styles.spinning : ""}`}
