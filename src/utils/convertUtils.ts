@@ -14,6 +14,7 @@ export interface GameWithFormat {
     creator?: string;
     timeout?: number;
     createdAt?: string;
+    sngStartTime?: number;
 }
 
 export const convertGameListItemToGameWithFormat = (game: GameListItem): GameWithFormat => {
@@ -33,6 +34,7 @@ export const convertGameListItemToGameWithFormat = (game: GameListItem): GameWit
         creator:        game.creator,
         timeout:        opts.timeout,
         createdAt:      game.createdAt,
+        sngStartTime:   opts.sngStartTime,
     };
 };
 
