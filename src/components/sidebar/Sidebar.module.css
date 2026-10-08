@@ -1,0 +1,165 @@
+.sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 20px 14px;
+    background-color: var(--bg-app);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    font-family: Inter, system-ui, sans-serif;
+}
+
+/* ── Logo ── */
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    padding: 0 6px;
+}
+
+.logoImage {
+    height: 26px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* Brand mark colors are fixed — the logo keeps its own identity colors
+   rather than following the generic UI accent. */
+.logoText {
+    font-size: 18px;
+    font-weight: 800;
+    color: #c084fc;
+    letter-spacing: -0.03em;
+}
+
+.logoAccent {
+    color: #818cf8;
+}
+
+.logoDiamond {
+    color: var(--text);
+    font-size: 10px;
+    margin-left: 2px;
+    vertical-align: super;
+}
+
+/* ── Groups ── */
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.groupLabel {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0 10px 6px;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+    background: transparent;
+    text-align: left;
+    width: 100%;
+}
+
+.navItem:hover {
+    color: var(--text);
+    background-color: var(--border);
+}
+
+.navItemActive {
+    color: var(--text);
+    background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.navItemDisabled {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    opacity: 0.4;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    cursor: not-allowed;
+    text-align: left;
+    width: 100%;
+}
+
+/* ── Network selector (ported, widened to fill the sidebar row) ── */
+.networkSelectorWrap {
+    padding: 0 10px;
+}
+
+.networkSelectorWrap :global(.container) {
+    width: 100%;
+}
+
+.networkSelectorWrap :global(.trigger) {
+    width: 100%;
+    justify-content: space-between;
+}
+
+/* ── Footer ── */
+.footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+}
+
+.statusChip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.statusText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.statusDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #4ade80;
+    flex-shrink: 0;
+    animation: pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.35; }
+}
