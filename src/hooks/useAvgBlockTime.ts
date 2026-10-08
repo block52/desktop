@@ -41,8 +41,10 @@ export function useAvgBlockTime(): UseAvgBlockTimeReturn {
             });
             if (!cosmosClient) return;
 
+            // getLatestBlocks returns blocks oldest-first (ascending height) —
+            // reverse to the newest-first order computeAvgBlockTimeSeconds expects.
             const blocks = await cosmosClient.getLatestBlocks(BLOCK_SAMPLE_SIZE);
-            const times = blocks.map(b => b.block.header.time);
+            const times = blocks.map(b => b.block.header.time).reverse();
             setAvgBlockTimeSeconds(computeAvgBlockTimeSeconds(times));
         } catch {
             setAvgBlockTimeSeconds(null);
