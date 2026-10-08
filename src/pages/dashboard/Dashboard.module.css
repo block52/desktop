@@ -121,6 +121,11 @@
     opacity: 0.85;
 }
 
+.depositButton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .avatar {
     width: 36px;
     height: 36px;

@@ -115,15 +115,6 @@
     padding: 0 10px;
 }
 
-.networkSelectorWrap :global(.container) {
-    width: 100%;
-}
-
-.networkSelectorWrap :global(.trigger) {
-    width: 100%;
-    justify-content: space-between;
-}
-
 /* ── Footer ── */
 .footer {
     margin-top: auto;

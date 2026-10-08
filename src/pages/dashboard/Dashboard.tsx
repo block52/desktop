@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
           <div className={styles.balancePill}>
             ${(Number(usdcBalanceAmount) / Math.pow(10, COSMOS_CONSTANTS.USDC_DECIMALS)).toFixed(2)}
           </div>
-          <button className={styles.depositButton} onClick={() => setShowDepositModal(true)}>
+          <button className={styles.depositButton} onClick={() => setShowDepositModal(true)} disabled={!cosmosAddress}>
             Deposit
           </button>
           {avatarInitials && <div className={styles.avatar}>{avatarInitials}</div>}

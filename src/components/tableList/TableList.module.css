@@ -275,7 +275,7 @@
 .stateTitle { color: var(--text-muted); font-size: 14px; margin: 0 0 4px; }
 .stateText  { color: var(--text-muted); font-size: 13px; margin: 0; }
 
-.errorIcon { color: var(--danger); margin-bottom: 12px; }
+.errorIcon { color: color-mix(in srgb, var(--danger) 70%, white); margin-bottom: 12px; }
 .emptyIcon { color: var(--text-muted); margin-bottom: 12px; }
 
 .retryBtn {

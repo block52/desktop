@@ -43,7 +43,7 @@ const Table: React.FC = () => {
     const { gameState, gameFormat, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot } =
         useGameState();
     const legalActions = usePlayerLegalActions();
-    const { balance: cosmosBalance } = useCosmosWallet();
+    const { balance: cosmosBalance, isLoading: isBalanceLoading } = useCosmosWallet();
 
     const [betAmount, setBetAmount] = useState<string>("");
     const [callAmount, setCallAmount] = useState<string>("");
@@ -200,7 +200,7 @@ const Table: React.FC = () => {
                 <input placeholder="Buy-in (USDC)" value={buyInAmount} onChange={e => setBuyInAmount(e.target.value)} />
                 <input placeholder="Seat (optional)" value={seatNumber} onChange={e => setSeatNumber(e.target.value)} />
                 <button
-                    disabled={isSubmitting || !hasUsdcBalance}
+                    disabled={isSubmitting || (!isBalanceLoading && !hasUsdcBalance)}
                     onClick={() =>
                         runAction("Join", () =>
                             joinTable(
@@ -215,7 +215,7 @@ const Table: React.FC = () => {
                     Join
                 </button>
             </div>
-            {!hasUsdcBalance && <div className={styles.validationError}>Fund your wallet before joining — USDC balance is 0.</div>}
+            {!isBalanceLoading && !hasUsdcBalance && <div className={styles.validationError}>Fund your wallet before joining — USDC balance is 0.</div>}
             {!waitingForPlayers && !sitAndGoWaiting && (
                 <PlayerActionButtons
                     isSubmitting={isSubmitting}

@@ -38,7 +38,7 @@
 
 .danger {
     border-color: var(--danger);
-    color: var(--danger);
+    color: color-mix(in srgb, var(--danger) 70%, white);
 }
 
 .autoNote {

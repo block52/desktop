@@ -20,7 +20,7 @@
     font-family: "Barlow Condensed", system-ui, sans-serif;
     font-size: 24px;
     font-weight: 700;
-    color: var(--danger);
+    color: color-mix(in srgb, var(--danger) 70%, white);
 }
 
 .title {
