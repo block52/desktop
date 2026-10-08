@@ -19,7 +19,7 @@
 
 /* ── Base ── */
 .base {
-    background-color: #0b1120;
+    background-color: var(--bg-app);
     z-index: 1;
 }
 
@@ -33,7 +33,7 @@
     right: auto;
     bottom: auto;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(79, 70, 229, 0.22) 0%, transparent 65%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 65%);
     filter: blur(48px);
     animation: floatA 18s ease-in-out infinite;
 }
@@ -47,7 +47,7 @@
     top: auto;
     left: auto;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 65%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 65%);
     filter: blur(56px);
     animation: floatB 22s ease-in-out infinite;
 }
@@ -59,7 +59,7 @@
     top: 40%;
     left: 45%;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.10) 0%, transparent 65%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 65%);
     filter: blur(64px);
     animation: floatC 28s ease-in-out infinite;
 }
@@ -100,9 +100,9 @@
     background: linear-gradient(
         90deg,
         transparent 0%,
-        rgba(99, 102, 241, 0.06) 30%,
-        rgba(139, 92, 246, 0.08) 50%,
-        rgba(99, 102, 241, 0.06) 70%,
+        color-mix(in srgb, var(--accent) 6%, transparent) 30%,
+        color-mix(in srgb, var(--accent) 8%, transparent) 50%,
+        color-mix(in srgb, var(--accent) 6%, transparent) 70%,
         transparent 100%
     );
     background-size: 200% 100%;

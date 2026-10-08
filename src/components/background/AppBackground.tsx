@@ -41,7 +41,7 @@ const AppBackground: React.FC = () => {
             <div
                 className={styles.spotlight}
                 style={{
-                    background: `radial-gradient(ellipse 40% 35% at ${mouse.x}% ${mouse.y}%, rgba(99,102,241,0.10) 0%, transparent 70%)`
+                    background: `radial-gradient(ellipse 40% 35% at ${mouse.x}% ${mouse.y}%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 70%)`
                 }}
             />
 
@@ -53,7 +53,7 @@ const AppBackground: React.FC = () => {
                             <path
                                 d="M28,3 L52,16 L52,43 L28,56 L4,43 L4,16 Z"
                                 fill="none"
-                                stroke="rgba(99,102,241,0.18)"
+                                stroke="color-mix(in srgb, var(--accent) 18%, transparent)"
                                 strokeWidth="0.6"
                             />
                         </pattern>
