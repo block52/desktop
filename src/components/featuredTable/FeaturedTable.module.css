@@ -1,0 +1,85 @@
+.card {
+    flex: 2;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: Inter, system-ui, sans-serif;
+}
+
+.badges {
+    display: flex;
+    gap: 8px;
+}
+
+.badgeSng {
+    background-color: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.badgeStatus {
+    background-color: var(--border);
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    font-family: monospace;
+}
+
+.meta {
+    display: flex;
+    gap: 24px;
+}
+
+.metaItem {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.metaLabel {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.metaValue {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.registerButton {
+    margin-top: 8px;
+    align-self: flex-start;
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent-text);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    transition: opacity 0.15s;
+}
+
+.registerButton:hover {
+    opacity: 0.85;
+}
