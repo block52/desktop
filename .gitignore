@@ -96,3 +96,4 @@ out/
 
 # Local tooling output
 .playwright-mcp/
+.superpowers/
