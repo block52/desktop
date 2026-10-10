@@ -14,7 +14,7 @@ export interface HandLogProps {
     onReplay: () => void;
 }
 
-const ACTION_VERBS: Record<string, string> = {
+export const ACTION_VERBS: Record<string, string> = {
     "post-small-blind": "posts small blind",
     "post-big-blind": "posts big blind",
     "dead-small-blind": "posts dead small blind",

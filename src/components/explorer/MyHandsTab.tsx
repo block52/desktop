@@ -1,32 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { PlayerStatus } from "@block52/poker-vm-sdk";
 import { useMyHands } from "../../hooks/useMyHands";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
-import { formatMicroUsd } from "../../utils/currency";
-import type { PlayerHand } from "../../utils/indexer";
+import { describeHandOutcome } from "../../utils/handOutcome";
 import styles from "./ExplorerTabs.module.css";
 
 function shortId(id: string): string {
     return `${id.slice(0, 8)}…${id.slice(-6)}`;
 }
 
-function outcome(hand: PlayerHand, isChips: boolean | undefined): { label: string; className: string } {
-    if (hand.won_amount > 0) {
-        const amount = isChips === false ? formatMicroUsd(hand.won_amount) : hand.won_amount.toLocaleString();
-        return { label: `Won ${amount}${isChips === true ? " chips" : ""}`, className: styles.won };
-    }
-    switch (hand.status) {
-        case PlayerStatus.FOLDED:
-            return { label: "Folded", className: "" };
-        case PlayerStatus.BUSTED:
-            return { label: "Busted", className: styles.lost };
-        case "":
-            return { label: "Left the table", className: "" };
-        default:
-            return { label: "Lost", className: styles.lost };
-    }
-}
+const TONE_CLASS = { won: styles.won, lost: styles.lost, neutral: "" } as const;
 
 const MyHandsTab: React.FC = () => {
     const address = getCosmosAddress();
@@ -57,7 +40,7 @@ const MyHandsTab: React.FC = () => {
                 {!isLoading && error === "" && hands.length === 0 && <p className={styles.state}>No indexed hands for this wallet yet.</p>}
 
                 {hands.map(hand => {
-                    const result = outcome(hand, chipTables.get(hand.game_id));
+                    const result = describeHandOutcome(hand, chipTables.get(hand.game_id));
                     return (
                         <div key={`${hand.game_id}#${hand.hand_number}`} className={styles.row}>
                             <div className={styles.grow}>
@@ -78,7 +61,7 @@ const MyHandsTab: React.FC = () => {
                                     ))}
                                 </span>
                             )}
-                            <span className={`${styles.num} ${result.className}`}>{result.label}</span>
+                            <span className={`${styles.num} ${TONE_CLASS[result.tone]}`}>{result.label}</span>
                             <Link to={`/table/${hand.game_id}`} className="btn-ghost" style={{ padding: "6px 12px", borderRadius: 999, fontSize: 12 }}>
                                 Open table
                             </Link>

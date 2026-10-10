@@ -1,4 +1,4 @@
-/* Hand history — renders inside the shell's main pane; Lobby/Nodes design language. */
+/* Hand history — mock HISTORY screen: hand list + replay panel. */
 .page {
     display: flex;
     flex-direction: column;
@@ -10,154 +10,157 @@
 
 .header {
     display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.headerText {
+    display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-bottom: 8px;
+    flex: 1 1 260px;
 }
 
 .title {
+    margin: 0;
     font-size: 28px;
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.02em;
     color: #f8fafc;
-    margin: 0;
 }
 
 .subtitle {
+    margin: 0;
     font-size: 14px;
-    font-weight: 400;
     line-height: 1.4;
     color: rgb(148, 163, 184);
-    margin: 0;
 }
 
-/* ── Panels ── */
-.panel {
+.layout {
+    display: grid;
+    grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+}
+
+.listPanel {
     overflow: hidden;
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
 }
 
-.panelHeader {
+.handRow {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    border-bottom: 1px solid hsl(245 22% 17%);
-}
-
-.count {
-    font-size: 11px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    color: rgb(148, 163, 184);
-    background: hsl(215 20% 65% / 0.14);
-    border-radius: 5px;
-    min-width: 17px;
-    height: 17px;
-    padding: 0 4px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* ── My tables rows ── */
-.myGameRow {
-    display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
     gap: 12px;
-    align-items: center;
-    padding: 0 16px;
-    min-height: 52px;
+    padding: 12px 18px;
     border-bottom: 1px solid hsl(245 22% 17% / 0.6);
     cursor: pointer;
 }
 
-.myGameRow:last-child {
-    border-bottom: none;
+.handRowSelected {
+    background: hsl(263 83% 58% / 0.1);
 }
 
-.myGameIdentity {
+.handText {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    min-width: 0;
+    gap: 5px;
 }
 
-.myGameName {
-    font-size: 14px;
+.handTitle {
+    font-size: 13.5px;
     font-weight: 600;
-    line-height: 1.1;
-    color: var(--text);
+    line-height: 1;
+}
+
+.handMeta {
+    font-size: 11.5px;
+    line-height: 1;
+    color: rgb(148, 163, 184);
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.amount {
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
 
-.myGameId {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--mono);
-    font-size: 11px;
+.won {
+    color: hsl(142 70% 55%);
+}
+
+.lost {
+    color: hsl(0 84% 68%);
+}
+
+.state {
+    padding: 36px 18px;
+    text-align: center;
+    font-size: 13px;
     color: rgb(148, 163, 184);
 }
 
-.sngNote {
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgb(241, 208, 126);
+.stateError {
+    color: hsl(0 84% 68%);
 }
 
-/* ── Picker ── */
-.pickerCard {
-    padding: 18px;
+.loadMore {
+    display: block;
+    margin: 12px auto;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: Inter, system-ui, sans-serif;
+}
+
+/* ── Replay ── */
+.replay {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+    padding: 18px;
 }
 
-.pickerRow {
+.replayHead {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
-.pickerOr {
+.replayTitle {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.replayName {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.mono {
+    font-family: var(--mono);
     font-size: 12px;
     color: rgb(148, 163, 184);
 }
 
-.pickerDropdown {
-    flex: 1 1 220px;
-    min-width: 0;
-}
-
-.input {
-    flex: 1 1 180px;
-    min-width: 0;
-    background-color: hsl(240 38% 5.5%);
-    border: 1px solid hsl(245 22% 17%);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 12px;
-    padding: 10px 12px;
-    outline: none;
-    border-radius: 10px;
-}
-
-.input:focus {
-    border-color: hsl(263 83% 62% / 0.5);
-}
-
-.input::placeholder {
-    color: var(--text-muted);
-}
-
-.ghostButton {
-    height: 38px;
+.pill {
+    height: 36px;
     padding: 0 14px;
     border-radius: 999px;
     font-size: 13px;
@@ -166,202 +169,156 @@
     white-space: nowrap;
 }
 
-.ghostButton:disabled {
+.pill:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
 
-/* ── Current hand stats ── */
-.statRow {
-    display: flex;
-    gap: 32px;
-    flex-wrap: wrap;
-    padding: 16px;
-}
-
-.stat {
+.felt {
+    position: relative;
+    border-radius: 18px;
+    padding: 22px 16px 18px;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    background: radial-gradient(ellipse at 50% 40%, hsl(158 42% 22%), hsl(160 45% 12%));
+    border: 1px solid hsl(43 50% 40% / 0.5);
+}
+
+.pot {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: hsl(240 30% 8% / 0.7);
+    color: hsl(43 80% 72%);
+    font-variant-numeric: tabular-nums;
+}
+
+.board {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.boardCard {
+    width: clamp(44px, 9vw, 72px);
+}
+
+.emptyCard {
+    width: clamp(44px, 9vw, 72px);
+    aspect-ratio: 5 / 7;
+    border-radius: 6px;
+    border: 1px dashed hsl(0 0% 100% / 0.18);
+}
+
+.hands {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.handGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.holeCards {
+    display: flex;
     gap: 4px;
 }
 
-.statValue {
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--text);
-    text-transform: capitalize;
+.holeCard {
+    width: 46px;
 }
 
-.statValueMono {
-    font-family: var(--mono);
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.5;
-    color: var(--text);
+.handLabel {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: hsl(210 40% 98% / 0.85);
 }
 
-.statLabel {
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dots {
+    flex: 1;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.dot {
+    width: 9px;
+    height: 9px;
+    border: 0;
+    padding: 0;
+    border-radius: 50%;
+    background: hsl(245 22% 24%);
+    cursor: pointer;
+}
+
+.dotDone {
+    background: hsl(263 60% 50%);
+}
+
+.dotActive {
+    background: hsl(263 83% 68%);
+    box-shadow: 0 0 0 3px hsl(263 83% 58% / 0.25);
+}
+
+.stepInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: hsl(245 22% 12% / 0.6);
+    border: 1px solid hsl(245 22% 17%);
+}
+
+.stepText {
+    flex: 1;
+    font-size: 13.5px;
+}
+
+.stepPos {
+    font-size: 12px;
+    color: rgb(148, 163, 184);
+    font-variant-numeric: tabular-nums;
+}
+
+.winners {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
     font-size: 12px;
     color: rgb(148, 163, 184);
 }
 
-.winnersBox {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px 16px 16px;
-    border-top: 1px solid hsl(245 22% 17% / 0.6);
-}
-
-.winnerRow {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.winnerSeat {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-}
-
-.winnerAmount {
-    font-size: 13px;
-    font-weight: 600;
-    color: rgb(82, 224, 134);
-}
-
-/* ── Action log grid ── */
-.logHeader,
-.logRow {
-    display: grid;
-    grid-template-columns: 48px 48px minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-    gap: 12px;
-    align-items: center;
-}
-
-.logHeader {
-    padding: 10px 16px;
-    border-bottom: 1px solid hsl(245 22% 17%);
-}
-
-.logRow {
-    padding: 0 16px;
-    min-height: 44px;
-    border-bottom: 1px solid hsl(245 22% 17% / 0.6);
-}
-
-.logRow:last-child {
-    border-bottom: none;
-}
-
-.cell {
-    font-size: 13px;
-    font-weight: 500;
-    color: #f8fafc;
-    white-space: nowrap;
-}
-
-.actionCell {
-    font-size: 13px;
-    font-weight: 500;
-    color: #f8fafc;
-    text-transform: capitalize;
-    white-space: nowrap;
-}
-
-.mutedCell {
-    font-size: 13px;
-    font-weight: 500;
-    color: rgb(148, 163, 184);
-    white-space: nowrap;
-    text-transform: capitalize;
-}
-
-.monoMuted {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: rgb(148, 163, 184);
-    white-space: nowrap;
-}
-
-/* ── States ── */
-.stateBox {
-    padding: 32px 24px;
-    text-align: center;
-}
-
-.stateTitle {
-    color: var(--text-muted);
-    font-size: 14px;
-    margin: 0 0 4px;
-}
-
-.stateText {
-    color: var(--text-muted);
-    font-size: 13px;
-    margin: 0;
-}
-
-.spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid transparent;
-    border-top-color: var(--accent);
-    border-right-color: hsl(263 83% 58% / 0.25);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 12px;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* Mobile: my-games rows wrap, picker stacks, action log scrolls horizontally */
-@media (max-width: 768px) {
-    .myGameRow {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px 12px;
-        padding: 12px 16px;
-        min-height: 0;
+@media (max-width: 960px) {
+    .layout {
+        grid-template-columns: minmax(0, 1fr);
     }
 
-    .myGameIdentity {
-        flex: 1 1 100%;
+    .listPanel {
+        max-height: 320px;
     }
-
-    .pickerRow {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .pickerOr {
-        text-align: center;
-    }
-
-    .ghostButton {
-        align-self: flex-end;
-    }
-
-    .panel {
-        overflow-x: auto;
-    }
-
-    .logHeader,
-    .logRow {
-        min-width: 640px;
-    }
-}
-
-.winnerAddress {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: rgb(148, 163, 184);
 }

@@ -134,6 +134,15 @@ export interface PlayerSession {
     created_at: string;
 }
 
+// GET /api/v1/hands — one row per indexed hand.
+export interface IndexedHand {
+    game_id: string;
+    hand_number: number;
+    block_height: number;
+    deck_seed: string;
+    created_at: string;
+}
+
 export interface Paged<T> {
     data: T[];
     pagination: { limit: number; offset: number; total: number };
@@ -162,6 +171,10 @@ export const indexerApi = {
         if (params.search !== "") query.set("search", params.search);
         return getJson<Paged<PlayerListItem>>(`/api/v1/players?${query.toString()}`, signal);
     },
+    getRecentHands: (limit: number, offset: number, signal?: AbortSignal) =>
+        getJson<Paged<IndexedHand>>(`/api/v1/hands?limit=${limit}&offset=${offset}`, signal),
+    getHand: (gameId: string, handNumber: number, signal?: AbortSignal) =>
+        getJson<IndexedHand>(`/api/v1/hands/${encodeURIComponent(gameId)}/${handNumber}`, signal),
     getPlayerProfile: (address: string, signal?: AbortSignal) =>
         getJson<PlayerProfile>(`/api/v1/players/${encodeURIComponent(address)}/stats`, signal),
     getPlayerSessions: (address: string, limit: number, offset: number, signal?: AbortSignal) =>
