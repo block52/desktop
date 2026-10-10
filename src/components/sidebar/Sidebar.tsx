@@ -4,6 +4,7 @@ import styles from "./Sidebar.module.css";
 import { useNetwork } from "../../context/NetworkContext";
 import type { NetworkEndpoints } from "../../context/NetworkContext";
 import { getCosmosClient } from "../../utils/cosmos/client";
+import logoUrl from "../../assets/brand/logo.png";
 
 /* Icon paths copied from the redesign mockup (24 viewBox, stroke currentColor, stroke-width 1.8). */
 const ICONS: Record<string, string[]> = {
@@ -216,6 +217,7 @@ const Sidebar: React.FC<SidebarProps> = ({ drawerOpen, onCloseDrawer }) => {
     const isLobby = location.pathname === "/";
     const isWallet = location.pathname === "/wallet";
     const isHandHistory = location.pathname === "/hand-history";
+    const isPlayers = location.pathname === "/players" || location.pathname.startsWith("/players/");
     const isExplorer = location.pathname === "/explorer";
     const isHandDistribution = location.pathname === "/hand-distribution";
     const isNodes = location.pathname === "/nodes";
@@ -242,7 +244,7 @@ const Sidebar: React.FC<SidebarProps> = ({ drawerOpen, onCloseDrawer }) => {
                     </svg>
                 </button>
                 <Link to="/" className={styles.brand}>
-                    <span className={styles.brandMark}>52</span>
+                    <img className={styles.brandMark} src={logoUrl} alt="Block52" width={36} height={36} />
                     <span className={styles.brandText}>
                         <span className={styles.brandName}>Block52</span>
                         <span className={styles.brandSub}>Poker VM</span>
@@ -253,7 +255,7 @@ const Sidebar: React.FC<SidebarProps> = ({ drawerOpen, onCloseDrawer }) => {
                 <NavItem to="/" active={isLobby} icon="lobby" label="Lobby" />
                 <NavItem to="/wallet" active={isWallet} icon="wallet" label="Wallet" />
                 <NavItem to="/hand-history" active={isHandHistory} icon="history" label="Hand history" />
-                <NavItem icon="players" label="Players" />
+                <NavItem to="/players" active={isPlayers} icon="players" label="Players" />
 
                 <span className={`section-label ${styles.groupLabelNetwork}`}>Network</span>
                 <NavItem to="/explorer" active={isExplorer} icon="explorer" label="Block explorer" />
