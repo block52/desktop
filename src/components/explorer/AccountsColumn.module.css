@@ -286,3 +286,99 @@
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* ── Table columns: icon | address (+copy) | type | balance | last active ── */
+.addressLine {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.typePill {
+    width: 110px;
+    flex-shrink: 0;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: hsl(263 90% 80%);
+    white-space: nowrap;
+}
+
+.balance {
+    width: 110px;
+    flex-shrink: 0;
+}
+
+.lastActive {
+    width: 84px;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 12px;
+    color: rgb(148, 163, 184);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.headRow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 18px;
+    border-bottom: 1px solid hsl(245 22% 17%);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgb(148, 163, 184);
+}
+
+.headSpacer {
+    width: 38px;
+    flex-shrink: 0;
+}
+
+.headStart {
+    flex: 1;
+}
+
+.headType {
+    width: 110px;
+    flex-shrink: 0;
+}
+
+.headBalance {
+    width: 110px;
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.headActive {
+    width: 84px;
+    flex-shrink: 0;
+    text-align: right;
+}
+
+@media (max-width: 760px) {
+    .hideNarrow {
+        display: none;
+    }
+}
+
+.headButton {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.headButton:hover {
+    color: var(--text);
+}
+
+.headStart.headButton {
+    text-align: left;
+}

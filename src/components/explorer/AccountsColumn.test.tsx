@@ -9,6 +9,8 @@ import type { AccountTx } from "../../hooks/useAccountTransactions";
 const ACCOUNTS: AccountListItem[] = [
     {
         address: "b521chcut79q8jtc99qs9vcgmdantrmat22xv20m56",
+        type: "B52 Account",
+        lastActive: null,
         usdcValue: 9.5,
         balances: [
             { denom: "usdc", amount: "9500000" },
@@ -19,6 +21,8 @@ const ACCOUNTS: AccountListItem[] = [
     },
     {
         address: "b521qqvt4ygyjxnac9xupscgng99k3aqv9u8lqxjjy",
+        type: "B52 Account",
+        lastActive: new Date(Date.now() - 5 * 60_000).toISOString(),
         usdcValue: 1250,
         balances: [{ denom: "usdc", amount: "1250000000" }],
         validatorMoniker: "node1",
@@ -35,6 +39,9 @@ function renderColumn(props: Partial<Parameters<typeof AccountsColumn>[0]> = {})
     return render(
         <ToastProvider>
             <AccountsColumn
+                sortBy="balance"
+                sortOrder="desc"
+                onSort={() => {}}
                 accounts={ACCOUNTS}
                 total={58}
                 isLoading={false}
@@ -60,6 +67,15 @@ afterEach(() => {
 });
 
 describe("AccountsColumn", () => {
+    it("shows type and last active columns", () => {
+        renderColumn();
+
+        expect(screen.getByText("Last active")).toBeTruthy();
+        expect(screen.getAllByText("B52 Account")).toHaveLength(2);
+        expect(screen.getByText("5m ago")).toBeTruthy();
+        expect(screen.getByText("—")).toBeTruthy();
+    });
+
     it("renders the section title with the total and account rows", () => {
         renderColumn();
 

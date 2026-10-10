@@ -60,6 +60,85 @@ export interface IndexerStatus {
     total_games: number;
 }
 
+// GET /api/v1/players — money fields are micro-USDC.
+export type PlayerSortField = "net_profit" | "total_hands" | "total_rake_contributed" | "vip_points" | "last_seen_block";
+
+export interface PlayerListItem {
+    player_address: string;
+    vip_tier: string;
+    rakeback_pct: number;
+    total_hands: number;
+    total_actions: number;
+    net_profit: number;
+    total_rake_contributed: number;
+    last_seen_block?: number;
+}
+
+export interface PlayerSearchParams {
+    search: string;
+    sort: PlayerSortField;
+    order: "asc" | "desc";
+    limit: number;
+    offset: number;
+}
+
+// GET /api/v1/players/:address/hands — amounts are in the table's units
+// (chips for Sit & Go / tournament, micro-USDC for cash).
+export interface PlayerHand {
+    game_id: string;
+    hand_number: number;
+    seat: number;
+    /** The player's status at the hand's end ("" if they have since left). */
+    status: string;
+    won_amount: number;
+    block_height: number;
+    ended_at?: string;
+    community_cards: string[];
+    winner_count: number;
+}
+
+// GET /api/v1/players/:address/stats — money is micro-USDC; percentage fields
+// (vpip, pfr, aggression_factor, wtsd, won_at_showdown) are integers scaled x100.
+export interface PlayerProfile {
+    player_address: string;
+    total_hands: number;
+    total_actions: number;
+    total_buy_ins: number;
+    total_cash_outs: number;
+    net_profit: number;
+    session_count: number;
+    vip_tier: string;
+    rakeback_pct: number;
+    vip_points: number;
+    total_rake_contributed: number;
+    vpip: number;
+    pfr: number;
+    aggression_factor: number;
+    wtsd: number;
+    won_at_showdown: number;
+    biggest_pot_won: number;
+    biggest_hand_profit: number;
+    longest_session_blocks: number;
+    first_seen_block?: number;
+    last_seen_block?: number;
+}
+
+// GET /api/v1/players/:address/sessions
+export interface PlayerSession {
+    player_address: string;
+    game_id: string;
+    join_block: number;
+    leave_block?: number;
+    buy_in_amount: number;
+    cash_out_amount?: number;
+    created_at: string;
+}
+
+export interface Paged<T> {
+    data: T[];
+    pagination: { limit: number; offset: number; total: number };
+}
+
 async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
     const response = await fetch(`${getIndexerUrl()}${path}`, { signal });
     if (!response.ok) {
@@ -73,6 +152,22 @@ export const indexerApi = {
     getSummary: (signal?: AbortSignal) => getJson<StatsSummary>("/api/v1/stats/summary", signal),
     getRandomness: (signal?: AbortSignal) => getJson<RandomnessReport>("/api/v1/analysis/randomness", signal),
     getStatus: (signal?: AbortSignal) => getJson<IndexerStatus>("/api/v1/status", signal),
+    getPlayers: (params: PlayerSearchParams, signal?: AbortSignal) => {
+        const query = new URLSearchParams({
+            sort: params.sort,
+            order: params.order,
+            limit: String(params.limit),
+            offset: String(params.offset)
+        });
+        if (params.search !== "") query.set("search", params.search);
+        return getJson<Paged<PlayerListItem>>(`/api/v1/players?${query.toString()}`, signal);
+    },
+    getPlayerProfile: (address: string, signal?: AbortSignal) =>
+        getJson<PlayerProfile>(`/api/v1/players/${encodeURIComponent(address)}/stats`, signal),
+    getPlayerSessions: (address: string, limit: number, offset: number, signal?: AbortSignal) =>
+        getJson<Paged<PlayerSession>>(`/api/v1/players/${encodeURIComponent(address)}/sessions?limit=${limit}&offset=${offset}`, signal),
+    getPlayerHands: (address: string, limit: number, offset: number, signal?: AbortSignal) =>
+        getJson<Paged<PlayerHand>>(`/api/v1/players/${encodeURIComponent(address)}/hands?limit=${limit}&offset=${offset}`, signal),
 };
 
 // ── Presentation helpers ──

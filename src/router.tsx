@@ -4,6 +4,8 @@ import AppBackground from "./components/background/AppBackground";
 import Sidebar from "./components/sidebar/Sidebar";
 import Dashboard from "./pages/dashboard/Dashboard";
 import HandHistory from "./pages/handHistory/HandHistory";
+import Players from "./pages/players/Players";
+import { PlayerProfileRoute } from "./pages/players/PlayerProfile";
 import BlockExplorer from "./pages/blockExplorer/BlockExplorer";
 import HandDistribution from "./pages/handDistribution/HandDistribution";
 import Nodes from "./pages/nodes/Nodes";
@@ -31,6 +33,8 @@ const Shell: React.FC = () => {
                         <Routes>
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/hand-history" element={<HandHistory />} />
+                            <Route path="/players" element={<Players />} />
+                            <Route path="/players/:address" element={<PlayerProfileRoute />} />
                             <Route path="/explorer" element={<BlockExplorer />} />
                             <Route path="/hand-distribution" element={<HandDistribution />} />
                             <Route path="/nodes" element={<Nodes />} />

@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { BlockResponse } from "@block52/poker-vm-sdk";
 import { useNetwork } from "../../context/NetworkContext";
 import { useAvgBlockTime } from "../../hooks/useAvgBlockTime";
@@ -8,7 +9,10 @@ import { useAccountTransactions } from "../../hooks/useAccountTransactions";
 import { getCosmosClient } from "../../utils/cosmos/client";
 import CopyButton from "../../components/copyButton/CopyButton";
 import ExplorerStats from "../../components/explorer/ExplorerStats";
-import AccountsColumn from "../../components/explorer/AccountsColumn";
+import AccountsColumn, { type AccountSortField } from "../../components/explorer/AccountsColumn";
+import AddressLookupTab from "../../components/explorer/AddressLookupTab";
+import MyHandsTab from "../../components/explorer/MyHandsTab";
+import PlayersTab from "../../components/explorer/PlayersTab";
 import styles from "./BlockExplorer.module.css";
 
 /* getTx is untyped in the SDK (returns response.data of /cosmos/tx/v1beta1/txs/{hash});
@@ -27,6 +31,16 @@ interface TxSummary {
 interface TxLookupResponse {
     tx_response?: TxSummary;
 }
+
+type ExplorerTab = "blocks" | "accounts" | "address" | "hands" | "players";
+
+const TABS: { id: ExplorerTab; label: string }[] = [
+    { id: "blocks", label: "Latest blocks" },
+    { id: "accounts", label: "All accounts" },
+    { id: "address", label: "Address lookup" },
+    { id: "hands", label: "My hands" },
+    { id: "players", label: "Players" }
+];
 
 const BLOCKS_FETCH_COUNT = 20;
 const ACCOUNTS_LIMIT = 15;
@@ -49,6 +63,7 @@ function formatAge(isoTime: string): string {
 }
 
 const BlockExplorer: React.FC = () => {
+    const navigate = useNavigate();
     const { currentNetwork } = useNetwork();
     const { avgBlockTimeSeconds } = useAvgBlockTime();
     const validatorsCount = useValidatorCount();
@@ -56,6 +71,8 @@ const BlockExplorer: React.FC = () => {
     const [blocks, setBlocks] = useState<BlockResponse[]>([]);
     const [blocksError, setBlocksError] = useState("");
     const [selectedHeight, setSelectedHeight] = useState<string | null>(null);
+    const [tab, setTab] = useState<ExplorerTab>("blocks");
+    const [lookupAddress, setLookupAddress] = useState("");
 
     const [txQuery, setTxQuery] = useState("");
     const [txResult, setTxResult] = useState<TxSummary | null>(null);
@@ -92,6 +109,14 @@ const BlockExplorer: React.FC = () => {
         async (hash: string) => {
             const trimmed = hash.trim();
             if (trimmed === "") return;
+            // Addresses open the lookup tab instead of a tx search.
+            if (trimmed.startsWith("b52")) {
+                setLookupAddress(trimmed);
+                setTab("address");
+                setTxResult(null);
+                setTxNotFound(false);
+                return;
+            }
             setTxSearching(true);
             setTxNotFound(false);
             setTxResult(null);
@@ -116,7 +141,36 @@ const BlockExplorer: React.FC = () => {
     const { accounts, total: accountsTotal, isLoading: accountsLoading, error: accountsError } = useAccountsList();
     const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
     const [showAllAccounts, setShowAllAccounts] = useState(false);
+    const [accountSort, setAccountSort] = useState<AccountSortField>("balance");
+    const [accountOrder, setAccountOrder] = useState<"asc" | "desc">("desc");
+
+    const toggleAccountSort = (field: AccountSortField) => {
+        if (accountSort === field) {
+            setAccountOrder(o => (o === "asc" ? "desc" : "asc"));
+        } else {
+            setAccountSort(field);
+            setAccountOrder(field === "address" ? "asc" : "desc");
+        }
+    };
+
+    const sortedAccounts = useMemo(() => {
+        const direction = accountOrder === "asc" ? 1 : -1;
+        return [...accounts].sort((a, b) => {
+            if (accountSort === "address") return direction * a.address.localeCompare(b.address);
+            if (accountSort === "balance") return direction * (a.usdcValue - b.usdcValue);
+            // Accounts with no activity sort last in either direction.
+            if (a.lastActive === null && b.lastActive === null) return 0;
+            if (a.lastActive === null) return 1;
+            if (b.lastActive === null) return -1;
+            return direction * (Date.parse(a.lastActive) - Date.parse(b.lastActive));
+        });
+    }, [accounts, accountSort, accountOrder]);
     const { txs: accountTxs, isLoading: accountTxsLoading, error: accountTxsError } = useAccountTransactions(selectedAccount);
+
+    const openTx = (hash: string) => {
+        setTxQuery(hash);
+        void searchByHash(hash);
+    };
 
     const latestHeight = blocks.length > 0 ? Number(blocks[0].block.header.height).toLocaleString() : null;
 
@@ -211,7 +265,24 @@ const BlockExplorer: React.FC = () => {
                 </div>
             )}
 
-            <div className={styles.columns}>
+            <div className="segmented" role="tablist" style={{ display: "flex", width: "100%", overflowX: "auto" }}>
+                {TABS.map(t => (
+                    <button
+                        key={t.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={tab === t.id}
+                        className={tab === t.id ? "seg on" : "seg"}
+                        style={{ flex: 1, textAlign: "center", justifyContent: "center", whiteSpace: "nowrap" }}
+                        onClick={() => setTab(t.id)}
+                    >
+                        {t.label}
+                    </button>
+                ))}
+            </div>
+
+            {tab === "blocks" && (
+                <div className={styles.columns}>
                 <div className={styles.column}>
                     <h2 className={styles.columnTitle}>Blocks</h2>
                     <div className={`pane-lite ${styles.panel}`}>
@@ -298,26 +369,35 @@ const BlockExplorer: React.FC = () => {
                         })}
                     </div>
                 </div>
+                </div>
+            )}
 
-                <AccountsColumn
-                    accounts={showAllAccounts ? accounts : accounts.slice(0, ACCOUNTS_LIMIT)}
-                    total={accountsTotal}
-                    isLoading={accountsLoading}
-                    error={accountsError}
-                    selectedAddress={selectedAccount}
-                    onSelectAddress={setSelectedAccount}
-                    selectedTxs={accountTxs}
-                    txsLoading={accountTxsLoading}
-                    txsError={accountTxsError}
-                    hasMore={accountsTotal > ACCOUNTS_LIMIT}
-                    expanded={showAllAccounts}
-                    onToggleShowAll={() => setShowAllAccounts(v => !v)}
-                    onTxClick={hash => {
-                        setTxQuery(hash);
-                        void searchByHash(hash);
-                    }}
-                />
-            </div>
+            {tab === "accounts" && (
+                <div className={styles.columns}>
+                    <AccountsColumn
+                        sortBy={accountSort}
+                        sortOrder={accountOrder}
+                        onSort={toggleAccountSort}
+                        accounts={showAllAccounts ? sortedAccounts : sortedAccounts.slice(0, ACCOUNTS_LIMIT)}
+                        total={accountsTotal}
+                        isLoading={accountsLoading}
+                        error={accountsError}
+                        selectedAddress={selectedAccount}
+                        onSelectAddress={setSelectedAccount}
+                        selectedTxs={accountTxs}
+                        txsLoading={accountTxsLoading}
+                        txsError={accountTxsError}
+                        hasMore={accountsTotal > ACCOUNTS_LIMIT}
+                        expanded={showAllAccounts}
+                        onToggleShowAll={() => setShowAllAccounts(v => !v)}
+                        onTxClick={openTx}
+                    />
+                </div>
+            )}
+
+            {tab === "address" && <AddressLookupTab address={lookupAddress} onAddressChange={setLookupAddress} onTxClick={openTx} />}
+            {tab === "hands" && <MyHandsTab />}
+            {tab === "players" && <PlayersTab onOpenPlayer={address => navigate(`/players/${address}`)} />}
         </div>
     );
 };

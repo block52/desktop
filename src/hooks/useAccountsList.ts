@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fromBech32, toBech32 } from "@cosmjs/encoding";
 import { useNetwork } from "../context/NetworkContext";
 
 export interface AccountListItem {
     address: string;
+    /** Auth account kind, e.g. "B52 Account". */
+    type: string;
+    /** Most recent sent/received tx time (ISO); null until resolved or if none. */
+    lastActive: string | null;
     usdcValue: number;
     balances: { denom: string; amount: string }[];
     validatorMoniker: string | null;
@@ -19,6 +23,47 @@ export interface AccountsListState {
 
 const POLL_MS = 60000;
 const FETCH_LIMIT = 100;
+const ACTIVITY_BATCH = 5;
+
+/** "/cosmos.auth.v1beta1.BaseAccount" → "B52 Account"; other kinds keep their short name. */
+export function accountTypeLabel(account: unknown): string {
+    if (typeof account !== "object" || account === null) return "Unknown";
+    const raw = (account as Record<string, unknown>)["@type"];
+    if (typeof raw !== "string") return "Unknown";
+    const short = raw.split(".").pop();
+    if (short === undefined || short === "") return "Unknown";
+    return short === "BaseAccount" ? "B52 Account" : short;
+}
+
+/** Newest timestamp among the given ISO strings, or null. */
+export function latestTimestamp(timestamps: (string | undefined)[]): string | null {
+    let latest: string | null = null;
+    let latestMs = -Infinity;
+    for (const t of timestamps) {
+        if (t === undefined) continue;
+        const ms = Date.parse(t);
+        if (Number.isNaN(ms) || ms <= latestMs) continue;
+        latest = t;
+        latestMs = ms;
+    }
+    return latest;
+}
+
+async function fetchLastActive(rest: string, address: string): Promise<string | null> {
+    const newest = async (query: string): Promise<string | undefined> => {
+        const url = `${rest}/cosmos/tx/v1beta1/txs?query=${encodeURIComponent(query)}&pagination.limit=1&order_by=2`;
+        const response = await fetch(url);
+        if (!response.ok) return undefined;
+        const data = (await response.json()) as { tx_responses?: { timestamp?: string }[] };
+        return data.tx_responses?.[0]?.timestamp;
+    };
+    try {
+        const [sent, received] = await Promise.all([newest(`message.sender='${address}'`), newest(`transfer.recipient='${address}'`)]);
+        return latestTimestamp([sent, received]);
+    } catch {
+        return null;
+    }
+}
 
 /** Flat / nested account address extraction, "" when none. */
 export function extractAccountAddress(account: unknown): string {
@@ -80,6 +125,8 @@ async function fetchJson(url: string): Promise<unknown> {
 export function useAccountsList(): AccountsListState {
     const { currentNetwork } = useNetwork();
     const [state, setState] = useState<AccountsListState>({ accounts: [], total: 0, isLoading: true, error: "" });
+    // address → last active, kept across polls so the column doesn't flicker.
+    const [activity, setActivity] = useState<Map<string, string | null>>(new Map());
 
     useEffect(() => {
         if (currentNetwork.rest === "") return;
@@ -132,6 +179,8 @@ export function useAccountsList(): AccountsListState {
                         const validator = validatorMap.get(address);
                         return {
                             address,
+                            type: accountTypeLabel(account),
+                            lastActive: null,
                             usdcValue,
                             balances,
                             validatorMoniker: validator?.moniker ?? null,
@@ -142,6 +191,20 @@ export function useAccountsList(): AccountsListState {
 
                 if (cancelled) return;
                 const valid = items.filter(i => i.address !== "").sort((a, b) => b.usdcValue - a.usdcValue);
+                // Last-active needs two tx searches per account: resolve in small
+                // batches after the list is already on screen.
+                void (async () => {
+                    for (let i = 0; i < valid.length; i += ACTIVITY_BATCH) {
+                        const batch = valid.slice(i, i + ACTIVITY_BATCH);
+                        const results = await Promise.all(batch.map(a => fetchLastActive(rest, a.address)));
+                        if (cancelled) return;
+                        setActivity(prev => {
+                            const next = new Map(prev);
+                            batch.forEach((a, idx) => next.set(a.address, results[idx]));
+                            return next;
+                        });
+                    }
+                })();
                 setState({
                     accounts: valid,
                     total: valid.length,
@@ -169,5 +232,10 @@ export function useAccountsList(): AccountsListState {
         };
     }, [currentNetwork]);
 
-    return state;
+    const accounts = useMemo(
+        () => state.accounts.map(a => ({ ...a, lastActive: activity.get(a.address) ?? null })),
+        [state.accounts, activity]
+    );
+
+    return { ...state, accounts };
 }

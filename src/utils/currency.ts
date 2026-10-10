@@ -55,3 +55,11 @@ export function microToDecimal(micro: bigint): string {
     const fraction = (micro % 1_000_000n).toString().padStart(6, "0").replace(/0+$/, "");
     return fraction === "" ? whole.toString() : `${whole}.${fraction}`;
 }
+
+/** Signed micro-USDC integer (indexer money fields) as "$1,234.56" / "-$12.00". */
+export function formatMicroUsd(micro: number): string {
+    const abs = BigInt(Math.trunc(Math.abs(micro)));
+    const whole = (abs / 1_000_000n).toLocaleString();
+    const cents = ((abs % 1_000_000n) / 10_000n).toString().padStart(2, "0");
+    return `${micro < 0 ? "-" : ""}$${whole}.${cents}`;
+}
