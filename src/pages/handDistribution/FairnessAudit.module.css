@@ -1,0 +1,237 @@
+/* Fairness audit — mock DISTRIBUTION screen: verdict + stat tiles, frequency bars with an expected line. */
+.state {
+    padding: 28px;
+    font-size: 14px;
+    color: rgb(148, 163, 184);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.errorText {
+    color: hsl(0 80% 72%);
+}
+
+.retry {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font: 500 13px/1 Inter, system-ui, sans-serif;
+}
+
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+    gap: 12px;
+}
+
+.tile {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tileOk {
+    border-color: hsl(142 70% 45% / 0.35);
+}
+
+.verdict {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.big {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.toneOk {
+    color: hsl(142 70% 62%);
+}
+
+.toneWarn {
+    color: hsl(43 90% 66%);
+}
+
+.toneBad {
+    color: hsl(0 80% 72%);
+}
+
+.toneMute {
+    color: hsl(215 20% 65%);
+}
+
+/* ── Chart ── */
+.chartCard {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow: hidden;
+}
+
+.chartHead {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.chartTitle {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: rgb(148, 163, 184);
+    font-variant-numeric: tabular-nums;
+}
+
+.legendLine {
+    width: 16px;
+    border-top: 2px dashed hsl(43 74% 58%);
+}
+
+.scroll {
+    overflow-x: auto;
+}
+
+.chart {
+    position: relative;
+    min-width: 520px;
+    height: 240px;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    padding-top: 10px;
+}
+
+.expectedLine {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 50%;
+    border-top: 2px dashed hsl(43 74% 58% / 0.8);
+}
+
+.bar {
+    flex: 1;
+    min-height: 2px;
+    border-radius: 3px 3px 0 0;
+    background: hsl(263 60% 50% / 0.85);
+    transition: height 200ms ease;
+}
+
+.barBright {
+    background: hsl(263 83% 66% / 0.85);
+}
+
+.empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+    text-align: center;
+    font-size: 13px;
+    color: rgb(148, 163, 184);
+    pointer-events: none;
+}
+
+.suitRow {
+    min-width: 520px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin-top: 8px;
+}
+
+/* ── Chi-squared test breakdown ── */
+.tests {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.testGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 12px;
+}
+
+.testRow {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 12px;
+    background: hsl(240 38% 5.5%);
+    border: 1px solid hsl(245 22% 17%);
+}
+
+.testHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.testLabel {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: hsl(245 22% 16%);
+}
+
+.testStats {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: rgb(148, 163, 184);
+}
+
+.testNote {
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgb(148, 163, 184);
+}
+
+.footer {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: rgb(148, 163, 184);
+    font-variant-numeric: tabular-nums;
+}
+
+.refresh {
+    margin-left: auto;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font: 500 12px/1 Inter, system-ui, sans-serif;
+    color: hsl(263 90% 78%);
+}
+
+.refresh:hover {
+    text-decoration: underline;
+}

@@ -43,7 +43,7 @@ Known intentional divergences — do not "fix" these when comparing:
 
 - **Players / Admin**: exist in the mock, deliberately disabled in the app sidebar (nav items render disabled, no routes)
 - **Wallet**: layout matches the mock (Available card + segmented Deposit/Withdraw switching the inline panel, Activity list from real `listWithdrawalRequests` data); the mock's QR-deposit rows have no equivalent in the real bridge flow (approve/deposit via web3 instead), "At tables" / "Lifetime net" rows have no data source — keys section is an app addition below the fold
-- **Hand distribution**: app is a Monte Carlo equity calculator; mock is a shuffle-fairness audit (chi-squared, frequency bars)
+- **Hand distribution**: mock is a shuffle-fairness audit (chi-squared, frequency bars) — built from the indexer API (`VITE_INDEXER_URL`, default `https://indexer.block52.xyz`) as the default tab, with the Monte Carlo equity calculator kept as a second tab (an app addition). Adds suit/rank chi-squared tests and a duplicate-seed note from the web explorer page; the mock's Verdict/χ²/p-value/Cards-dealt tiles show "No data yet" until the indexer has revealed cards
 - **Nodes**: app manages RPC network endpoints; mock lists validators
 
 ## Inherited Rules
