@@ -33,6 +33,19 @@ Each context has its own Vite config (`vite.main.config.ts`, `vite.preload.confi
 
 Vite outputs to `.vite/build/` (main/preload) and `.vite/renderer/` (renderer). The forge config uses `asar: true` with security fuses — `RunAsNode`, `NodeOptionsEnvironmentVariable`, and `NodeCliInspectArguments` are all disabled at package time.
 
+## Design Reference
+
+The UI is ported from a design mockup: `~/Downloads/Block52 Redesign.html` (bundled single-file HTML app — open it in a browser, or grep the `<sc-if value="{{ isX }}">` blocks per screen; dark-theme tokens live in its `:root` `.dark` block).
+
+**Standing rule: after completing any UI task, compare the result against this mock before calling it done.** Verify color tokens (`--card 240 26% 11`, `--popover 240 26% 10`, `--primary 263 83% 58`, `--muted-foreground 215 20% 65`, `--pane-border 245 22% 17`), utility-class patterns (`.pane-lite`, `.section-label`, `.row-hover`, `.btn-ghost`/`.btn-glow` pills, `.segmented`/`.seg`, `.search-field`), and the mock's copy pattern (labeled pill buttons: `btn-ghost`, 36px, `border-radius: 999px`, 13px medium).
+
+Known intentional divergences — do not "fix" these when comparing:
+
+- **Players / Admin**: exist in the mock, deliberately disabled in the app sidebar (nav items render disabled, no routes)
+- **Wallet**: layout matches the mock (Available card + segmented Deposit/Withdraw switching the inline panel, Activity list from real `listWithdrawalRequests` data); the mock's QR-deposit rows have no equivalent in the real bridge flow (approve/deposit via web3 instead), "At tables" / "Lifetime net" rows have no data source — keys section is an app addition below the fold
+- **Hand distribution**: app is a Monte Carlo equity calculator; mock is a shuffle-fairness audit (chi-squared, frequency bars)
+- **Nodes**: app manages RPC network endpoints; mock lists validators
+
 ## Inherited Rules
 
 This project is part of the Block52 poker-vm monorepo. When integrating with the blockchain/game layer:

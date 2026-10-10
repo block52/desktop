@@ -1,0 +1,391 @@
+/* Block explorer — renders inside the shell's main pane; Lobby/Nodes design language. */
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    color: var(--text);
+    font-family: Inter, system-ui, sans-serif;
+}
+
+.title {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: #f8fafc;
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: rgb(148, 163, 184);
+    margin: 0;
+}
+
+/* ── Transaction lookup ── */
+.searchCard {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.searchRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.input {
+    flex: 1;
+    min-width: 0;
+    background-color: hsl(240 38% 5.5%);
+    border: 1px solid hsl(245 22% 17%);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px 12px;
+    outline: none;
+    border-radius: 10px;
+    transition: border-color 0.15s;
+}
+
+.input:focus {
+    border-color: hsl(263 83% 62% / 0.5);
+}
+
+.input::placeholder {
+    color: var(--text-muted);
+}
+
+.ghostButton {
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: Inter, system-ui, sans-serif;
+    white-space: nowrap;
+}
+
+.ghostButton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.notFound {
+    margin: 0;
+    font-size: 13px;
+    color: hsl(0 62.8% 65%);
+}
+
+/* ── Key/value detail rows (tx + block) ── */
+.txDetail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid hsl(245 22% 17% / 0.6);
+    padding-top: 12px;
+}
+
+.txRow {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    min-width: 0;
+}
+
+.txLabel {
+    width: 96px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: rgb(148, 163, 184);
+}
+
+.txValue {
+    font-size: 13px;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.txValueMono {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.txOk {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgb(82, 224, 134);
+}
+
+.txFail {
+    font-size: 13px;
+    font-weight: 600;
+    color: hsl(0 62.8% 65%);
+}
+
+/* ── Latest blocks panel ── */
+.panel {
+    overflow: hidden;
+}
+
+.blockRow {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto 52px;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid hsl(245 22% 17% / 0.6);
+    cursor: pointer;
+}
+
+.blockRowSelected {
+    background: hsl(263 83% 58% / 0.08);
+}
+
+.blockIcon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: hsl(245 22% 14%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(148, 163, 184);
+    flex-shrink: 0;
+}
+
+.blockIdentity {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    flex: 1;
+}
+
+.blockHeight {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    color: hsl(263 90% 80%);
+    font-variant-numeric: tabular-nums;
+}
+
+.blockMeta {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1;
+    color: rgb(148, 163, 184);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.txChip {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: hsl(245 22% 14%);
+    color: var(--text);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.blockAge {
+    font-size: 12px;
+    line-height: 1;
+    color: rgb(148, 163, 184);
+    width: 52px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.blockDetail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid hsl(245 22% 17% / 0.6);
+    background: hsl(245 22% 12% / 0.4);
+}
+
+.txList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-top: 1px solid hsl(245 22% 17% / 0.6);
+    padding-top: 8px;
+}
+
+/* ── States ── */
+.stateBox {
+    padding: 32px 24px;
+    text-align: center;
+}
+
+.stateTitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin: 0 0 4px;
+}
+
+.stateText {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0;
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid transparent;
+    border-top-color: var(--accent);
+    border-right-color: hsl(263 83% 58% / 0.25);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Mobile: tx lookup stacks; block rows keep 4 columns behind horizontal scroll */
+@media (max-width: 768px) {
+    .searchRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ghostButton {
+        align-self: flex-end;
+    }
+
+    .panel {
+        overflow-x: auto;
+    }
+
+    .blockRow,
+    .blockDetail {
+        min-width: 560px;
+    }
+}
+
+.txValueWrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.hashCell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgb(148, 163, 184);
+    white-space: nowrap;
+}
+
+.txListItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+
+/* ── Header search pill (mock: icon + input inside a search-field, no button) ── */
+.headerText {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 260px;
+    min-width: 0;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.searchPill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 10px;
+    flex: 1 1 280px;
+    max-width: 420px;
+    min-width: 0;
+    cursor: text;
+}
+
+.searchIcon {
+    color: rgb(148, 163, 184);
+    flex-shrink: 0;
+}
+
+.searchInput {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    outline: none;
+    color: var(--text);
+    font-size: 13px;
+    font-family: Inter, system-ui, sans-serif;
+}
+
+.searchInput::placeholder {
+    color: var(--text-muted);
+}
+
+/* ── Two-column Blocks / Transactions layout ── */
+.columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+    gap: 14px;
+    align-items: start;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.columnTitle {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text);
+}
+
+/* ── Tx lookup result panel ── */
+.txDetailPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .searchPill {
+        max-width: none;
+    }
+}

@@ -7,6 +7,8 @@ if (started) {
   app.quit();
 }
 
+app.setName("Block52");
+
 const iconPath = path.join(__dirname, "../../assets/icon.png");
 
 const createWindow = () => {

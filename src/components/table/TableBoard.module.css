@@ -1,91 +1,123 @@
+/* Felt pane (mock TABLE screen): a .pane card with a dark radial backdrop,
+   the rail+felt stadium inset inside it, and seats laid over the pane. */
 .outer {
     position: relative;
     flex: 1;
-    display: flex;
-    justify-content: center;
+    min-width: 0;
     min-height: 420px;
+    overflow: hidden;
+    background: radial-gradient(ellipse 70% 60% at 50% 45%, hsl(158 30% 10%), hsl(240 28% 9.5%) 72%);
 }
 
-.rail {
+/* The felt box. container-type: size lets the cards scale with the felt
+   itself (cqw/cqh) instead of the viewport. */
+.feltBox {
     position: absolute;
-    inset: 0;
-    border: 8px solid var(--border);
-    border-radius: 9999px;
-    opacity: 0.5;
+    left: 7%;
+    right: 7%;
+    top: 12%;
+    bottom: 20%;
+    container-type: size;
 }
 
-/* Stadium shape — flat sides, semicircular rounded ends. A fixed radius
-   larger than half the box's short side gets clamped by the browser to
-   exactly that, producing a true stadium (not a smooth ellipse) — the
-   same technique ui's own `rounded-[250px]` on a fixed 1000x500 box
-   produces, expressed responsively here instead of with a fixed px value.
-   This is the spec's one deliberate border-radius exception besides
-   avatars/pills. */
+/* Rail + felt in one element: dark rim with a thin gold inset line over a
+   radial green gradient. Stadium shape via a radius larger than half the
+   short side. */
 .felt {
     position: absolute;
-    inset: 20% 8%;
-    background: var(--bg-card);
-    border: 2px solid var(--border-strong);
+    inset: 0;
     border-radius: 9999px;
+    border: 18px solid hsl(240 28% 7%);
+    background: radial-gradient(ellipse at 50% 40%, hsl(155 45% 26%), hsl(158 50% 13%) 78%);
+    box-shadow:
+        inset 0 0 0 2px hsl(43 70% 55% / 0.5),
+        inset 0 0 80px hsl(158 60% 4% / 0.8),
+        0 30px 60px -20px black,
+        0 0 0 1px hsl(250 28% 22%);
 }
 
 .centerMessage {
     position: absolute;
     left: 50%;
-    top: 50%;
+    top: 44%;
     transform: translate(-50%, -50%);
     text-align: center;
     z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
 .label {
-    font-family: Barlow, system-ui, sans-serif;
     font-size: 10px;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--text-muted);
-    margin-bottom: 4px;
 }
 
 .value {
-    font-family: "Barlow Condensed", system-ui, sans-serif;
     font-size: 22px;
-    font-weight: 600;
-    margin-bottom: 4px;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
 }
 
 .sub {
-    font-family: Barlow, system-ui, sans-serif;
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--text-muted);
+}
+
+.potPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 6px 6px;
+    border-radius: 999px;
+    background: hsl(158 50% 6% / 0.6);
+}
+
+.potChip {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: hsl(43 74% 58%);
+    border: 3px dashed hsl(43 80% 85%);
+    flex-shrink: 0;
+}
+
+.potValue {
+    font-size: 16px;
+    font-weight: 700;
+    color: hsl(43 80% 76%);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
 .communityCards {
     display: flex;
-    gap: 6px;
+    gap: clamp(4px, 1cqw, 10px);
     justify-content: center;
-    margin: 12px 0 8px;
 }
 
-.card {
-    width: 40px;
-    height: 55px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-strong);
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: "Barlow Condensed", system-ui, sans-serif;
-    font-size: 16px;
-    font-weight: 600;
+/* Bigger than the mock's 26–64px so the board reads at a glance. */
+.communityCard {
+    width: clamp(44px, min(10cqw, 18cqh), 88px);
+    border-radius: 6px;
+    box-shadow: 0 8px 18px -6px black;
+}
+
+.emptyCard {
+    width: clamp(44px, min(10cqw, 18cqh), 88px);
+    aspect-ratio: 5 / 7;
+    border: 1.5px dashed hsl(155 30% 40% / 0.5);
+    border-radius: 6px;
+    flex-shrink: 0;
 }
 
 .roundLabel {
-    font-family: Barlow, system-ui, sans-serif;
-    font-size: 9px;
-    letter-spacing: 0.6px;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-muted);
-    margin-top: 6px;
+    color: rgb(148, 163, 184);
 }

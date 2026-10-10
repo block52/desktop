@@ -1,0 +1,82 @@
+/* Slide-in hand log over the felt pane (mock TABLE screen, logOverlay). */
+.backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: flex-end;
+    background: hsl(0 0% 0% / 0.5);
+    backdrop-filter: blur(3px);
+}
+
+.panel {
+    width: min(320px, 88%);
+    height: 100%;
+    border-radius: 16px 0 0 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    padding: 16px 18px;
+    border-bottom: 1px solid hsl(245 22% 17%);
+}
+
+.title {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.replay {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font: 500 12px/1 Inter, system-ui, sans-serif;
+    color: hsl(263 90% 78%);
+}
+
+.replay:hover {
+    text-decoration: underline;
+}
+
+.list {
+    flex: 1;
+    overflow: auto;
+    padding: 8px 0;
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    padding: 9px 18px;
+}
+
+.round {
+    width: 44px;
+    flex-shrink: 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1;
+    color: rgb(148, 163, 184);
+}
+
+.what {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.what b {
+    font-weight: 600;
+}
+
+.empty {
+    padding: 14px 18px;
+    font-size: 13px;
+    color: rgb(148, 163, 184);
+}

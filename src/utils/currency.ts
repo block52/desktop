@@ -48,3 +48,10 @@ export function parseUsdcToMicro(value: string): bigint {
     // on anything that could round.
     return BigInt(`${whole || "0"}${fraction.padEnd(COSMOS_CONSTANTS.USDC_DECIMALS, "0")}`);
 }
+
+/** Micro-USDC → exact decimal text ("1500000" → "1.5"), no float math. Inverse of parseUsdcToMicro. */
+export function microToDecimal(micro: bigint): string {
+    const whole = micro / 1_000_000n;
+    const fraction = (micro % 1_000_000n).toString().padStart(6, "0").replace(/0+$/, "");
+    return fraction === "" ? whole.toString() : `${whole}.${fraction}`;
+}

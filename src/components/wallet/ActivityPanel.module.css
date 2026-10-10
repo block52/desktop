@@ -1,0 +1,143 @@
+.panel {
+    overflow: hidden;
+}
+
+.gridHeader,
+.row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) 110px 100px;
+    gap: 12px;
+    align-items: center;
+}
+
+.gridHeader {
+    padding: 12px 20px;
+    border-bottom: 1px solid hsl(245 22% 17%);
+}
+
+.amountHead {
+    text-align: right;
+}
+
+.row {
+    min-height: 58px;
+    padding: 12px 20px;
+    border-bottom: 1px solid hsl(245 22% 17% / 0.6);
+}
+
+.row:last-child {
+    border-bottom: none;
+}
+
+.typeCell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.typeText {
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text);
+}
+
+.typeTime {
+    font-size: 11.5px;
+    font-weight: 400;
+    line-height: 1;
+    color: rgb(148, 163, 184);
+}
+
+.detailCell {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: rgb(148, 163, 184);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.pill {
+    justify-self: start;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 5px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.pillCompleted {
+    background: hsl(142 70% 45.3% / 0.12);
+    color: hsl(142 70% 66%);
+}
+
+.pillSigned {
+    background: hsl(263 83% 58% / 0.14);
+    color: hsl(263 90% 78%);
+}
+
+.pillPending {
+    background: hsl(43 90% 66% / 0.14);
+    color: hsl(43 90% 66%);
+}
+
+.amountCell {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: right;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.amountMuted {
+    color: rgb(148, 163, 184);
+}
+
+.stateBox {
+    padding: 32px 24px;
+    text-align: center;
+}
+
+.stateText {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0;
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid transparent;
+    border-top-color: var(--accent);
+    border-right-color: hsl(263 83% 58% / 0.25);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .gridHeader {
+        display: none;
+    }
+
+    .row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "type pill"
+            "detail detail"
+            "amount amount";
+    }
+
+    .typeCell { grid-area: type; }
+    .detailCell { grid-area: detail; }
+    .pill { grid-area: pill; }
+    .amountCell { grid-area: amount; text-align: left; }
+}

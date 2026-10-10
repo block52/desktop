@@ -1,7 +1,8 @@
 import React from "react";
-import type { PlayerDTO } from "@block52/poker-vm-sdk";
+import { PlayerStatus, type PlayerDTO } from "@block52/poker-vm-sdk";
 import { getSeatPercent, resolveTableSize, seatToUiPosition } from "../../config/seatGeometry";
 import { Seat } from "./Seat";
+import { shortAddress } from "./shortAddress";
 import styles from "./PlayerSeating.module.css";
 
 export interface PlayerSeatingProps {
@@ -14,7 +15,12 @@ export interface PlayerSeatingProps {
     bigBlindPosition?: number;
     dealer?: number;
     formatStack: (stack: string) => string;
+    /** Max buy-in in the same micro units as player stacks; drives the hero's stack bar. Omit/0 to hide it. */
+    maxBuyIn?: string;
+    /** When set, vacant seats are clickable and report their server seat number. */
+    onVacantSeatClick?: (serverSeat: number) => void;
 }
+
 
 export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     players,
@@ -25,6 +31,8 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     bigBlindPosition,
     dealer,
     formatStack,
+    maxBuyIn,
+    onVacantSeatClick,
 }) => {
     const tableSize = resolveTableSize(maxPlayers);
 
@@ -46,9 +54,20 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
         const player = playersBySeat.get(serverSeat);
 
         if (!player) {
-            seats.push(<Seat key={serverSeat} left={left} top={top} occupied={false} />);
+            seats.push(
+                <Seat
+                    key={serverSeat}
+                    left={left}
+                    top={top}
+                    occupied={false}
+                    onSelect={onVacantSeatClick !== undefined ? () => onVacantSeatClick(serverSeat) : undefined}
+                />
+            );
             continue;
         }
+
+        const isHero = localPlayer !== undefined && player.seat === localPlayer.seat;
+        const maxBuyInMicro = maxBuyIn !== undefined ? Number(maxBuyIn) : 0;
 
         seats.push(
             <Seat
@@ -60,10 +79,13 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 isSmallBlind={player.isSmallBlind || smallBlindPosition === serverSeat}
                 isBigBlind={player.isBigBlind || bigBlindPosition === serverSeat}
                 isDealer={player.isDealer || dealer === serverSeat}
-                name={player.address}
+                isFolded={player.status === PlayerStatus.FOLDED}
+                isHero={isHero}
+                stackFraction={isHero && maxBuyInMicro > 0 ? Number(player.stack) / maxBuyInMicro : undefined}
+                name={shortAddress(player.address)}
                 stack={formatStack(player.stack)}
                 currentBet={player.sumOfBets !== "0" ? formatStack(player.sumOfBets) : undefined}
-                showCards={true}
+                holeCards={player.holeCards ?? undefined}
             />
         );
     }

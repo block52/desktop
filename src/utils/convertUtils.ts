@@ -2,6 +2,7 @@ import { GameListItem, GameFormat, GameVariant, getGameFormat, getGameVariant } 
 
 export interface GameWithFormat {
     gameId: string;
+    name?: string;
     minBuyIn: string;
     maxBuyIn: string;
     minPlayers: number;
@@ -22,6 +23,7 @@ export const convertGameListItemToGameWithFormat = (game: GameListItem): GameWit
     const opts = game.gameOptions;
     return {
         gameId:         game.gameId,
+        name:           game.name,
         minBuyIn:       opts.minBuyIn,
         maxBuyIn:       opts.maxBuyIn,
         minPlayers:     opts.minPlayers,

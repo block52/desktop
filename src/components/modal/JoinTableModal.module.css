@@ -1,0 +1,280 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: hsl(0 0% 0% / 0.5);
+    backdrop-filter: blur(3px);
+}
+
+.modal {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-family: Inter, system-ui, sans-serif;
+    color: var(--text);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.close {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.fact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 12px;
+    background: hsl(240 38% 5.5%);
+    border: 1px solid hsl(245 22% 17%);
+}
+
+.factValue {
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.amountBox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 48px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid hsl(250 28% 22%);
+    background: hsl(240 38% 5.5%);
+    transition: border-color 120ms;
+}
+
+.amountBox:focus-within {
+    border-color: hsl(263 83% 62% / 0.6);
+}
+
+.prefix {
+    font-size: 18px;
+    font-weight: 600;
+    color: rgb(148, 163, 184);
+}
+
+.amountInput {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: var(--text);
+    font: 600 18px/1 Inter, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+
+.amountInput::-webkit-outer-spin-button,
+.amountInput::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+.sliderBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 4px 2px 0;
+}
+
+/* --fill (set inline) paints the track purple up to the thumb. */
+.slider {
+    width: 100%;
+    height: 20px;
+    margin: 0;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.slider::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, hsl(263 83% 62%) var(--fill), hsl(245 22% 16%) var(--fill));
+}
+
+.slider:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    margin-top: -7px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 2px 8px black;
+}
+
+.sliderEnds {
+    display: flex;
+    justify-content: space-between;
+}
+
+.end {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text);
+}
+
+.endRight {
+    align-items: flex-end;
+    text-align: right;
+}
+
+.endValue {
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.end:disabled {
+    cursor: default;
+}
+
+.end:hover:not(:disabled) .endValue {
+    color: hsl(263 90% 80%);
+}
+
+.problem {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: color-mix(in srgb, var(--danger) 70%, white);
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.cancel,
+.confirm {
+    height: 44px;
+    border-radius: 12px;
+    font: 600 14px/1 Inter, system-ui, sans-serif;
+    cursor: pointer;
+}
+
+.cancel {
+    flex: 0 0 auto;
+    padding: 0 20px;
+}
+
+.confirm {
+    flex: 1;
+    border: 0;
+}
+
+.confirm:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ── Sit & Go registration modal (shares this stylesheet) ── */
+
+.fillBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    background: hsl(240 38% 5.5%);
+    border: 1px solid hsl(245 22% 17%);
+}
+
+.fillHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.fillTrack {
+    height: 6px;
+    border-radius: 3px;
+    background: hsl(245 22% 16%);
+    overflow: hidden;
+}
+
+.fillBar {
+    height: 100%;
+    border-radius: 3px;
+    background: hsl(263 83% 62%);
+}
+
+.note {
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgb(148, 163, 184);
+}
+
+.rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 2px;
+    font-size: 13px;
+    color: rgb(148, 163, 184);
+    border-bottom: 1px solid hsl(245 22% 17%);
+}
+
+.row:last-child {
+    border-bottom: 0;
+}
+
+.rowValue {
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}

@@ -9,8 +9,8 @@ interface LiveStatsProps {
 
 const LiveStats: React.FC<LiveStatsProps> = ({ openTables, seatedPlayers, avgBlockTimeSeconds }) => {
     return (
-        <div className={styles.card}>
-            <span className={styles.heading}>Live Now</span>
+        <div className={`pane-lite ${styles.card}`}>
+            <span className="section-label">Live now</span>
             <div className={styles.row}>
                 <div className={styles.stat}>
                     <span className={styles.value}>{openTables}</span>
@@ -24,7 +24,7 @@ const LiveStats: React.FC<LiveStatsProps> = ({ openTables, seatedPlayers, avgBlo
                     <span className={styles.value}>
                         {avgBlockTimeSeconds !== null ? `${avgBlockTimeSeconds.toFixed(1)}s` : "—"}
                     </span>
-                    <span className={styles.label}>Avg block</span>
+                    <span className={styles.label}>Avg. block</span>
                 </div>
             </div>
         </div>

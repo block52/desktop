@@ -1,0 +1,8 @@
+.card {
+    display: block;
+    width: 56px;
+    height: auto;
+    border-radius: 7px;
+    box-shadow: 0 6px 14px -4px rgba(0, 0, 0, 0.55);
+    flex-shrink: 0;
+}
