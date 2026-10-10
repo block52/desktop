@@ -93,3 +93,6 @@ out/
 
 # Git worktrees (superpowers subagent-driven development)
 .worktrees/
+
+# Local tooling output
+.playwright-mcp/
