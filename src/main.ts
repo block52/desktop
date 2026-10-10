@@ -29,7 +29,10 @@ const createWindow = () => {
     );
   }
 
-  mainWindow.webContents.openDevTools();
+  // DevTools only when running from source (yarn start), never in a packaged build.
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools();
+  }
 };
 
 ipcMain.on("open-external", (_event, url: string) => {

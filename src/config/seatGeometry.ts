@@ -70,12 +70,13 @@ const SEAT_PERCENT_RAW: Record<TableSize, Array<{ left: number; top: number }>> 
     ],
 };
 
-// Compresses the raw [0,100] vertical range into [14,90], leaving room
-// above for the table header and below for the action bar — without this,
-// top-row seats overlap the header and bottom-row seats crowd the action
-// bar (a real bug found during this design's visual iteration).
+// Compresses the raw [0,100] vertical range into [14,78]. The felt spans
+// 12%–80% of the seat plane (see TableBoard's .feltBox), so the top seat
+// sits 2% inside its edge and the bottom seat 2% inside the opposite one —
+// seats hug the rail evenly instead of the bottom seat floating below it,
+// and side seats land on the felt's vertical centre (46%).
 const SAFE_TOP_MIN = 14;
-const SAFE_TOP_MAX = 90;
+const SAFE_TOP_MAX = 78;
 
 function compressTop(rawTop: number): number {
     return SAFE_TOP_MIN + (rawTop / 100) * (SAFE_TOP_MAX - SAFE_TOP_MIN);
