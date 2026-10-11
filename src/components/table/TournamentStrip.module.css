@@ -1,0 +1,48 @@
+.strip {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    padding: 8px 16px;
+    font-family: Inter, system-ui, sans-serif;
+}
+
+.item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.prizes {
+    margin-left: auto;
+}
+
+.value {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.countdown {
+    font-size: 12px;
+    font-weight: 600;
+    color: hsl(43 90% 70%);
+}
+
+.overtime {
+    color: hsl(0 80% 68%);
+}
+
+.prize {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.prize b {
+    color: hsl(142 70% 65%);
+    font-weight: 700;
+}

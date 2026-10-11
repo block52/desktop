@@ -34,6 +34,7 @@ import { TableErrorPage } from "../../components/table/TableErrorPage";
 import { TopUpModal } from "../../components/modal/TopUpModal";
 import { topUpTable, type TopUpResult } from "../../hooks/playerActions/topUp";
 import { maxTopUpMicro } from "../../utils/topUpLimits";
+import { TournamentStrip } from "../../components/table/TournamentStrip";
 import { LeaveTableModal } from "../../components/modal/LeaveTableModal";
 import { SitAndGoResultModal } from "../../components/modal/SitAndGoResultModal";
 import { claimWinnings } from "../../hooks/playerActions/claimWinnings";
@@ -405,6 +406,24 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                 settings={settings}
                 onToggleSetting={settings.toggle}
             />
+            {isTournamentBlinds && gameState.gameOptions.blindLevelDuration !== undefined && (
+                <TournamentStrip
+                    level={gameState.gameOptions.blindLevel}
+                    smallBlind={formatChips(gameState.gameOptions.smallBlind)}
+                    bigBlind={formatChips(gameState.gameOptions.bigBlind)}
+                    nextSmallBlind={
+                        gameState.gameOptions.nextSmallBlind !== undefined ? formatChips(gameState.gameOptions.nextSmallBlind) : undefined
+                    }
+                    nextBigBlind={gameState.gameOptions.nextBigBlind !== undefined ? formatChips(gameState.gameOptions.nextBigBlind) : undefined}
+                    levelStartTime={gameState.gameOptions.levelStartTime}
+                    levelDurationMinutes={gameState.gameOptions.blindLevelDuration}
+                    prizes={
+                        gameState.payouts !== undefined
+                            ? gameState.payouts.map(p => ({ place: p.place, amount: `$${(Number(p.amount) / 1_000_000).toFixed(2)}` }))
+                            : []
+                    }
+                />
+            )}
             <div className={styles.boardRow}>
                 <TableBoard
                     players={gameState.players}
