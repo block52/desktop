@@ -222,6 +222,13 @@ export const Seat: React.FC<SeatProps> = ({
         return winningCards.includes(code.toUpperCase()) ? styles.cardWin : styles.cardMuted;
     };
 
+    const betBlock = (extraClass: string) =>
+        currentBet !== undefined && currentBet !== "" ? (
+            <div className={`${styles.betBlock} ${extraClass}`}>
+                {betValue !== undefined && <ChipPile amount={betValue} />}
+                <div className={styles.bet}>{currentBet}</div>
+            </div>
+        ) : null;
     if (isHero) {
         return (
             <div ref={boxRef} className={`${styles.seat} ${styles.hero} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
@@ -231,6 +238,7 @@ export const Seat: React.FC<SeatProps> = ({
                         {holeCards.map((code, i) => (
                             <PlayingCard key={i} code={code} className={`${styles.heroCard} ${cardStateClass(code)}`} />
                         ))}
+                        {betBlock(`${styles.betBeside} ${styles.betRight}`)}
                     </div>
                 )}
                 <WinBadge winner={winner} result={result} />
@@ -248,24 +256,12 @@ export const Seat: React.FC<SeatProps> = ({
                     )}
                 </div>
                 <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} winner={winner} />
-                {currentBet && (
-                <div className={styles.betBlock}>
-                    {betValue !== undefined && <ChipPile amount={betValue} />}
-                    <div className={styles.bet}>{currentBet}</div>
-                </div>
-            )}
+                {!hasCards && betBlock("")}
             </div>
         );
     }
 
     const initials = seatNumber !== undefined ? String(seatNumber) : "?";
-    const betBlock = (extraClass: string) =>
-        currentBet !== undefined && currentBet !== "" ? (
-            <div className={`${styles.betBlock} ${extraClass}`}>
-                {betValue !== undefined && <ChipPile amount={betValue} />}
-                <div className={styles.bet}>{currentBet}</div>
-            </div>
-        ) : null;
     // Seats in the upper half hang their badge and cards above the avatar, away from the table centre.
     const isUpper = top < 50;
 
@@ -291,11 +287,11 @@ export const Seat: React.FC<SeatProps> = ({
                     {holeCards.map((code, i) => (
                         <PlayingCard key={i} code={code} faceDown={parseCard(code) === null} className={`${styles.holeCard} ${cardStateClass(code)}`} />
                     ))}
-                    {/* Upper seats keep the bet beside the cards, off the felt. */}
-                    {isUpper && betBlock(`${styles.betBeside} ${left < 50 ? styles.betLeft : styles.betRight}`)}
+                    {/* The bet sits beside the cards: off the felt for upper seats, clear of the pane edge for lower ones. */}
+                    {betBlock(`${styles.betBeside} ${left < 50 ? styles.betLeft : styles.betRight}`)}
                 </div>
             )}
-            {!(isUpper && hasCards && !isFolded) && betBlock(isUpper ? `${styles.betSide} ${left < 50 ? styles.betLeft : styles.betRight}` : "")}
+            {!(hasCards && !isFolded) && betBlock(isUpper ? `${styles.betSide} ${left < 50 ? styles.betLeft : styles.betRight}` : "")}
         </div>
     );
 };

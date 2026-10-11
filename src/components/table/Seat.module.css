@@ -563,11 +563,12 @@
 }
 
 /* With hole cards showing, the bet sits right beside them (the cards container is the anchor). */
-.upper .cards {
+.cards,
+.heroCards {
     position: relative;
 }
 
-.upper .betBeside {
+.betBeside {
     position: absolute;
     top: 50%;
     margin: 0;
@@ -575,11 +576,11 @@
     transform: translateY(-50%);
 }
 
-.upper .betBeside.betRight {
+.betBeside.betRight {
     left: calc(100% + 10px);
 }
 
-.upper .betBeside.betLeft {
+.betBeside.betLeft {
     right: calc(100% + 10px);
 }
 
