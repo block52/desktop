@@ -76,17 +76,7 @@ const SEAT_PERCENT_RAW: Record<TableSize, Array<{ left: number; top: number }>> 
 // seats hug the rail evenly instead of the bottom seat floating below it,
 // and side seats land on the felt's vertical centre (46%).
 const SAFE_TOP_MIN = 14;
-const SAFE_TOP_MAX = 58;
-
-// A seat is its avatar plus a nameplate and hole cards hanging below/around it, so the
-// avatar's anchor sits well inside the rail: bottom-row seats are raised so their cards
-// land on the felt, and side seats are pulled in so their cards do not overhang the rail.
-const SAFE_LEFT_MIN = 8;
-const SAFE_LEFT_MAX = 92;
-
-function compressLeft(rawLeft: number): number {
-    return SAFE_LEFT_MIN + (rawLeft / 100) * (SAFE_LEFT_MAX - SAFE_LEFT_MIN);
-}
+const SAFE_TOP_MAX = 78;
 
 function compressTop(rawTop: number): number {
     return SAFE_TOP_MIN + (rawTop / 100) * (SAFE_TOP_MAX - SAFE_TOP_MIN);
@@ -108,7 +98,7 @@ function compressTop(rawTop: number): number {
 export function getSeatPercent(tableSize: TableSize, uiPosition: number): { left: number; top: number } {
     const raw = SEAT_PERCENT_RAW[tableSize][uiPosition];
     const rawTop = tableSize === 9 && (uiPosition === 0 || uiPosition === 1 || uiPosition === 8) ? 98.3 : raw.top;
-    return { left: compressLeft(raw.left), top: compressTop(rawTop) };
+    return { left: raw.left, top: compressTop(rawTop) };
 }
 
 /**
