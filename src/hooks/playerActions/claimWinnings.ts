@@ -3,7 +3,7 @@ import type { NetworkEndpoints } from "../../context/NetworkContext";
 import { getSigningClient, withMoneyMoverRetry } from "../../utils/cosmos/client";
 import { finishingOrderFromState } from "../../utils/cosmos/settlementTx";
 
-export interface ClaimWinningsResult {
+interface ClaimWinningsResult {
     hash: string;
     gameId: string;
 }

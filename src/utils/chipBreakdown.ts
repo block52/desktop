@@ -4,7 +4,7 @@
  * a single white chip.
  */
 
-export interface ChipDenomination {
+interface ChipDenomination {
     value: number;
     file: string;
 }
@@ -24,7 +24,7 @@ const CHIP_DENOMINATIONS: ChipDenomination[] = [
     { value: 1, file: "1chip" }
 ];
 
-export interface ChipStack {
+interface ChipStack {
     value: number;
     file: string;
     /** True number of chips of this denomination. */
@@ -33,8 +33,8 @@ export interface ChipStack {
     visibleCount: number;
 }
 
-export const MAX_STACKS = 4;
-export const MAX_CHIPS_PER_STACK = 5;
+const MAX_STACKS = 4;
+const MAX_CHIPS_PER_STACK = 5;
 
 /** Decompose an amount into at most MAX_STACKS denomination piles, largest first. */
 export function decomposeAmount(amount: number): ChipStack[] {

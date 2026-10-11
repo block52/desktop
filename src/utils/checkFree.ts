@@ -4,7 +4,7 @@ import { TexasHoldemRound, type ActionDTO, type PlayerDTO } from "@block52/poker
 const CHIP_ACTIONS = new Set<string>(["post-small-blind", "post-big-blind", "bet", "call", "raise", "all-in"]);
 
 /** Chips a player committed in the current betting round (preflop counts the blinds posted in the ante round). */
-export function currentRoundContribution(playerId: string, round: string, previousActions: readonly ActionDTO[]): bigint {
+function currentRoundContribution(playerId: string, round: string, previousActions: readonly ActionDTO[]): bigint {
     const isPreflop = round === TexasHoldemRound.ANTE || round === TexasHoldemRound.PREFLOP;
     return previousActions
         .filter(

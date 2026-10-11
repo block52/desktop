@@ -12,7 +12,7 @@ export interface SeatBannerAction {
 
 export type SeatStatusLabel = "FOLD" | "ALL IN" | "SITTING OUT";
 
-export interface SeatBannerProps {
+interface SeatBannerProps {
     lastAction?: SeatBannerAction;
     /** This seat is to act: shows the turn countdown. */
     isActive?: boolean;

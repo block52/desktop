@@ -1,4 +1,4 @@
-export interface PageSlice<T> {
+interface PageSlice<T> {
     items: T[];
     /** Page actually shown, clamped into [1, pageCount]. */
     page: number;

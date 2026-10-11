@@ -59,16 +59,16 @@ export function formatAmount(micro: string, microPerUnit = 1_000_000): string {
 }
 
 export function actionMin(legalActions: LegalActionDTO[], action: PlayerActionType): string | null {
-    const match = legalActions.find(a => a.action === action);
+    const match = legalActions.find(candidate => candidate.action === action);
     return match?.min ?? null;
 }
 
 export function primaryAction(legalActions: LegalActionDTO[]): { type: "bet" | "raise"; min: string; max: string } | null {
-    const bet = legalActions.find(a => a.action === PlayerActionType.BET && a.min !== undefined && a.max !== undefined);
+    const bet = legalActions.find(candidate => candidate.action === PlayerActionType.BET && candidate.min !== undefined && candidate.max !== undefined);
     if (bet !== undefined && bet.min !== undefined && bet.max !== undefined) {
         return { type: "bet", min: bet.min, max: bet.max };
     }
-    const raise = legalActions.find(a => a.action === PlayerActionType.RAISE && a.min !== undefined && a.max !== undefined);
+    const raise = legalActions.find(candidate => candidate.action === PlayerActionType.RAISE && candidate.min !== undefined && candidate.max !== undefined);
     if (raise !== undefined && raise.min !== undefined && raise.max !== undefined) {
         return { type: "raise", min: raise.min, max: raise.max };
     }

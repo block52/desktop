@@ -80,19 +80,13 @@ function getSnapshot(): GameSettings {
     return snapshot;
 }
 
-export function setGameSetting(key: GameSettingKey, value: boolean): void {
+function setGameSetting(key: GameSettingKey, value: boolean): void {
     snapshot = { ...snapshot, [key]: value };
     try {
         localStorage.setItem(STORAGE_KEYS[key], String(value));
     } catch {
         // Storage unavailable: the setting applies for this session only.
     }
-    listeners.forEach(listener => listener());
-}
-
-/** Test hook: re-read settings from storage. */
-export function reloadGameSettings(): void {
-    snapshot = readAll();
     listeners.forEach(listener => listener());
 }
 

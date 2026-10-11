@@ -35,18 +35,21 @@ export function useChipTables(hands: PlayerHand[]): Map<string, boolean> {
     useEffect(() => {
         const client = getCosmosClient(currentNetwork);
         if (!client) return;
-        const missing = [...new Set(hands.map(h => h.game_id))].filter(id => !requestedTables.current.has(id));
+        const missing = [...new Set(hands.map(hand => hand.game_id))].filter(id => !requestedTables.current.has(id));
         for (const id of missing) {
             requestedTables.current.add(id);
             client
                 .getGame(id)
                 .then(response => {
                     if (!response.game || response.game === "null") return;
-                    const parsed: GameStateResponseDTO = JSON.parse(response.game);
-                    const isChips = parsed.format === GameFormat.SIT_AND_GO || isTournamentFormat(parsed.format);
-                    setChipTables(prev => new Map(prev).set(id, isChips));
+                    const parsed: unknown = JSON.parse(response.game);
+                    if (typeof parsed !== "object" || parsed === null || !("format" in parsed)) return;
+                    const { format } = parsed as GameStateResponseDTO;
+                    const isChips = format === GameFormat.SIT_AND_GO || isTournamentFormat(format);
+                    setChipTables(previous => new Map(previous).set(id, isChips));
                 })
-                .catch(() => undefined);
+                // Forget the attempt so a later hands update retries this table.
+                .catch(() => requestedTables.current.delete(id));
         }
     }, [hands, currentNetwork]);
 
@@ -63,6 +66,8 @@ export function useMyHands(address: string | null): MyHandsState {
     const [nonce, setNonce] = useState(0);
     const [loadedCount, setLoadedCount] = useState(0);
     const [estimated, setEstimated] = useState(false);
+    // Bumped whenever the list is reset, so a page still loading for the old wallet is dropped.
+    const generation = useRef(0);
 
     // Fresh list on wallet / network change or reload.
     useEffect(() => {
@@ -70,6 +75,7 @@ export function useMyHands(address: string | null): MyHandsState {
         setTotal(0);
         setError("");
         setLoadedCount(0);
+        generation.current += 1;
         if (address === null) return;
         const controller = new AbortController();
         setIsLoading(true);
@@ -92,22 +98,28 @@ export function useMyHands(address: string | null): MyHandsState {
     const loadMore = useCallback(() => {
         if (address === null || isLoading) return;
         setIsLoading(true);
+        const requestedGeneration = generation.current;
         fetchWalletHands(address, PAGE_SIZE, loadedCount)
             .then(res => {
+                if (generation.current !== requestedGeneration) return;
                 setHands(prev => {
-                    const seen = new Set(prev.map(h => `${h.game_id}#${h.hand_number}`));
-                    return [...prev, ...res.data.filter(h => !seen.has(`${h.game_id}#${h.hand_number}`))];
+                    const seen = new Set(prev.map(hand => `${hand.game_id}#${hand.hand_number}`));
+                    return [...prev, ...res.data.filter(hand => !seen.has(`${hand.game_id}#${hand.hand_number}`))];
                 });
-                setLoadedCount(c => c + res.data.length);
+                setLoadedCount(count => count + res.data.length);
                 setTotal(res.total);
             })
-            .catch(err => setError(err instanceof Error ? err.message : "Failed to load hands"))
-            .finally(() => setIsLoading(false));
+            .catch(err => {
+                if (generation.current === requestedGeneration) setError(err instanceof Error ? err.message : "Failed to load hands");
+            })
+            .finally(() => {
+                if (generation.current === requestedGeneration) setIsLoading(false);
+            });
     }, [address, isLoading, loadedCount]);
 
     const chipTables = useChipTables(hands);
 
-    const reload = useCallback(() => setNonce(n => n + 1), []);
+    const reload = useCallback(() => setNonce(count => count + 1), []);
 
     return { hands, total, isLoading, error, hasMore: hands.length < total, estimated, loadMore, reload, chipTables };
 }

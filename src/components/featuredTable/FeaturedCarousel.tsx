@@ -48,7 +48,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ game }) => {
             <FeaturedTable game={slide.game} />
         ) : (
             (() => {
-                const sng = upcoming.find(u => u.id === slide.id);
+                const sng = upcoming.find(candidate => candidate.id === slide.id);
                 return sng !== undefined ? <UpcomingSngSlide sng={sng} /> : null;
             })()
         );
@@ -62,15 +62,15 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ game }) => {
                         ‹
                     </button>
                     <div className={styles.dots} role="tablist" aria-label="Featured tournaments">
-                        {slides.map((s, i) => (
+                        {slides.map((slide, position) => (
                             <button
-                                key={s.kind === "live" ? "live" : s.id}
+                                key={slide.kind === "live" ? "live" : slide.id}
                                 type="button"
                                 role="tab"
-                                aria-selected={i === index}
-                                aria-label={`Slide ${i + 1} of ${slides.length}`}
-                                className={`${styles.dot} ${i === index ? styles.dotOn : ""}`}
-                                onClick={() => setRequested(i)}
+                                aria-selected={position === index}
+                                aria-label={`Slide ${position + 1} of ${slides.length}`}
+                                className={`${styles.dot} ${position === index ? styles.dotOn : ""}`}
+                                onClick={() => setRequested(position)}
                             />
                         ))}
                     </div>

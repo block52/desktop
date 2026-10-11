@@ -3,7 +3,7 @@ import styles from "./ChipPile.module.css";
 
 const CHIP_IMAGES = import.meta.glob<string>("../../assets/chips/*.svg", { eager: true, query: "?url", import: "default" });
 
-export interface ChipPileProps {
+interface ChipPileProps {
     /** Whole-dollar (or tournament chip) value to draw. */
     amount: number;
     className?: string;

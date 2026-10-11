@@ -4,7 +4,7 @@ import { indexerApi } from "../utils/indexer";
 import { summariseSession, type LastSessionSummary } from "../utils/lastSession";
 import { handsInSession } from "../utils/sessionHands";
 
-export interface LastSessionState {
+interface LastSessionState {
     session: LastSessionSummary | null;
     isLoading: boolean;
     error: string;

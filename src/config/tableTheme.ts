@@ -32,6 +32,6 @@ export function saveTableTheme(theme: TableTheme): void {
 }
 
 export function nextTableTheme(theme: TableTheme): TableTheme {
-    const index = TABLE_THEMES.findIndex(t => t.id === theme);
+    const index = TABLE_THEMES.findIndex(option => option.id === theme);
     return TABLE_THEMES[(index + 1) % TABLE_THEMES.length].id;
 }

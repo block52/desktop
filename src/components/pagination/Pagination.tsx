@@ -50,20 +50,20 @@ export const Pagination: React.FC<PaginationProps> = ({ slice, pageSize, onPageC
                     >
                         ‹
                     </button>
-                    {pageButtons(page, pageCount).map((p, i) =>
-                        p === null ? (
-                            <span key={`gap-${i}`} className={styles.gap} aria-hidden="true">
+                    {pageButtons(page, pageCount).map((pageNumber, position) =>
+                        pageNumber === null ? (
+                            <span key={`gap-${position}`} className={styles.gap} aria-hidden="true">
                                 …
                             </span>
                         ) : (
                             <button
-                                key={p}
+                                key={pageNumber}
                                 type="button"
-                                className={`btn-ghost ${styles.pageButton} ${p === page ? styles.current : ""}`}
-                                onClick={() => onPageChange(p)}
-                                aria-current={p === page ? "page" : undefined}
+                                className={`btn-ghost ${styles.pageButton} ${pageNumber === page ? styles.current : ""}`}
+                                onClick={() => onPageChange(pageNumber)}
+                                aria-current={pageNumber === page ? "page" : undefined}
                             >
-                                {p}
+                                {pageNumber}
                             </button>
                         )
                     )}

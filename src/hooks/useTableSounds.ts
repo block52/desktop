@@ -18,7 +18,7 @@ export function useTableSounds(args: {
 
     useEffect(() => {
         if (previousActions === undefined) return;
-        const newest = previousActions.reduce((max, a) => (a.index > max ? a.index : max), -1);
+        const newest = previousActions.reduce((max, action) => (action.index > max ? action.index : max), -1);
         if (lastIndexRef.current === null) {
             lastIndexRef.current = newest;
             return;
@@ -26,7 +26,7 @@ export function useTableSounds(args: {
         if (newest > lastIndexRef.current) {
             if (actionSounds) {
                 // Newest action wins when several arrive in one frame.
-                const latest = previousActions.find(a => a.index === newest);
+                const latest = previousActions.find(action => action.index === newest);
                 const sound = latest !== undefined ? soundForAction(latest.action) : null;
                 if (sound !== null) playTableSound(sound);
             }

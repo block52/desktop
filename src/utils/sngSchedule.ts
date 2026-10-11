@@ -218,6 +218,19 @@ export function parseSngSchedule(raw: unknown): SngTournament[] {
             }
             return value;
         };
+        const requireHttpsUrl = (field: string): string => {
+            const value = requireString(field);
+            let protocol: string;
+            try {
+                protocol = new URL(value).protocol;
+            } catch {
+                throw new Error(`SNG schedule entry ${index} field "${field}" must be an https URL`);
+            }
+            if (protocol !== "https:") {
+                throw new Error(`SNG schedule entry ${index} field "${field}" must be an https URL`);
+            }
+            return value;
+        };
         const requireNumber = (field: string, min: number, max: number): number => {
             const value = t[field];
             if (typeof value !== "number" || !Number.isInteger(value) || value < min || value > max) {
@@ -234,7 +247,7 @@ export function parseSngSchedule(raw: unknown): SngTournament[] {
             hour: requireNumber("hour", 0, 23),
             minute: requireNumber("minute", 0, 59),
             timeZone: requireString("timeZone"),
-            link: requireString("link")
+            link: requireHttpsUrl("link")
         };
     });
 }

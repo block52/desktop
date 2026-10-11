@@ -1,6 +1,6 @@
 const SOUND_FILES = import.meta.glob<string>("../assets/sounds/*.mp3", { eager: true, query: "?url", import: "default" });
 
-export type TableSound = "all-in" | "bet-raise" | "call" | "check" | "fold" | "show" | "chip-notification";
+type TableSound = "all-in" | "bet-raise" | "call" | "check" | "fold" | "show" | "chip-notification";
 
 /** The sound for a table action (bet and raise share one; muck is silent). Null when the action has none. */
 export function soundForAction(action: string): TableSound | null {

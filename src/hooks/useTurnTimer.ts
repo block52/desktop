@@ -4,7 +4,7 @@ import { latestActionTimestampMs, secondsRemaining, turnId } from "../utils/turn
 
 const DEFAULT_TIMEOUT_SECONDS = 30;
 
-export interface TurnTimer {
+interface TurnTimer {
     /** Identifies the current turn; changes when anyone acts or the seat to act changes. */
     turnKey: string;
     /** Seconds the seat to act has in total. */

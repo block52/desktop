@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { PlayerStatus, type PlayerDTO } from "@block52/poker-vm-sdk";
-import { getSeatPercent, resolveTableSize, seatToUiPosition } from "../../config/seatGeometry";
+import { DEFAULT_FELT_ASPECT, FELT_HEIGHT_FRACTION, getSeatPercent, resolveTableSize, seatToUiPosition } from "../../config/seatGeometry";
 import { Seat } from "./Seat";
 import type { SeatStatusLabel } from "./SeatBanner";
 import styles from "./PlayerSeating.module.css";
@@ -73,10 +73,24 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
 }) => {
     const tableSize = resolveTableSize(maxPlayers);
 
+    // The felt's real shape, so seats around it stay evenly spaced in any window.
+    const [feltAspect, setFeltAspect] = useState(DEFAULT_FELT_ASPECT);
+    const planeRef = useCallback((plane: HTMLDivElement | null) => {
+        if (plane === null) return;
+        const measure = () => {
+            if (plane.clientHeight === 0) return;
+            setFeltAspect(Math.min(Math.max(plane.clientWidth / (plane.clientHeight * FELT_HEIGHT_FRACTION), 1.2), 2.6));
+        };
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(plane);
+        return () => observer.disconnect();
+    }, []);
+
     // The hero's own seat anchors the rotation. If the local player isn't
     // seated (spectating, or hasn't joined yet), fall back to no rotation
     // (seat 1 renders at position 0) rather than guessing.
-    const localPlayer = localAddress ? players.find(p => p.address.toLowerCase() === localAddress) : undefined;
+    const localPlayer = localAddress ? players.find(player => player.address.toLowerCase() === localAddress) : undefined;
     const heroServerSeat = localPlayer?.seat ?? 1;
 
     const playersBySeat = new Map<number, PlayerDTO>();
@@ -87,7 +101,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     const seats = [];
     for (let serverSeat = 1; serverSeat <= tableSize; serverSeat++) {
         const uiPosition = seatToUiPosition(serverSeat, heroServerSeat, tableSize);
-        const { left, top } = getSeatPercent(tableSize, uiPosition);
+        const { left, top } = getSeatPercent(tableSize, uiPosition, feltAspect);
         const player = playersBySeat.get(serverSeat);
 
         if (!player) {
@@ -152,7 +166,11 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
         );
     }
 
-    return <div className={styles.plane}>{seats}</div>;
+    return (
+        <div ref={planeRef} className={styles.plane}>
+            {seats}
+        </div>
+    );
 };
 
 export default PlayerSeating;

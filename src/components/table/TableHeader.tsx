@@ -52,6 +52,40 @@ const SETTING_ROWS: ReadonlyArray<{ key: GameSettingKey; label: string; hint: st
     { key: "autoNewHand", label: "Auto new hand", hint: "Start the next hand automatically." }
 ];
 
+const RefreshIcon: React.FC = () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 12a9 9 0 1 1-3-6.7" />
+        <path d="M21 4v5h-5" />
+    </svg>
+);
+
+interface SettingRowsProps {
+    settings: GameSettings;
+    onToggle: (key: GameSettingKey) => void;
+    showHints?: boolean;
+}
+
+const SettingRows: React.FC<SettingRowsProps> = ({ settings, onToggle, showHints = false }) => (
+    <>
+        {SETTING_ROWS.map(row => (
+            <button
+                key={row.key}
+                type="button"
+                role="menuitemcheckbox"
+                aria-checked={settings[row.key]}
+                className={styles.settingRow}
+                onClick={() => onToggle(row.key)}
+            >
+                <span className={styles.settingText}>
+                    <span className={styles.settingLabel}>{row.label}</span>
+                    {showHints && <span className={styles.settingHint}>{row.hint}</span>}
+                </span>
+                <span className={`${styles.switch} ${settings[row.key] ? styles.switchOn : ""}`} aria-hidden="true" />
+            </button>
+        ))}
+    </>
+);
+
 export const TableHeader: React.FC<TableHeaderProps> = ({
     tableLabel,
     tableId,
@@ -155,10 +189,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                         aria-label="Refresh balance"
                         title="Refresh balance"
                     >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 12a9 9 0 1 1-3-6.7" />
-                            <path d="M21 4v5h-5" />
-                        </svg>
+                        <RefreshIcon />
                     </button>
                 </span>
             )}
@@ -167,12 +198,12 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 className={`${styles.verifiedPill} ${shuffleSeed === null ? styles.pendingPill : ""} ${styles.wide}`}
                 title={
                     shuffleSeed === null
-                        ? "The chain has not recorded this hand's deck seed yet."
-                        : `Hand #${handNumber}'s deck seed is recorded on-chain: ${shuffleSeed}. The deck is dealt from it, so the shuffle can be audited after the hand.`
+                        ? "No deck seed has been recorded for this hand yet."
+                        : `Hand #${handNumber}'s deck seed is on record: ${shuffleSeed}. The hand's shuffle can be audited against it after the hand.`
                 }
             >
                 <span className={styles.verifiedDot} />
-                {shuffleSeed === null ? "Seed pending" : "Seed on-chain"}
+                {shuffleSeed === null ? "Seed pending" : "Seed recorded"}
             </span>
             {blockHeight !== null && (
                 <span className={`${styles.blockHeight} ${styles.wide}`}>#{Number(blockHeight).toLocaleString()}</span>
@@ -208,22 +239,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                     </button>
                     {settingsOpen && (
                         <div className={`pane ${styles.settingsMenu}`} role="menu">
-                            {SETTING_ROWS.map(row => (
-                                <button
-                                    key={row.key}
-                                    type="button"
-                                    role="menuitemcheckbox"
-                                    aria-checked={settings[row.key]}
-                                    className={styles.settingRow}
-                                    onClick={() => onToggleSetting(row.key)}
-                                >
-                                    <span className={styles.settingText}>
-                                        <span className={styles.settingLabel}>{row.label}</span>
-                                        <span className={styles.settingHint}>{row.hint}</span>
-                                    </span>
-                                    <span className={`${styles.switch} ${settings[row.key] ? styles.switchOn : ""}`} aria-hidden="true" />
-                                </button>
-                            ))}
+                            <SettingRows settings={settings} onToggle={onToggleSetting} showHints />
                         </div>
                     )}
                 </div>
@@ -236,7 +252,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                     title="Change table theme"
                     aria-label="Change table theme"
                 >
-                    {TABLE_THEMES.find(t => t.id === theme)?.label}
+                    {TABLE_THEMES.find(option => option.id === theme)?.label}
                 </button>
             )}
             {onLeave !== undefined && (
@@ -269,16 +285,13 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                                         {wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}
                                     </span>
                                     <button type="button" className={styles.walletRefresh} onClick={wallet.onRefresh} disabled={wallet.isRefreshing} aria-label="Refresh balance">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M21 12a9 9 0 1 1-3-6.7" />
-                                            <path d="M21 4v5h-5" />
-                                        </svg>
+                                        <RefreshIcon />
                                     </button>
                                 </div>
                             )}
                             {blockHeight !== null && <div className={styles.moreInfo}>Block #{Number(blockHeight).toLocaleString()}</div>}
                             {isCreatedByYou && <div className={styles.moreInfo}>Created by you</div>}
-                            <div className={styles.moreInfo}>{shuffleSeed === null ? "Deck seed pending" : `Deck seed recorded on-chain · ${shuffleSeed.slice(0, 8)}…`}</div>
+                            <div className={styles.moreInfo}>{shuffleSeed === null ? "Deck seed pending" : `Deck seed recorded · ${shuffleSeed.slice(0, 8)}…`}</div>
                         </div>
                         <div className={styles.moreSection}>
                             <button type="button" role="menuitem" className={styles.moreItem} onClick={() => { setMoreOpen(false); onToggleLog(); }}>
@@ -287,7 +300,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                             {theme !== undefined && onCycleTheme !== undefined && (
                                 <button type="button" role="menuitem" className={styles.moreItem} onClick={onCycleTheme}>
                                     Table theme
-                                    <span className={styles.moreValue}>{TABLE_THEMES.find(t => t.id === theme)?.label}</span>
+                                    <span className={styles.moreValue}>{TABLE_THEMES.find(option => option.id === theme)?.label}</span>
                                 </button>
                             )}
                             {onLeave !== undefined && (
@@ -298,21 +311,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                         </div>
                         {settings !== undefined && onToggleSetting !== undefined && (
                             <div className={styles.moreSection}>
-                                {SETTING_ROWS.map(row => (
-                                    <button
-                                        key={row.key}
-                                        type="button"
-                                        role="menuitemcheckbox"
-                                        aria-checked={settings[row.key]}
-                                        className={styles.settingRow}
-                                        onClick={() => onToggleSetting(row.key)}
-                                    >
-                                        <span className={styles.settingText}>
-                                            <span className={styles.settingLabel}>{row.label}</span>
-                                        </span>
-                                        <span className={`${styles.switch} ${settings[row.key] ? styles.switchOn : ""}`} aria-hidden="true" />
-                                    </button>
-                                ))}
+                                <SettingRows settings={settings} onToggle={onToggleSetting} />
                             </div>
                         )}
                     </div>

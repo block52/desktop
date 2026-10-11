@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { blindLevelSecondsRemaining, formatCountdown } from "../../utils/blindLevel";
 import styles from "./TournamentStrip.module.css";
 
-export interface TournamentStripProps {
+interface TournamentStripProps {
     /** 0-based level reported by the chain; undefined before the tournament starts. */
     level: number | undefined;
     smallBlind: string;
@@ -66,9 +66,9 @@ export const TournamentStrip: React.FC<TournamentStripProps> = ({
                 <div className={`${styles.item} ${styles.prizes}`}>
                     <span className="section-label">Prizes</span>
                     <span className={styles.value}>
-                        {prizes.map(p => (
-                            <span key={p.place} className={styles.prize}>
-                                {ordinal(p.place)} <b>{p.amount}</b>
+                        {prizes.map(prize => (
+                            <span key={prize.place} className={styles.prize}>
+                                {ordinal(prize.place)} <b>{prize.amount}</b>
                             </span>
                         ))}
                     </span>

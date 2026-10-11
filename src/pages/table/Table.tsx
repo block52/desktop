@@ -45,7 +45,8 @@ import { claimWinnings } from "../../hooks/playerActions/claimWinnings";
 import { useGameSettings } from "../../hooks/useGameSettings";
 import { useTableSounds } from "../../hooks/useTableSounds";
 import { useTurnTimer } from "../../hooks/useTurnTimer";
-import { useAutoFold, useAutoMuck, useAutoShowCards, usePreCheck } from "../../hooks/playerActions/useAutoActions";
+import { useSngResultDismissal } from "../../hooks/useSngResultDismissal";
+import { useTableAutoPlay } from "../../hooks/playerActions/useTableAutoPlay";
 import { postSmallBlind } from "../../hooks/playerActions/postSmallBlind";
 import { postBigBlind } from "../../hooks/playerActions/postBigBlind";
 import { dealCardsWithEntropy } from "../../hooks/playerActions/dealCards";
@@ -92,14 +93,13 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     /** Which action is in flight ("Call", "Bet", ...), so its button can show a spinner. */
     const [pendingAction, setPendingAction] = useState<string | null>(null);
     /** An action that was accepted but whose result has not reached the table yet. */
-    const [awaitingFrame, setAwaitingFrame] = useState<{ label: string; actionCount: number } | null>(null);
+    const [awaitingFrame, setAwaitingFrame] = useState<{ label: string; actionCount: number | undefined } | null>(null);
     /** What the game is doing for the player automatically ("Posting small blind…"). */
     const [autoActivity, setAutoActivity] = useState<string | null>(null);
     const [logOpen, setLogOpen] = useState<boolean>(false);
     const [leaveOpen, setLeaveOpen] = useState<boolean>(false);
     const [topUpOpen, setTopUpOpen] = useState<boolean>(false);
     /** Tables whose Sit & Go result dialog the player closed (remembered per table and wallet). */
-    const [resultDismissed, setResultDismissed] = useState<Record<string, boolean>>({});
     const settings = useGameSettings();
     // Actions pause while the live feed is stale: the table on screen may not match the chain.
     const isFeedStale = connection.status !== "live";
@@ -119,7 +119,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
 
     const hasWallet = !!getCosmosAddress();
     const localAddress = getCosmosAddress()?.toLowerCase() ?? null;
-    const usdcBalanceAmount = cosmosBalance.find(b => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)?.amount ?? "0";
+    const usdcBalanceAmount = cosmosBalance.find(balance => balance.denom === COSMOS_CONSTANTS.TOKEN_DENOM)?.amount ?? "0";
 
     useEffect(() => {
         if (!id || !hasWallet) {
@@ -138,6 +138,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         }
     }, [validationMessage, showWarning]);
 
+    // Actions already on the table when a submission goes out; the table has moved on once this changes.
+    const actionCountNow = gameState?.previousActions.length;
     const actionInFlight = useRef(false);
     const runAction = async (label: string, action: () => Promise<PlayerActionResult | JoinTableResult | LeaveTableResult | TopUpResult>): Promise<boolean> => {
         // State updates land after the render, so a fast double click would slip through `disabled`.
@@ -149,7 +151,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             await action();
             // Accepted by the chain, but the table only moves on when its next frame arrives: keep the
             // spinner until then (or the safety timeout below), so the click never looks like it did nothing.
-            setAwaitingFrame({ label, actionCount: gameState?.previousActions.length ?? 0 });
+            setAwaitingFrame({ label, actionCount: actionCountNow });
             showSuccess(`${label} confirmed`);
             return true;
         } catch (err) {
@@ -187,7 +189,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         blindType => {
             setAutoActivity(null);
             // Accepted by the chain; keep the button working until the table's next frame shows it.
-            setAwaitingFrame({ label: blindType === "small" ? "Post small blind" : "Post big blind", actionCount: gameState?.previousActions.length ?? 0 });
+            setAwaitingFrame({ label: blindType === "small" ? "Post small blind" : "Post big blind", actionCount: actionCountNow });
             showSuccess(`Posted ${blindType} blind`);
         },
         err => {
@@ -205,7 +207,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         () => setAutoActivity("Dealing cards…"),
         () => {
             setAutoActivity(null);
-            setAwaitingFrame({ label: "Deal", actionCount: gameState?.previousActions.length ?? 0 });
+            setAwaitingFrame({ label: "Deal", actionCount: actionCountNow });
             showSuccess("Cards dealt");
         },
         err => {
@@ -231,7 +233,6 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     );
 
     // Clear the "waiting for the table" spinner once a new action lands, or after a safety timeout.
-    const actionCountNow = gameState?.previousActions.length;
     useEffect(() => {
         if (awaitingFrame === null) return;
         if (actionCountNow !== undefined && actionCountNow !== awaitingFrame.actionCount) {
@@ -248,16 +249,18 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const hasShowAction = hasAction(legalActions.legalActions, PlayerActionType.SHOW);
     const isUsersTurn = legalActions.isPlayerTurn;
 
-    const handSeed = useHandSeed(tableId, gameState?.handNumber ?? null);
+    const handSeed = useHandSeed(tableId, gameState !== undefined ? gameState.handNumber : null);
 
     // ---- Sitting in (cash): what the panel offers, and the automatic sit-in for a fresh joiner ----
     const seatDisplay = getPlayerActionDisplay({
         playerStatus: legalActions.playerStatus,
         sitInMethod: legalActions.sitInMethod,
         legalActions: legalActions.legalActions,
-        totalSeatedPlayers: gameState?.players.length ?? 0,
-        handNumber: gameState?.handNumber ?? 0,
-        hasActivePlayers: gameState?.players.some(p => p.status === PlayerStatus.ACTIVE || p.status === PlayerStatus.ALL_IN) ?? false,
+        totalSeatedPlayers: gameState !== undefined ? gameState.players.length : 0,
+        handNumber: gameState !== undefined ? gameState.handNumber : 0,
+        hasActivePlayers:
+            gameState !== undefined &&
+            gameState.players.some(player => player.status === PlayerStatus.ACTIVE || player.status === PlayerStatus.ALL_IN),
         sitInOptions: settings.sitInOptions,
         gameFormat
     });
@@ -269,7 +272,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             setAutoActivity("Sitting you in…");
             sitIn(tableId, currentNetwork)
                 .then(() => {
-                    setAwaitingFrame({ label: "Sit in", actionCount: gameState?.previousActions.length ?? 0 });
+                    setAwaitingFrame({ label: "Sit in", actionCount: actionCountNow });
                 })
                 .catch(err => showError(err instanceof Error ? err.message : String(err)))
                 .finally(() => setAutoActivity(null));
@@ -277,7 +280,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         if (!wantsAutoSitIn) {
             autoSitInFired.current = false;
         }
-    }, [wantsAutoSitIn, tableId, currentNetwork, showError, gameState?.previousActions.length]);
+    }, [wantsAutoSitIn, tableId, currentNetwork, showError, actionCountNow]);
     useTableSounds({
         previousActions: gameState?.previousActions,
         isUsersTurn,
@@ -285,34 +288,25 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         turnSound: settings.turnNotificationSound
     });
 
-    // Fold (or check when free) when the turn clock runs out; show cards the same way at showdown.
-    useAutoFold({
-        enabled: settings.autoFold,
+    // Fold / check / show / muck / pre-check on the player's behalf. They share runAction's in-flight guard,
+    // so they can never overlap each other or a click.
+    useTableAutoPlay({
+        settings,
         hasFoldAction,
         hasCheckAction,
-        isUsersTurn,
-        timeRemaining: turn.timeRemaining,
-        isBusy: isSubmitting || isFeedStale,
-        fold: () => foldHand(tableId, currentNetwork),
-        check: () => checkHand(tableId, currentNetwork),
-        onSubmitted: action => showWarning(action === "check" ? "Time ran out — checked for you" : "Time ran out — folded for you"),
-        onError: err => showError(err.message)
-    });
-    useAutoShowCards({
+        hasMuckAction,
         hasShowAction,
         isUsersTurn,
         timeRemaining: turn.timeRemaining,
-        isBusy: isSubmitting || isFeedStale,
+        isBusy: isSubmitting || isFeedStale || awaitingFrame !== null,
+        runAction,
+        fold: () => foldHand(tableId, currentNetwork),
+        check: () => checkHand(tableId, currentNetwork),
         show: () => showCards(tableId, currentNetwork),
-        onError: err => showError(err.message)
-    });
-    useAutoMuck({
-        enabled: settings.autoMuck,
-        hasMuckAction,
-        isUsersTurn,
-        isBusy: isSubmitting || isFeedStale,
         muck: () => muckCards(tableId, currentNetwork),
-        onError: err => showError(err.message)
+        queuedPreCheck: preCheckQueued,
+        onPreCheckResolved: () => setPreCheckQueued(false),
+        onTimedOut: showWarning
     });
 
     // ---- Sit out (cash games only: tournament seats never sit out voluntarily) ----
@@ -343,7 +337,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     );
 
     // "Checking is free for me right now" — offered before the turn, only while seated in the hand.
-    const myPlayer = gameState?.players.find(p => p.address.toLowerCase() === localAddress);
+    const myPlayer = gameState?.players.find(player => player.address.toLowerCase() === localAddress);
     const isCheckFree =
         gameState !== undefined &&
         myPlayer !== undefined &&
@@ -354,16 +348,6 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     if (preCheckQueued && !preCheckStillValid) {
         setPreCheckQueued(false);
     }
-    usePreCheck({
-        queued: preCheckQueued,
-        hasCheckAction,
-        isUsersTurn,
-        isBusy: isSubmitting || isFeedStale,
-        check: () => checkHand(tableId, currentNetwork),
-        onResolved: () => setPreCheckQueued(false),
-        onError: err => showError(err.message)
-    });
-
     if (!hasWallet) {
         return (
             <div className={styles.page}>
@@ -396,7 +380,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         );
     }
 
-    const isUserSeated = gameState.players.some(p => p.address.toLowerCase() === localAddress);
+    const isUserSeated = gameState.players.some(player => player.address.toLowerCase() === localAddress);
     const hasEmptySeats = gameState.players.length < gameState.gameOptions.maxPlayers;
     const sitAndGoWaiting =
         isSitAndGoFormat(gameFormat) && isUserSeated && hasEmptySeats && gameState.round === TexasHoldemRound.ANTE
@@ -419,7 +403,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
 
     // Sit & Go has no seat or amount to choose, so registration opens on its own
     // when an unseated viewer lands on the table. Clicking an open seat also opens it.
-    const takenSeats = new Set(gameState.players.map(p => p.seat));
+    const takenSeats = new Set(gameState.players.map(player => player.seat));
     let firstFreeSeat: number | null = null;
     for (let seat = 1; seat <= gameState.gameOptions.maxPlayers; seat++) {
         if (!takenSeats.has(seat)) {
@@ -442,17 +426,17 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     // Sit & Go amounts are tournament chips; cash amounts are micro-USDC.
     const chipValue = (amount: string) => (isTournamentBlinds ? Number(amount) : Number(amount) / 1_000_000);
     const winnersBySeat = new Map(
-        gameState.winners.map(w => [w.seat, { amount: formatAmount(w.amount), description: w.description }] as const)
+        gameState.winners.map(winner => [winner.seat, { amount: formatAmount(winner.amount), description: winner.description }] as const)
     );
     const resultsByAddress = new Map(
-        gameState.results.map(r => [
-            r.playerId.toLowerCase(),
-            { place: r.place, payout: r.payout !== "0" ? `$${(Number(r.payout) / 1_000_000).toFixed(2)}` : undefined }
+        gameState.results.map(result => [
+            result.playerId.toLowerCase(),
+            { place: result.place, payout: result.payout !== "0" ? `$${(Number(result.payout) / 1_000_000).toFixed(2)}` : undefined }
         ] as const)
     );
-    const winningCards = gameState.winners.flatMap(w => w.cards ?? []).map(code => code.toUpperCase());
+    const winningCards = gameState.winners.flatMap(winner => winner.cards ?? []).map(code => code.toUpperCase());
     const blindText = (value: string) => formatAmount(value);
-    const callMicro = legalActions.legalActions.find(a => a.action === PlayerActionType.CALL)?.min;
+    const callMicro = legalActions.legalActions.find(candidate => candidate.action === PlayerActionType.CALL)?.min;
     // A bet or raise must carry an amount: until the player picks one it defaults to the action's minimum.
     const betSpec = primaryAction(legalActions.legalActions);
     const wagerDisplay =
@@ -489,23 +473,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
 
     const isFolded = myPlayer?.status === PlayerStatus.FOLDED;
 
-    const myResult = localAddress !== null ? gameState.results.find(r => r.playerId.toLowerCase() === localAddress) : undefined;
-    const resultKey = `viewed_sng_result_${tableId}_${localAddress ?? ""}`;
-    const isResultDismissed = resultDismissed[resultKey] ?? (() => {
-        try {
-            return localStorage.getItem(resultKey) === "true";
-        } catch {
-            return false;
-        }
-    })();
-    const dismissResult = () => {
-        try {
-            localStorage.setItem(resultKey, "true");
-        } catch {
-            // Not remembered across reloads.
-        }
-        setResultDismissed(prev => ({ ...prev, [resultKey]: true }));
-    };
+    const myResult = localAddress !== null ? gameState.results.find(result => result.playerId.toLowerCase() === localAddress) : undefined;
+    const { isDismissed: isResultDismissed, dismiss: dismissResult } = useSngResultDismissal(tableId, localAddress);
     const showResult = isTournamentBlinds && myResult !== undefined && !isResultDismissed;
 
     // ---- Blind and deal steps (driven automatically; the buttons show them and allow a manual press) ----

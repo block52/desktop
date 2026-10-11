@@ -73,7 +73,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
         myAddress !== null && game.creator !== undefined && game.creator.toLowerCase() === myAddress;
 
     const mineCount = rawGames.filter(isMine).length;
-    const cashCount = useMemo(() => rawGames.filter(g => !isSitAndGo(g)).length, [rawGames]);
+    const cashCount = useMemo(() => rawGames.filter(game => !isSitAndGo(game)).length, [rawGames]);
     const sngCount = useMemo(() => rawGames.filter(isSitAndGo).length, [rawGames]);
 
     const games = useMemo(() => {
@@ -81,12 +81,12 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
         if (formatFilter === "mine") {
             list = list.filter(isMine);
         } else if (formatFilter !== "all") {
-            list = list.filter(g => (formatFilter === "sit-and-go" ? isSitAndGo(g) : !isSitAndGo(g)));
+            list = list.filter(game => (formatFilter === "sit-and-go" ? isSitAndGo(game) : !isSitAndGo(game)));
         }
         if (search.trim()) {
             const q = search.trim().toLowerCase();
             list = list.filter(
-                g => g.gameId.toLowerCase().includes(q) || (g.name !== undefined && g.name.toLowerCase().includes(q))
+                game => game.gameId.toLowerCase().includes(q) || (game.name !== undefined && game.name.toLowerCase().includes(q))
             );
         }
         return list;

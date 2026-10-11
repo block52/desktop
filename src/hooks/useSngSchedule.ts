@@ -12,7 +12,7 @@ function scheduleUrl(): string {
     return typeof configured === "string" && configured !== "" ? configured : DEFAULT_SCHEDULE_URL;
 }
 
-export interface SngScheduleState {
+interface SngScheduleState {
     tournaments: SngTournament[];
     isLoading: boolean;
     error: string;

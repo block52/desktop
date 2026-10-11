@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 /** Settle time before an automatic action fires, so it never acts on a half-applied state. */
-export const AUTO_ACTION_DELAY_MS = 500;
+const AUTO_ACTION_DELAY_MS = 500;
 
 /**
  * The "latch, wait, fire once" core shared by the automatic-action hooks (ported from the web app).

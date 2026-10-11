@@ -50,7 +50,12 @@ Known intentional divergences — do not "fix" these when comparing:
 - **Create table**: web-parity form (game type, name validation, blind/buy-in presets, calculated range, creation-fee preview) — the mock's dialog is simpler
 - **Wallet**: refresh button, copyable address, and a transfers + withdrawals activity feed (the mock shows withdrawals only)
 - **Block explorer**: shared pagination (15/30/50) on every tab
+- **Dashboard**: the hero is a slider (live featured Sit & Go, then the next scheduled tournaments from the web repo's `sng-schedule.json`; Register opens the link in the system browser, https only); "Your last session" and My hands are real indexer data, fetched when the page opens (My hands falls back to the wallet's table sessions when the indexer has no hands attributed to it)
 - **Table**: ported from the web app rather than the mock — web card/chip art, win and turn ripples, seat banner (last action, turn clock, WINS / place), Modern / Classic / Nouns themes, Sit & Go strip (blind level, next blinds, prizes), play settings menu (auto fold / muck / pre-check / sounds), pre-select check, sit-out boxes, add chips, leave confirmation, Sit & Go prize claim, auto-reconnect banner, live hand strength, and action / turn sounds
+
+## Code conventions
+
+This repo follows its own existing style (`interface` for props, `function` declarations for utilities, `export default` components, `src/utils/`, flat `components/<domain>/` folders, relative imports) rather than the shared gates' stricter rules (type-only, arrow functions, named exports, no `utils/`, `components/<Name>/<Name>.tsx`, `@/` alias). Match the surrounding code; don't mix styles inside a file. Don't export a symbol that nothing else imports.
 
 ## Inherited Rules
 

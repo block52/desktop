@@ -1,6 +1,5 @@
 import { useLatchedDelay } from "./useLatchedDelay";
 
-/** What an automatic action needs from the table: the action runs, and a failure is reported once. */
 interface AutoActionCallbacks {
     onError?: (error: Error) => void;
 }
@@ -10,10 +9,8 @@ function toError(err: unknown): Error {
 }
 
 /**
- * Fold — or check, when it is free — once the player's turn clock has run out.
- *
- * Fires once per turn, never while an action of the player's own is in flight (`isBusy`): their action
- * may already be on its way, and a fold queued behind it would land on their next decision.
+ * Fold — or check, when it is free — once the player's turn clock has run out. Holds back while an action is in
+ * flight (`isBusy`): a fold queued behind it would land on the player's next decision.
  */
 export function useAutoFold(args: {
     enabled: boolean;
@@ -39,7 +36,6 @@ export function useAutoFold(args: {
     });
 }
 
-/** Show cards automatically once the turn clock runs out at showdown. */
 export function useAutoShowCards(args: {
     hasShowAction: boolean;
     isUsersTurn: boolean;
@@ -59,7 +55,6 @@ export function useAutoShowCards(args: {
     });
 }
 
-/** Muck losing cards at showdown the moment it is the player's turn to, when auto-muck is on. */
 export function useAutoMuck(args: {
     enabled: boolean;
     hasMuckAction: boolean;

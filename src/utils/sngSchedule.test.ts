@@ -154,6 +154,12 @@ describe("parseSngSchedule", () => {
         expect(() => parseSngSchedule("nope")).toThrow();
     });
 
+    it("rejects a registration link that is not an https URL", () => {
+        for (const link of ["file:///etc/passwd", "javascript:alert(1)", "http://example.com", "not a url"]) {
+            expect(() => parseSngSchedule({ tournaments: [{ ...TUESDAY_10, link }] })).toThrow(/https URL/);
+        }
+    });
+
     it("rejects a missing tournaments array", () => {
         expect(() => parseSngSchedule({})).toThrow(/tournaments/);
     });

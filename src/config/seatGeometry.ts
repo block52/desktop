@@ -31,8 +31,11 @@ export function resolveTableSize(maxPlayers: number): TableSize {
     return 9;
 }
 
-/** Width / height of the felt's box, as it renders in the default window. */
-const FELT_ASPECT = 1.7;
+/** Width / height of the felt's box in the default window; the seat plane replaces it with its measured shape. */
+export const DEFAULT_FELT_ASPECT = 1.7;
+
+/** The felt's height as a share of the seat plane's (it spans 17%–76% of it; see TableBoard's .feltBox). */
+export const FELT_HEIGHT_FRACTION = 0.59;
 
 /**
  * Seats spaced at equal arc length around the felt's stadium outline (straights joined by
@@ -40,8 +43,8 @@ const FELT_ASPECT = 1.7;
  * neighbours are all the same, unlike the web app's hand-placed coordinates. Output is in the same
  * 0-100 box percentages as the other layouts.
  */
-function evenStadiumSeats(count: number): Array<{ left: number; top: number }> {
-    const width = FELT_ASPECT;
+function evenStadiumSeats(count: number, aspect: number): Array<{ left: number; top: number }> {
+    const width = Math.max(aspect, 1.05);
     const radius = 0.5;
     const straight = width - 1;
     const arc = Math.PI * radius;
@@ -81,7 +84,7 @@ function evenStadiumSeats(count: number): Array<{ left: number; top: number }> {
  * stage pixels) by normalizing each table size's own coordinate set
  * against its own min/max — NOT ui's SEAT_SPREAD-adjusted values.
  */
-const SEAT_PERCENT_RAW: Record<TableSize, Array<{ left: number; top: number }>> = {
+const SEAT_PERCENT_RAW: Record<Exclude<TableSize, 9>, Array<{ left: number; top: number }>> = {
     2: [
         { left: 50, top: 100 },
         { left: 50, top: 0 },
@@ -100,7 +103,6 @@ const SEAT_PERCENT_RAW: Record<TableSize, Array<{ left: number; top: number }>> 
         { left: 100, top: 25 },
         { left: 100, top: 75 },
     ],
-    9: evenStadiumSeats(9),
 };
 
 // Compresses the raw [0,100] vertical range into [19,74]. The felt spans
@@ -128,8 +130,12 @@ function compressTop(rawTop: number): number {
  * function forces all three bottom-row seats to the same raw top (98.3)
  * before compression, rather than trusting ui's source data as-is.
  */
-export function getSeatPercent(tableSize: TableSize, uiPosition: number): { left: number; top: number } {
-    const raw = SEAT_PERCENT_RAW[tableSize][uiPosition];
+export function getSeatPercent(
+    tableSize: TableSize,
+    uiPosition: number,
+    feltAspect: number = DEFAULT_FELT_ASPECT
+): { left: number; top: number } {
+    const raw = tableSize === 9 ? evenStadiumSeats(9, feltAspect)[uiPosition] : SEAT_PERCENT_RAW[tableSize][uiPosition];
     const rawTop = tableSize === 9 && (uiPosition === 0 || uiPosition === 1 || uiPosition === 8) ? 98.3 : raw.top;
     return { left: raw.left, top: compressTop(rawTop) };
 }

@@ -35,8 +35,20 @@ const createWindow = () => {
   }
 };
 
-ipcMain.on("open-external", (_event, url: string) => {
-  shell.openExternal(url);
+/** Only web links may leave the app: a renderer (or remote data it displays) must not launch file:, smb: or app-protocol URLs. */
+function isWebUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+ipcMain.on("open-external", (_event, url: unknown) => {
+  if (isWebUrl(url)) {
+    void shell.openExternal(url);
+  }
 });
 
 app.whenReady().then(() => {

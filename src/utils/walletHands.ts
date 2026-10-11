@@ -1,7 +1,7 @@
 import { indexerApi, type PlayerHand } from "./indexer";
 import { handsInSession } from "./sessionHands";
 
-export interface WalletHandsPage {
+interface WalletHandsPage {
     data: PlayerHand[];
     total: number;
     /** True when the hands were matched from table sessions because the indexer had none attributed. */

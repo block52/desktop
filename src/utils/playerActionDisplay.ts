@@ -1,7 +1,7 @@
 import { NonPlayerActionType, PlayerStatus, SIT_IN_METHOD_POST_NOW, isCashFormat, type LegalActionDTO } from "@block52/poker-vm-sdk";
 
 /** What the seated player's panel should offer around sitting in and out (ported from the web app). */
-export type PlayerActionDisplay =
+type PlayerActionDisplay =
     /** Sit-in confirmed or parked: show a passive waiting message. */
     | { kind: "pending"; waitingMessage: string }
     /** Alone at the table. */
@@ -29,7 +29,7 @@ export interface PlayerActionDisplayInput {
 }
 
 /** Sit-out options are cash-only: in a Sit & Go or tournament everyone with chips is dealt into every hand. */
-export function allowsVoluntarySitOut(gameFormat: string | undefined): boolean {
+function allowsVoluntarySitOut(gameFormat: string | undefined): boolean {
     return isCashFormat(gameFormat);
 }
 

@@ -298,6 +298,10 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
     const retryConnection = useCallback(() => {
         const tableId = currentTableIdRef.current;
         if (tableId === null) return;
+        if (reconnectTimerRef.current) {
+            clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
         reconnectAttemptRef.current = 0;
         setConnection({ status: "reconnecting", attempt: 1 });
         currentTableIdRef.current = null;
