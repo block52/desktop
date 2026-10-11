@@ -154,7 +154,15 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     if (isLoading || !gameState) {
         return (
             <div className={styles.page}>
-                <div className={styles.connecting}>Connecting…</div>
+                <div className={styles.connecting} role="status">
+                    <span className={styles.spinner} aria-hidden="true" />
+                    <span className={styles.connectingTitle}>Connecting to table</span>
+                    {id !== undefined && (
+                        <span className={styles.connectingId}>
+                            {id.slice(0, 8)}…{id.slice(-6)}
+                        </span>
+                    )}
+                </div>
             </div>
         );
     }
