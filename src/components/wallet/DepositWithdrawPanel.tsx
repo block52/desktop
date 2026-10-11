@@ -17,6 +17,7 @@ import { getCosmosMnemonic, getCosmosAddress } from "../../utils/cosmos/storage"
 import { base64ToHex } from "../../utils/encodingUtils";
 import { withdrawAbi, BRIDGE_ADDRESS } from "../../abis/contractABI";
 import { ETH_USDC_ADDRESS, ETH_USDT_ADDRESS } from "../../config/constants";
+import CryptoDepositModal from "../modal/CryptoDepositModal";
 import styles from "./DepositWithdrawPanel.module.css";
 
 export type WalletTab = "deposit" | "withdraw";
@@ -53,6 +54,7 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
     const [approvedAmount, setApprovedAmount] = useState<bigint>(0n);
     const [error, setError] = useState("");
     const [isDone, setIsDone] = useState(false);
+    const [cryptoOpen, setCryptoOpen] = useState(false);
 
     const { decimals } = useDecimals(tokenAddress);
     const { balance } = useWalletBalance(tokenAddress);
@@ -213,6 +215,18 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
                 >
                     {isApproving ? "Approving…" : "Approve"}
                 </button>
+            )}
+
+            <button type="button" className={`btn-ghost ${styles.primaryButton}`} onClick={() => setCryptoOpen(true)}>
+                Deposit with BTC, ETH, USDT or USDC (QR)
+            </button>
+
+            {cryptoOpen && (
+                <CryptoDepositModal
+                    cosmosAddress={cosmosAddress}
+                    onClose={() => setCryptoOpen(false)}
+                    onCompleted={() => void onConfirmed()}
+                />
             )}
         </div>
     );
