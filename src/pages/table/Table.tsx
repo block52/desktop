@@ -405,6 +405,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             <ConnectionBanner connection={connection} onRetry={retryConnection} />
             <TableHeader
                 tableLabel={`Table ${tableId.slice(0, 6)}…${tableId.slice(-4)}`}
+                tableId={tableId}
                 variantLabel={getVariantLabel(gameVariant !== undefined ? String(gameVariant) : undefined)}
                 smallBlind={blindText(gameState.gameOptions.smallBlind)}
                 bigBlind={blindText(gameState.gameOptions.bigBlind)}

@@ -3,10 +3,13 @@ import { useNetwork } from "../../context/NetworkContext";
 import { getCosmosClient } from "../../utils/cosmos/client";
 import { TABLE_THEMES, type TableTheme } from "../../config/tableTheme";
 import type { GameSettingKey, GameSettings } from "../../hooks/useGameSettings";
+import CopyButton from "../copyButton/CopyButton";
 import styles from "./TableHeader.module.css";
 
 export interface TableHeaderProps {
     tableLabel: string;
+    /** Full table id; with it the header offers a copyable link to the table. */
+    tableId?: string;
     /** Short variant label, e.g. "NLH". */
     variantLabel: string;
     smallBlind: string;
@@ -42,6 +45,7 @@ const SETTING_ROWS: ReadonlyArray<{ key: GameSettingKey; label: string; hint: st
 
 export const TableHeader: React.FC<TableHeaderProps> = ({
     tableLabel,
+    tableId,
     variantLabel,
     smallBlind,
     bigBlind,
@@ -106,7 +110,12 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 Lobby
             </button>
             <div className={styles.titleBlock}>
-                <span className={styles.tableName}>{tableLabel}</span>
+                <span className={styles.tableName}>
+                    {tableLabel}
+                    {tableId !== undefined && (
+                        <CopyButton text={`https://app.block52.xyz/table/${tableId}`} message="Table link copied" title="Copy table link" />
+                    )}
+                </span>
                 <span className={styles.subline}>
                     {variantLabel} · ${smallBlind} / ${bigBlind} · Hand #{handNumber}
                 </span>
