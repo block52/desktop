@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useMyHands } from "../../hooks/useMyHands";
 import { useRecentHands } from "../../hooks/useRecentHands";
+import { useGameHands } from "../../hooks/useGameHands";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import { describeHandOutcome } from "../../utils/handOutcome";
 import HandReplay from "./HandReplay";
 import styles from "./HandHistory.module.css";
 
-type Scope = "mine" | "all";
+type Scope = "mine" | "all" | "table";
 
 interface Selection {
     gameId: string;
@@ -24,25 +25,36 @@ function formatWhen(iso: string | undefined, fallbackBlock: number): string {
 
 const HandHistory: React.FC = () => {
     const address = getCosmosAddress();
-    const [scope, setScope] = useState<Scope>(address === null ? "all" : "mine");
+    // Opened from a table's hand log: start on that table's hands.
+    const routerState: unknown = useLocation().state;
+    const tableGameId =
+        typeof routerState === "object" && routerState !== null && "gameId" in routerState && typeof routerState.gameId === "string"
+            ? routerState.gameId
+            : null;
+    const [scope, setScope] = useState<Scope>(tableGameId !== null ? "table" : address === null ? "all" : "mine");
     const [selection, setSelection] = useState<Selection | null>(null);
 
     const mine = useMyHands(scope === "mine" ? address : null);
     const recent = useRecentHands(scope === "all");
+    const tableHands = useGameHands(scope === "table" ? tableGameId : null);
 
     // Open the newest hand of the list by default so the replay isn't empty.
     const firstMine = mine.hands.length > 0 ? mine.hands[0] : null;
     const firstRecent = recent.hands.length > 0 ? recent.hands[0] : null;
+    const firstTable = tableHands.hands.length > 0 ? tableHands.hands[0] : null;
     useEffect(() => {
         if (selection !== null) return;
         if (scope === "mine" && firstMine !== null) setSelection({ gameId: firstMine.game_id, handNumber: firstMine.hand_number });
         if (scope === "all" && firstRecent !== null) setSelection({ gameId: firstRecent.game_id, handNumber: firstRecent.hand_number });
-    }, [scope, selection, firstMine, firstRecent]);
+        if (scope === "table" && firstTable !== null) setSelection({ gameId: firstTable.game_id, handNumber: firstTable.hand_number });
+    }, [scope, selection, firstMine, firstRecent, firstTable]);
 
     const switchScope = (next: Scope) => {
         setScope(next);
         setSelection(null);
     };
+
+    const listed = scope === "table" ? tableHands : recent;
 
     const isSelected = (gameId: string, handNumber: number) => selection?.gameId === gameId && selection.handNumber === handNumber;
 
@@ -54,6 +66,11 @@ const HandHistory: React.FC = () => {
                     <p className={styles.subtitle}>Replay any hand from chain state. Share the link, verify the deck.</p>
                 </div>
                 <div className="segmented" role="tablist">
+                    {tableGameId !== null && (
+                        <button type="button" role="tab" aria-selected={scope === "table"} className={scope === "table" ? "seg on" : "seg"} onClick={() => switchScope("table")}>
+                            This table
+                        </button>
+                    )}
                     <button type="button" role="tab" aria-selected={scope === "mine"} className={scope === "mine" ? "seg on" : "seg"} onClick={() => switchScope("mine")}>
                         My hands
                     </button>
@@ -115,12 +132,12 @@ const HandHistory: React.FC = () => {
                         </>
                     )}
 
-                    {scope === "all" && (
+                    {(scope === "all" || scope === "table") && (
                         <>
-                            {recent.isLoading && recent.hands.length === 0 && <p className={styles.state}>Loading hands…</p>}
-                            {recent.error !== "" && <p className={`${styles.state} ${styles.stateError}`}>{recent.error}</p>}
-                            {!recent.isLoading && recent.error === "" && recent.hands.length === 0 && <p className={styles.state}>No indexed hands yet.</p>}
-                            {recent.hands.map(hand => (
+                            {listed.isLoading && listed.hands.length === 0 && <p className={styles.state}>Loading hands…</p>}
+                            {listed.error !== "" && <p className={`${styles.state} ${styles.stateError}`}>{listed.error}</p>}
+                            {!listed.isLoading && listed.error === "" && listed.hands.length === 0 && <p className={styles.state}>No indexed hands yet.</p>}
+                            {listed.hands.map(hand => (
                                 <div
                                     key={`${hand.game_id}#${hand.hand_number}`}
                                     className={`row-hover ${styles.handRow} ${isSelected(hand.game_id, hand.hand_number) ? styles.handRowSelected : ""}`}
@@ -135,9 +152,9 @@ const HandHistory: React.FC = () => {
                                     <span className={styles.handMeta}>#{hand.block_height.toLocaleString()}</span>
                                 </div>
                             ))}
-                            {recent.hasMore && (
-                                <button type="button" className={`btn-ghost ${styles.loadMore}`} onClick={recent.loadMore} disabled={recent.isLoading}>
-                                    {recent.isLoading ? "Loading…" : "Load more"}
+                            {listed.hasMore && (
+                                <button type="button" className={`btn-ghost ${styles.loadMore}`} onClick={listed.loadMore} disabled={listed.isLoading}>
+                                    {listed.isLoading ? "Loading…" : "Load more"}
                                 </button>
                             )}
                         </>

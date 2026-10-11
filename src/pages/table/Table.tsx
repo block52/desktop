@@ -649,7 +649,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                             formatAmount={formatAmount}
                             currencySymbol={isTournamentBlinds ? "" : "$"}
                             onClose={() => setLogOpen(false)}
-                            onReplay={() => navigate("/hand-history")}
+                            onReplay={() => navigate("/hand-history", { state: { gameId: tableId } })}
                         />
                     )}
                 </TableBoard>
