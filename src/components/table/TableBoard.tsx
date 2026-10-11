@@ -2,6 +2,7 @@ import React from "react";
 import type { PlayerDTO, TexasHoldemRound } from "@block52/poker-vm-sdk";
 import { PlayerSeating, type PlayerSeatingProps } from "./PlayerSeating";
 import PlayingCard from "./PlayingCard";
+import ChipPile from "./ChipPile";
 import styles from "./TableBoard.module.css";
 
 function capitalize(value: string): string {
@@ -12,11 +13,13 @@ export interface TableBoardProps extends Omit<PlayerSeatingProps, "players"> {
     players: PlayerDTO[];
     /** Community cards as SDK codes, e.g. "AS" — empty for preflop/not dealt yet. */
     communityCards: string[];
-    /** Formatted total pot (main pot + current round bets). */
+    /** Formatted total pot (main pot + current round bets), currency symbol included. */
     pot: string;
     /** Whether the total pot has chips in it; an empty pot is hidden while waiting for players. */
     hasPot: boolean;
-    /** Formatted main pot, set only when it differs from the total pot (post-flop side bets). */
+    /** Total pot as a whole-dollar/chip value, for the chip pile. */
+    potValue: number;
+    /** Formatted main pot (currency symbol included), set only when it differs from the total pot (post-flop side bets). */
     mainPot?: string;
     round: TexasHoldemRound;
     /** When set, replaces the normal pot/cards display with a Sit & Go fill-progress message. */
@@ -31,6 +34,7 @@ export const TableBoard: React.FC<TableBoardProps> = ({
     communityCards,
     pot,
     hasPot,
+    potValue,
     mainPot,
     round,
     sitAndGoWaiting,
@@ -40,11 +44,12 @@ export const TableBoard: React.FC<TableBoardProps> = ({
 }) => {
     const potDisplay = (
         <div className={styles.potStack}>
+            {hasPot && <ChipPile amount={potValue} />}
             <div className={styles.potPill}>
                 <span className={styles.potChip} />
-                <span className={styles.potValue}>Total pot ${pot}</span>
+                <span className={styles.potValue}>Total pot {pot}</span>
             </div>
-            {mainPot !== undefined && <div className={styles.mainPot}>Main pot ${mainPot}</div>}
+            {mainPot !== undefined && <div className={styles.mainPot}>Main pot {mainPot}</div>}
         </div>
     );
 

@@ -1,5 +1,12 @@
 import styles from "./PlayingCard.module.css";
 
+// Card faces and the back are the web app's art (ui/src/assets/cards), keyed by file name: "AS", "TD", "b52CardBack".
+const CARD_IMAGES = import.meta.glob<string>("../../assets/cards/*.svg", { eager: true, query: "?url", import: "default" });
+
+function cardImageUrl(name: string): string {
+    return CARD_IMAGES[`../../assets/cards/${name}.svg`];
+}
+
 export type Suit = "S" | "H" | "D" | "C";
 
 export interface ParsedCard {
@@ -49,39 +56,32 @@ interface PlayingCardProps {
     className?: string;
 }
 
-const RED_SUITS = new Set<Suit>(["H", "D"]);
+const SUIT_NAMES: Record<Suit, string> = { S: "spades", H: "hearts", D: "diamonds", C: "clubs" };
 
 const PlayingCard: React.FC<PlayingCardProps> = ({ code, faceDown = false, className }) => {
     if (faceDown) {
         return (
-            <svg viewBox="0 0 60 84" className={`${styles.card} ${className ?? ""}`} data-testid="card-back" aria-label="Face-down card">
-                <rect x="1" y="1" width="58" height="82" rx="7" fill="#241a3f" stroke="hsl(263 50% 30%)" strokeWidth="1.5" />
-                <rect x="6" y="6" width="48" height="72" rx="5" fill="none" stroke="hsl(263 60% 45% / 0.5)" strokeWidth="1" strokeDasharray="4 3" />
-                <text x="30" y="50" textAnchor="middle" fontSize="26" fill="hsl(263 80% 75% / 0.7)">52</text>
-            </svg>
+            <img
+                src={cardImageUrl("b52CardBack")}
+                className={`${styles.card} ${className ?? ""}`}
+                data-testid="card-back"
+                alt="Face-down card"
+                draggable={false}
+            />
         );
     }
 
     const parsed = parseCard(code);
     if (parsed === null) return null;
 
-    const color = RED_SUITS.has(parsed.suit) ? "#c2334b" : "#1d2b3f";
-    const symbol = SUIT_SYMBOLS[parsed.suit];
-    const corner = parsed.rank === "10" ? "10" : parsed.rank;
-
+    const file = `${parsed.rank === "10" ? "T" : parsed.rank}${parsed.suit}`;
     return (
-        <svg viewBox="0 0 60 84" className={`${styles.card} ${className ?? ""}`} aria-label={`${corner} of ${parsed.suit}`}>
-            <rect x="1" y="1" width="58" height="82" rx="7" fill="#f6f3ec" stroke="rgba(0,0,0,0.25)" strokeWidth="1" />
-            <text x="9" y="21" fontSize="17" fontWeight="700" fill={color} fontFamily="Inter, system-ui, sans-serif">
-                {corner}
-            </text>
-            <text x="9" y="36" fontSize="14" fill={color}>
-                {symbol}
-            </text>
-            <text x="34" y="62" fontSize="30" fill={color}>
-                {symbol}
-            </text>
-        </svg>
+        <img
+            src={cardImageUrl(file)}
+            className={`${styles.card} ${className ?? ""}`}
+            alt={`${parsed.rank} of ${SUIT_NAMES[parsed.suit]}`}
+            draggable={false}
+        />
     );
 };
 

@@ -12,6 +12,10 @@ export interface PlayerActionButtonsProps {
     onWagerChange: (value: string) => void;
     /** Pot in the same display units, for the ½/¾/Pot presets. */
     potValue: number;
+    /** Raw units per displayed unit: 1_000_000 for cash (micro-USDC), 1 for tournament chips. */
+    microPerUnit?: number;
+    /** Prefix for amounts: "$" for cash, "" for tournament chips. */
+    currencySymbol?: string;
     onBet: () => void;
     onCall: () => void;
     onRaise: () => void;
@@ -24,8 +28,8 @@ export interface PlayerActionButtonsProps {
 }
 
 /** Micro → display units with two decimals (matches the mock's $0.08 style). */
-export function formatAmount(micro: string): string {
-    return (Number(micro) / 1_000_000).toFixed(2);
+export function formatAmount(micro: string, microPerUnit = 1_000_000): string {
+    return (Number(micro) / microPerUnit).toFixed(microPerUnit === 1 ? 0 : 2);
 }
 
 export function actionMin(legalActions: LegalActionDTO[], action: PlayerActionType): string | null {
@@ -46,10 +50,10 @@ export function primaryAction(legalActions: LegalActionDTO[]): { type: "bet" | "
 }
 
 /** Preset wager for a pot fraction, clamped to the action's min/max. */
-export function presetForPot(fraction: number, potValue: number, min: number, max: number): string {
+export function presetForPot(fraction: number, potValue: number, min: number, max: number, decimals = 2): string {
     const raw = potValue * fraction;
     const clamped = Math.min(Math.max(raw, min), max);
-    return clamped.toFixed(2);
+    return clamped.toFixed(decimals);
 }
 
 const PRESETS: Array<{ label: string; fraction: number }> = [
@@ -65,6 +69,8 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     wagerAmount,
     onWagerChange,
     potValue,
+    microPerUnit = 1_000_000,
+    currencySymbol = "$",
     onBet,
     onCall,
     onRaise,
@@ -84,14 +90,15 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     const canSitInAndWait = hasAction(legalActions, NonPlayerActionType.SIT_IN_AND_WAIT);
     const turnLocked = isSubmitting || !isPlayerTurn;
 
-    const primaryMin = primary !== null ? Number(primary.min) / 1_000_000 : 0;
-    const primaryMax = primary !== null ? Number(primary.max) / 1_000_000 : 0;
+    const primaryMin = primary !== null ? Number(primary.min) / microPerUnit : 0;
+    const primaryMax = primary !== null ? Number(primary.max) / microPerUnit : 0;
     const wager = parseFloat(wagerAmount) || 0;
+    const decimals = microPerUnit === 1 ? 0 : 2;
 
     const primaryLabel =
         primary === null
             ? "Bet"
-            : `${primary.type === "bet" ? "Bet" : "Raise to"} $${wager > 0 ? wager.toFixed(2) : primaryMin.toFixed(2)}`;
+            : `${primary.type === "bet" ? "Bet" : "Raise to"} ${currencySymbol}${wager > 0 ? wager.toFixed(decimals) : primaryMin.toFixed(decimals)}`;
 
     return (
         <div className={`pane ${styles.bar}`}>
@@ -116,7 +123,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
             {primary !== null && (
                 <div className={styles.wager}>
                     {PRESETS.map(({ label, fraction }) => {
-                        const value = presetForPot(fraction, potValue, primaryMin, primaryMax);
+                        const value = presetForPot(fraction, potValue, primaryMin, primaryMax, decimals);
                         const selected = wager > 0 && value === wager.toFixed(2);
                         return (
                             <button
@@ -141,7 +148,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                         aria-label="Wager amount"
                     />
                     <label className={styles.amountBox}>
-                        <span className={styles.amountPrefix}>$</span>
+                        <span className={styles.amountPrefix}>{currencySymbol}</span>
                         <input
                             type="number"
                             className={styles.amountInput}
@@ -168,7 +175,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                 )}
                 {callMin !== null && (
                     <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onCall}>
-                        Call ${formatAmount(callMin)}
+                        Call {currencySymbol}{formatAmount(callMin, microPerUnit)}
                     </button>
                 )}
                 {canMuck && (

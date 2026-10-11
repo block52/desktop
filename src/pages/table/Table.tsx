@@ -37,6 +37,11 @@ function formatMicro(value: string): string {
     return (Number(value) / 1_000_000).toFixed(3);
 }
 
+/** Sit & Go amounts are whole tournament chips, shown with thousands separators and no currency. */
+function formatChips(value: string): string {
+    return Number(value).toLocaleString("en-US");
+}
+
 function getVariantLabel(variant: string | undefined): string {
     if (variant === String(GameVariant.OMAHA)) return "PLO";
     return "NLH";
@@ -195,10 +200,15 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const mainPotMicro = gameState.pots.length > 0 ? BigInt(gameState.pots[0]) : 0n;
     const isPreflopRound = gameState.round === TexasHoldemRound.ANTE || gameState.round === TexasHoldemRound.PREFLOP;
     const showMainPot = !isPreflopRound && mainPotMicro > 0n && mainPotMicro !== totalPotMicro;
-    const potText = (micro: bigint) => (isTournamentBlinds ? micro.toString() : formatMicro(micro.toString()));
-    const blindText = (value: string) => (isTournamentBlinds ? value : formatMicro(value));
+    const formatAmount = isTournamentBlinds ? formatChips : formatMicro;
+    const potText = (raw: bigint) => (isTournamentBlinds ? formatChips(raw.toString()) : `$${formatMicro(raw.toString())}`);
+    // Sit & Go amounts are tournament chips; cash amounts are micro-USDC.
+    const chipValue = (amount: string) => (isTournamentBlinds ? Number(amount) : Number(amount) / 1_000_000);
+    const blindText = (value: string) => formatAmount(value);
     const callMicro = legalActions.legalActions.find(a => a.action === PlayerActionType.CALL)?.min;
-    const callDisplay = callMicro !== undefined ? (Number(callMicro) / 1_000_000).toFixed(2) : "0";
+    const callRaw = callMicro !== undefined ? BigInt(callMicro) : 0n;
+    // Wagers are typed in display units; the chain wants raw units (micro-USDC, or chips for a Sit & Go).
+    const toRaw = (display: string) => (isTournamentBlinds ? BigInt(Math.round(Number(display))) : parseUsdcToMicro(display));
 
     const content = (
         <>
@@ -224,12 +234,14 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     smallBlindPosition={gameState.smallBlindPosition}
                     bigBlindPosition={gameState.bigBlindPosition}
                     dealer={gameState.dealer}
-                    formatStack={formatMicro}
+                    formatStack={formatAmount}
+                    chipValue={chipValue}
                     maxBuyIn={gameState.gameOptions.maxBuyIn}
                     onVacantSeatClick={isUserSeated ? undefined : setJoinSeat}
                     communityCards={gameState.communityCards}
                     pot={potText(totalPotMicro)}
                     hasPot={totalPotMicro > 0n}
+                    potValue={chipValue(gameState.totalPot)}
                     mainPot={showMainPot ? potText(mainPotMicro) : undefined}
                     round={gameState.round}
                     sitAndGoWaiting={sitAndGoWaiting}
@@ -240,7 +252,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                             actions={gameState.previousActions}
                             handNumber={gameState.handNumber}
                             localAddress={localAddress}
-                            formatAmount={isTournamentBlinds ? (micro: string) => micro : formatMicro}
+                            formatAmount={formatAmount}
                             onClose={() => setLogOpen(false)}
                             onReplay={() => navigate("/hand-history")}
                         />
@@ -292,10 +304,12 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     isPlayerTurn={legalActions.isPlayerTurn}
                     wagerAmount={wagerAmount}
                     onWagerChange={setWagerAmount}
-                    potValue={isTournamentBlinds ? Number(gameState.totalPot) : Number(gameState.totalPot) / 1_000_000}
-                    onBet={() => runAction("Bet", () => betHand(tableId, parseUsdcToMicro(wagerAmount), currentNetwork))}
-                    onCall={() => runAction("Call", () => callHand(tableId, parseUsdcToMicro(callDisplay), currentNetwork))}
-                    onRaise={() => runAction("Raise", () => raiseHand(tableId, parseUsdcToMicro(wagerAmount), currentNetwork))}
+                    potValue={chipValue(gameState.totalPot)}
+                    microPerUnit={isTournamentBlinds ? 1 : 1_000_000}
+                    currencySymbol={isTournamentBlinds ? "" : "$"}
+                    onBet={() => runAction("Bet", () => betHand(tableId, toRaw(wagerAmount), currentNetwork))}
+                    onCall={() => runAction("Call", () => callHand(tableId, callRaw, currentNetwork))}
+                    onRaise={() => runAction("Raise", () => raiseHand(tableId, toRaw(wagerAmount), currentNetwork))}
                     onCheck={() => runAction("Check", () => checkHand(tableId, currentNetwork))}
                     onFold={() => runAction("Fold", () => foldHand(tableId, currentNetwork))}
                     onMuck={() => runAction("Muck", () => muckCards(tableId, currentNetwork))}

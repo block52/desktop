@@ -34,22 +34,22 @@ describe("SUIT_SYMBOLS", () => {
 });
 
 describe("PlayingCard", () => {
-    it("renders the rank and suit", () => {
+    it("renders the web card face for the code", () => {
         render(<PlayingCard code="AS" />);
-        expect(screen.getByText("A")).toBeTruthy();
-        expect(screen.getAllByText("♠").length).toBeGreaterThanOrEqual(2);
+        const img = screen.getByAltText("A of spades");
+        expect(img.getAttribute("src")).toMatch(/AS\.svg/);
     });
 
-    it("renders ten as 10", () => {
+    it("maps ten to the T file", () => {
         render(<PlayingCard code="TH" />);
-        expect(screen.getByText("10")).toBeTruthy();
-        expect(screen.getAllByText("♥").length).toBeGreaterThanOrEqual(2);
+        const img = screen.getByAltText("10 of hearts");
+        expect(img.getAttribute("src")).toMatch(/TH\.svg/);
     });
 
-    it("renders face-down without rank text", () => {
+    it("renders the card back when face-down", () => {
         render(<PlayingCard code="AS" faceDown />);
-        expect(screen.queryByText("A")).toBeNull();
-        expect(screen.getByTestId("card-back")).toBeTruthy();
+        expect(screen.queryByAltText("A of spades")).toBeNull();
+        expect(screen.getByTestId("card-back").getAttribute("src")).toBeTruthy();
     });
 
     it("renders nothing for an invalid code", () => {

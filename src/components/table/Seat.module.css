@@ -142,19 +142,15 @@
     transform: rotate(-6deg);
 }
 
-.betChip {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    margin-right: 5px;
-    vertical-align: -1px;
-    border-radius: 50%;
-    background: hsl(43 74% 58%);
-    border: 2px dashed hsl(43 80% 85%);
+.betBlock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
 }
 
 .bet {
-    margin-top: 6px;
     font-size: 11px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;

@@ -15,6 +15,8 @@ export interface PlayerSeatingProps {
     bigBlindPosition?: number;
     dealer?: number;
     formatStack: (stack: string) => string;
+    /** Converts a raw amount to the whole-dollar/chip value used to draw chip piles. */
+    chipValue: (amount: string) => number;
     /** Max buy-in in the same micro units as player stacks; drives the hero's stack bar. Omit/0 to hide it. */
     maxBuyIn?: string;
     /** When set, vacant seats are clickable and report their server seat number. */
@@ -31,6 +33,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     bigBlindPosition,
     dealer,
     formatStack,
+    chipValue,
     maxBuyIn,
     onVacantSeatClick,
 }) => {
@@ -85,6 +88,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 name={shortAddress(player.address)}
                 stack={formatStack(player.stack)}
                 currentBet={player.sumOfBets !== "0" ? formatStack(player.sumOfBets) : undefined}
+                betValue={player.sumOfBets !== "0" ? chipValue(player.sumOfBets) : undefined}
                 holeCards={player.holeCards ?? undefined}
                 avatar={player.avatar}
             />

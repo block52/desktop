@@ -122,7 +122,7 @@
 
 .emptyCard {
     width: clamp(44px, min(10cqw, 18cqh), 88px);
-    aspect-ratio: 5 / 7;
+    aspect-ratio: 550 / 805;
     border: 1.5px dashed hsl(155 30% 40% / 0.5);
     border-radius: 6px;
     flex-shrink: 0;

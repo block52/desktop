@@ -1,5 +1,6 @@
 import React from "react";
 import PlayingCard, { parseCard } from "./PlayingCard";
+import ChipPile from "./ChipPile";
 import { avatarImageCandidates } from "../../utils/playerAvatar";
 import styles from "./Seat.module.css";
 
@@ -26,6 +27,8 @@ export interface SeatProps {
     currentBet?: string;
     /** Hole cards (SDK codes) — rendered face-up when present. */
     holeCards?: string[];
+    /** Current-round bet as a whole-dollar/chip value; draws the chip pile above the bet pill. */
+    betValue?: number;
     /** Raw `player.avatar` from table state (NFT ref or image URL). */
     avatar?: string;
     /** Vacant seats only: makes the seat clickable (e.g. to open the join modal). */
@@ -76,6 +79,7 @@ export const Seat: React.FC<SeatProps> = ({
     stackFraction,
     currentBet,
     holeCards,
+    betValue,
     avatar,
     onSelect,
 }) => {
@@ -128,9 +132,9 @@ export const Seat: React.FC<SeatProps> = ({
                     )}
                 </div>
                 {currentBet && (
-                <div className={styles.bet}>
-                    <span className={styles.betChip} />
-                    {currentBet}
+                <div className={styles.betBlock}>
+                    {betValue !== undefined && <ChipPile amount={betValue} />}
+                    <div className={styles.bet}>{currentBet}</div>
                 </div>
             )}
             </div>
@@ -154,15 +158,16 @@ export const Seat: React.FC<SeatProps> = ({
             </div>
             {hasCards && !isFolded && (
                 <div className={styles.cards}>
+                    {/* Hidden cards arrive as "X" placeholders and are drawn as card backs; revealed cards show their face. */}
                     {holeCards.map((code, i) => (
                         <PlayingCard key={i} code={code} faceDown={parseCard(code) === null} className={styles.holeCard} />
                     ))}
                 </div>
             )}
             {currentBet && (
-                <div className={styles.bet}>
-                    <span className={styles.betChip} />
-                    {currentBet}
+                <div className={styles.betBlock}>
+                    {betValue !== undefined && <ChipPile amount={betValue} />}
+                    <div className={styles.bet}>{currentBet}</div>
                 </div>
             )}
         </div>
