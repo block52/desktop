@@ -121,10 +121,26 @@ function BlindTag({ isSmallBlind, isBigBlind }: Pick<SeatProps, "isSmallBlind" |
     return null;
 }
 
-/** Space above an upper seat's avatar for its cards, badge and action strip. */
-const UPPER_SEAT_CLEARANCE_PX = 235;
-/** Space below a lower seat's avatar for its badge, cards and bet chips. */
-const LOWER_SEAT_CLEARANCE_PX = 215;
+/** Half the avatar's height: how far the seat's coordinate sits from the top (or bottom) of its box. */
+const AVATAR_HALF_PX = 28;
+/** Breathing room kept between a seat's content and the edge of the pane. */
+const PANE_EDGE_GAP_PX = 8;
+
+/** Tracks an element's rendered height, so a seat can keep all of its own content inside the pane. */
+function useBoxHeight(): [(el: HTMLElement | null) => void, number] {
+    const [height, setHeight] = React.useState(0);
+    const observer = React.useRef<ResizeObserver | null>(null);
+    const ref = React.useCallback((el: HTMLElement | null) => {
+        observer.current?.disconnect();
+        observer.current = null;
+        if (el === null) return;
+        setHeight(el.offsetHeight);
+        const next = new ResizeObserver(() => setHeight(el.offsetHeight));
+        next.observe(el);
+        observer.current = next;
+    }, []);
+    return [ref, height];
+}
 
 export const Seat: React.FC<SeatProps> = ({
     left,
@@ -154,11 +170,15 @@ export const Seat: React.FC<SeatProps> = ({
     avatar,
     onSelect,
 }) => {
-    // Upper-half seats hang their badge and cards above the avatar, lower-half seats below it. On a
-    // short pane the percentage coordinate alone would push that content out of the pane and clip
-    // it, so keep room for it: upper seats never sit closer to the top than UPPER_SEAT_CLEARANCE_PX,
-    // lower seats never closer to the bottom than LOWER_SEAT_CLEARANCE_PX.
-    const seatTop = top < 50 ? `max(${top}%, ${UPPER_SEAT_CLEARANCE_PX}px)` : `min(${top}%, calc(100% - ${LOWER_SEAT_CLEARANCE_PX}px))`;
+    // Upper-half seats hang their badge and cards above the avatar, lower-half seats below it. The
+    // percentage coordinate alone can push that content out of the pane and clip it on a short window,
+    // so the seat measures its own box and never sits closer to an edge than its content needs.
+    const [boxRef, boxHeight] = useBoxHeight();
+    const extent = boxHeight > 0 ? boxHeight - AVATAR_HALF_PX + PANE_EDGE_GAP_PX : 0;
+    const seatTop =
+        top < 50
+            ? `max(${top}%, ${extent}px)`
+            : `min(${top}%, calc(100% - ${extent}px))`;
     const style: React.CSSProperties = { left: `${left}%`, top: seatTop };
 
     if (!occupied) {
@@ -190,7 +210,7 @@ export const Seat: React.FC<SeatProps> = ({
 
     if (isHero) {
         return (
-            <div className={`${styles.seat} ${styles.hero} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
+            <div ref={boxRef} className={`${styles.seat} ${styles.hero} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
                 {winner !== undefined ? <Ripple kind="win" hero /> : isActive === true && <Ripple kind="turn" hero />}
                 {hasCards && (
                     <div className={styles.heroCards}>
@@ -229,7 +249,7 @@ export const Seat: React.FC<SeatProps> = ({
     const isUpper = top < 50;
 
     return (
-        <div className={`${styles.seat} ${isUpper ? styles.upper : ""} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : isIdle === true ? styles.idle : ""} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
+        <div ref={boxRef} className={`${styles.seat} ${isUpper ? styles.upper : ""} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : isIdle === true ? styles.idle : ""} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
             {winner !== undefined ? <Ripple kind="win" /> : isActive === true && <Ripple kind="turn" />}
             <WinBadge winner={winner} result={result} />
             <div className={styles.avatar}>
