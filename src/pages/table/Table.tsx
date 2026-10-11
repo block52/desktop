@@ -31,6 +31,7 @@ import { SitAndGoJoinModal } from "../../components/modal/SitAndGoJoinModal";
 import { PlayerActionButtons } from "../../components/table/PlayerActionButtons";
 import { NoWalletOverlay } from "../../components/table/NoWalletOverlay";
 import { TableErrorPage } from "../../components/table/TableErrorPage";
+import { loadTableTheme, nextTableTheme, saveTableTheme, type TableTheme } from "../../config/tableTheme";
 import styles from "./Table.module.css";
 
 function formatMicro(value: string): string {
@@ -65,6 +66,12 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const [sngDismissedTable, setSngDismissedTable] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [logOpen, setLogOpen] = useState<boolean>(false);
+    const [tableTheme, setTableTheme] = useState<TableTheme>(loadTableTheme);
+    const cycleTheme = () => {
+        const next = nextTableTheme(tableTheme);
+        setTableTheme(next);
+        saveTableTheme(next);
+    };
 
     const hasWallet = !!getCosmosAddress();
     const localAddress = getCosmosAddress()?.toLowerCase() ?? null;
@@ -242,6 +249,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                 leaveDisabled={isSubmitting}
                 onOpenNav={onOpenNav}
                 onToggleLog={() => setLogOpen(open => !open)}
+                theme={tableTheme}
+                onCycleTheme={cycleTheme}
             />
             <div className={styles.boardRow}>
                 <TableBoard
@@ -266,6 +275,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     potValue={chipValue(gameState.totalPot)}
                     mainPot={showMainPot ? potText(mainPotMicro) : undefined}
                     round={gameState.round}
+                    theme={tableTheme}
                     sitAndGoWaiting={sitAndGoWaiting}
                     waitingForPlayers={waitingForPlayers}
                 >

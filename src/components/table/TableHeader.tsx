@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNetwork } from "../../context/NetworkContext";
 import { getCosmosClient } from "../../utils/cosmos/client";
+import { TABLE_THEMES, type TableTheme } from "../../config/tableTheme";
 import styles from "./TableHeader.module.css";
 
 export interface TableHeaderProps {
@@ -19,6 +20,9 @@ export interface TableHeaderProps {
     /** Opens the nav drawer (table screen hides the sidebar). */
     onOpenNav?: () => void;
     onToggleLog: () => void;
+    /** Current table theme; with onCycleTheme shows the theme button. */
+    theme?: TableTheme;
+    onCycleTheme?: () => void;
 }
 
 export const TableHeader: React.FC<TableHeaderProps> = ({
@@ -32,7 +36,9 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     onLeave,
     leaveDisabled,
     onOpenNav,
-    onToggleLog
+    onToggleLog,
+    theme,
+    onCycleTheme
 }) => {
     const { currentNetwork } = useNetwork();
     const [blockHeight, setBlockHeight] = useState<string | null>(null);
@@ -102,6 +108,17 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                     <path d="M12 7v5l4 2" />
                 </svg>
             </button>
+            {theme !== undefined && onCycleTheme !== undefined && (
+                <button
+                    type="button"
+                    className={`btn-ghost ${styles.headerButton}`}
+                    onClick={onCycleTheme}
+                    title="Change table theme"
+                    aria-label="Change table theme"
+                >
+                    {TABLE_THEMES.find(t => t.id === theme)?.label}
+                </button>
+            )}
             {onLeave !== undefined && (
                 <button className={`btn-ghost ${styles.headerButton}`} onClick={onLeave} disabled={leaveDisabled}>
                     Leave Table

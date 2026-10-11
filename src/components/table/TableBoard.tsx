@@ -3,6 +3,8 @@ import type { PlayerDTO, TexasHoldemRound } from "@block52/poker-vm-sdk";
 import { PlayerSeating, type PlayerSeatingProps } from "./PlayerSeating";
 import PlayingCard from "./PlayingCard";
 import ChipPile from "./ChipPile";
+import NounsGlasses from "./NounsGlasses";
+import type { TableTheme } from "../../config/tableTheme";
 import styles from "./TableBoard.module.css";
 
 function capitalize(value: string): string {
@@ -22,6 +24,8 @@ export interface TableBoardProps extends Omit<PlayerSeatingProps, "players"> {
     /** Formatted main pot (currency symbol included), set only when it differs from the total pot (post-flop side bets). */
     mainPot?: string;
     round: TexasHoldemRound;
+    /** Visual theme of the rail, felt and background. */
+    theme?: TableTheme;
     /** When set, replaces the normal pot/cards display with a Sit & Go fill-progress message. */
     sitAndGoWaiting?: { prizePool: string; seated: number; maxPlayers: number };
     /** When set (and sitAndGoWaiting is not), shows a cash-table waiting message instead of pot/cards. */
@@ -37,6 +41,7 @@ export const TableBoard: React.FC<TableBoardProps> = ({
     potValue,
     mainPot,
     round,
+    theme = "modern",
     sitAndGoWaiting,
     waitingForPlayers,
     children,
@@ -55,9 +60,9 @@ export const TableBoard: React.FC<TableBoardProps> = ({
     );
 
     return (
-        <div className={`pane ${styles.outer}`}>
+        <div className={`pane ${styles.outer} ${styles[`theme_${theme}`]}`}>
             <div className={styles.feltBox}>
-            <div className={styles.felt} />
+            <div className={styles.felt}>{theme === "nouns" && <NounsGlasses className={styles.nounsLogo} />}</div>
 
             {sitAndGoWaiting ? (
                 <div className={styles.centerMessage}>
