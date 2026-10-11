@@ -72,6 +72,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     onToggleSetting
 }) => {
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [moreOpen, setMoreOpen] = useState(false);
     const { currentNetwork } = useNetwork();
     const [blockHeight, setBlockHeight] = useState<string | null>(null);
 
@@ -132,7 +133,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 </span>
             </div>
             {wallet !== undefined && (
-                <span className={styles.walletPill} title="Your wallet">
+                <span className={`${styles.walletPill} ${styles.wide}`} title="Your wallet">
                     <span
                         className={`${styles.walletBalance} ${wallet.isShort === true ? styles.walletShort : ""}`}
                         title={wallet.isShort === true ? "Not enough to sit at this table" : undefined}
@@ -158,15 +159,15 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                     </button>
                 </span>
             )}
-            {isCreatedByYou && <span className={styles.creatorPill}>Created by you</span>}
-            <span className={styles.verifiedPill}>
+            {isCreatedByYou && <span className={`${styles.creatorPill} ${styles.wide}`}>Created by you</span>}
+            <span className={`${styles.verifiedPill} ${styles.wide}`}>
                 <span className={styles.verifiedDot} />
                 Shuffle verified
             </span>
             {blockHeight !== null && (
-                <span className={styles.blockHeight}>#{Number(blockHeight).toLocaleString()}</span>
+                <span className={`${styles.blockHeight} ${styles.wide}`}>#{Number(blockHeight).toLocaleString()}</span>
             )}
-            <button type="button" className={`btn-ghost ${styles.menuButton}`} onClick={onToggleLog} aria-label="Hand log" title="Hand log">
+            <button type="button" className={`btn-ghost ${styles.menuButton} ${styles.wide}`} onClick={onToggleLog} aria-label="Hand log" title="Hand log">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                     <path d="M3 3v5h5" />
@@ -174,7 +175,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 </svg>
             </button>
             {settings !== undefined && onToggleSetting !== undefined && (
-                <div className={styles.settingsWrap}>
+                <div className={`${styles.settingsWrap} ${styles.wide}`}>
                     <button
                         type="button"
                         className={`btn-ghost ${styles.menuButton}`}
@@ -220,7 +221,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             {theme !== undefined && onCycleTheme !== undefined && (
                 <button
                     type="button"
-                    className={`btn-ghost ${styles.headerButton}`}
+                    className={`btn-ghost ${styles.headerButton} ${styles.wide}`}
                     onClick={onCycleTheme}
                     title="Change table theme"
                     aria-label="Change table theme"
@@ -229,10 +230,83 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 </button>
             )}
             {onLeave !== undefined && (
-                <button className={`btn-ghost ${styles.headerButton}`} onClick={onLeave} disabled={leaveDisabled}>
+                <button className={`btn-ghost ${styles.headerButton} ${styles.wide}`} onClick={onLeave} disabled={leaveDisabled}>
                     Leave Table
                 </button>
             )}
+            <div className={`${styles.moreWrap} ${styles.compactOnly}`}>
+                <button
+                    type="button"
+                    className={`btn-ghost ${styles.menuButton}`}
+                    onClick={() => setMoreOpen(open => !open)}
+                    aria-label="More table options"
+                    aria-expanded={moreOpen}
+                    title="More"
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="5" cy="12" r="1.8" />
+                        <circle cx="12" cy="12" r="1.8" />
+                        <circle cx="19" cy="12" r="1.8" />
+                    </svg>
+                </button>
+                {moreOpen && (
+                    <div className={`pane ${styles.moreMenu}`} role="menu">
+                        <div className={styles.moreSection}>
+                            {wallet !== undefined && (
+                                <div className={styles.moreInfo}>
+                                    <span className={wallet.isShort === true ? styles.walletShort : styles.walletBalance}>${wallet.balance}</span>
+                                    <span className={styles.walletAddress} style={{ display: "inline" }}>
+                                        {wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}
+                                    </span>
+                                    <button type="button" className={styles.walletRefresh} onClick={wallet.onRefresh} disabled={wallet.isRefreshing} aria-label="Refresh balance">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M21 12a9 9 0 1 1-3-6.7" />
+                                            <path d="M21 4v5h-5" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            )}
+                            {blockHeight !== null && <div className={styles.moreInfo}>Block #{Number(blockHeight).toLocaleString()}</div>}
+                            {isCreatedByYou && <div className={styles.moreInfo}>Created by you</div>}
+                        </div>
+                        <div className={styles.moreSection}>
+                            <button type="button" role="menuitem" className={styles.moreItem} onClick={() => { setMoreOpen(false); onToggleLog(); }}>
+                                Hand log
+                            </button>
+                            {theme !== undefined && onCycleTheme !== undefined && (
+                                <button type="button" role="menuitem" className={styles.moreItem} onClick={onCycleTheme}>
+                                    Table theme
+                                    <span className={styles.moreValue}>{TABLE_THEMES.find(t => t.id === theme)?.label}</span>
+                                </button>
+                            )}
+                            {onLeave !== undefined && (
+                                <button type="button" role="menuitem" className={styles.moreItem} disabled={leaveDisabled} onClick={() => { setMoreOpen(false); onLeave(); }}>
+                                    Leave table
+                                </button>
+                            )}
+                        </div>
+                        {settings !== undefined && onToggleSetting !== undefined && (
+                            <div className={styles.moreSection}>
+                                {SETTING_ROWS.map(row => (
+                                    <button
+                                        key={row.key}
+                                        type="button"
+                                        role="menuitemcheckbox"
+                                        aria-checked={settings[row.key]}
+                                        className={styles.settingRow}
+                                        onClick={() => onToggleSetting(row.key)}
+                                    >
+                                        <span className={styles.settingText}>
+                                            <span className={styles.settingLabel}>{row.label}</span>
+                                        </span>
+                                        <span className={`${styles.switch} ${settings[row.key] ? styles.switchOn : ""}`} aria-hidden="true" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
