@@ -1,0 +1,122 @@
+/* Table-flow dialogs (leave table, Sit & Go result): same shell as the wallet dialogs. */
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal {
+    width: 100%;
+    max-width: 420px;
+    background: hsl(240 26% 11%);
+    border: 1px solid hsl(245 22% 17%);
+    border-radius: 16px;
+    box-shadow:
+        inset 0 1px 0 hsl(263 50% 35% / 0.14),
+        0 12px 32px -12px hsl(263 60% 6% / 0.6),
+        0 32px 64px -32px hsl(263 60% 4% / 0.9);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-family: Inter, system-ui, sans-serif;
+    color: var(--text);
+}
+
+.title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.body {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.warning {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid hsl(38 90% 50% / 0.35);
+    background: hsl(38 90% 50% / 0.1);
+    color: hsl(43 90% 75%);
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid hsl(245 22% 17%);
+    background: hsl(240 38% 5.5%);
+}
+
+.summaryLabel {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.summaryValue {
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.payout {
+    border-color: hsl(142 60% 40% / 0.4);
+    background: hsl(142 60% 30% / 0.12);
+}
+
+.payout .summaryValue {
+    color: hsl(142 70% 65%);
+    font-size: 26px;
+}
+
+.error {
+    margin: 0;
+    font-size: 12.5px;
+    color: hsl(0 80% 70%);
+    line-height: 1.4;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.action {
+    height: 38px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 0;
+    font: 600 13px Inter, system-ui, sans-serif;
+    cursor: pointer;
+}
+
+.action:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.danger {
+    background: hsl(0 62.8% 38%);
+    color: #fff;
+}

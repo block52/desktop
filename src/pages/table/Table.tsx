@@ -31,6 +31,9 @@ import { SitAndGoJoinModal } from "../../components/modal/SitAndGoJoinModal";
 import { PlayerActionButtons } from "../../components/table/PlayerActionButtons";
 import { NoWalletOverlay } from "../../components/table/NoWalletOverlay";
 import { TableErrorPage } from "../../components/table/TableErrorPage";
+import { LeaveTableModal } from "../../components/modal/LeaveTableModal";
+import { SitAndGoResultModal } from "../../components/modal/SitAndGoResultModal";
+import { claimWinnings } from "../../hooks/playerActions/claimWinnings";
 import { useGameSettings } from "../../hooks/useGameSettings";
 import { useTurnTimer } from "../../hooks/useTurnTimer";
 import { useAutoFold, useAutoMuck, useAutoShowCards, usePreCheck } from "../../hooks/playerActions/useAutoActions";
@@ -70,6 +73,9 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const [sngDismissedTable, setSngDismissedTable] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [logOpen, setLogOpen] = useState<boolean>(false);
+    const [leaveOpen, setLeaveOpen] = useState<boolean>(false);
+    /** Tables whose Sit & Go result dialog the player closed (remembered per table and wallet). */
+    const [resultDismissed, setResultDismissed] = useState<Record<string, boolean>>({});
     const settings = useGameSettings();
     const turn = useTurnTimer(gameState);
     /** Pre-selected "Check": ephemeral per-round intent, not a saved setting. */
@@ -304,6 +310,37 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     // Wagers are typed in display units; the chain wants raw units (micro-USDC, or chips for a Sit & Go).
     const toRaw = (display: string) => (isTournamentBlinds ? BigInt(Math.round(Number(display))) : parseUsdcToMicro(display));
 
+    // ---- Leaving, and the end of a Sit & Go ----
+    // The chain drops LEAVE from the legal actions once a tournament has started (the roster is frozen).
+    const canLeave = isUserSeated && hasAction(legalActions.legalActions, NonPlayerActionType.LEAVE);
+    const isInActiveHand =
+        myPlayer !== undefined &&
+        (myPlayer.status === PlayerStatus.ACTIVE || myPlayer.status === PlayerStatus.ALL_IN) &&
+        gameState.round !== TexasHoldemRound.ANTE &&
+        gameState.round !== TexasHoldemRound.END;
+    const leaveReturnAmount = isTournamentBlinds
+        ? `$${(Number(gameState.gameOptions.minBuyIn) / 1_000_000).toFixed(2)}`
+        : `$${((myPlayer !== undefined ? Number(myPlayer.stack) : 0) / 1_000_000).toFixed(2)}`;
+
+    const myResult = localAddress !== null ? gameState.results.find(r => r.playerId.toLowerCase() === localAddress) : undefined;
+    const resultKey = `viewed_sng_result_${tableId}_${localAddress ?? ""}`;
+    const isResultDismissed = resultDismissed[resultKey] ?? (() => {
+        try {
+            return localStorage.getItem(resultKey) === "true";
+        } catch {
+            return false;
+        }
+    })();
+    const dismissResult = () => {
+        try {
+            localStorage.setItem(resultKey, "true");
+        } catch {
+            // Not remembered across reloads.
+        }
+        setResultDismissed(prev => ({ ...prev, [resultKey]: true }));
+    };
+    const showResult = isTournamentBlinds && myResult !== undefined && !isResultDismissed;
+
     const content = (
         <>
             <TableHeader
@@ -314,7 +351,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                 handNumber={gameState.handNumber}
                 isCreatedByYou={gameCreator !== undefined && localAddress !== null && gameCreator.toLowerCase() === localAddress}
                 onBack={() => navigate("/")}
-                onLeave={isUserSeated ? () => runAction("Leave", () => leaveTable(tableId, currentNetwork)) : undefined}
+                onLeave={canLeave ? () => setLeaveOpen(true) : undefined}
                 leaveDisabled={isSubmitting}
                 onOpenNav={onOpenNav}
                 onToggleLog={() => setLogOpen(open => !open)}
@@ -364,6 +401,35 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     )}
                 </TableBoard>
             </div>
+            {leaveOpen && canLeave && (
+                <LeaveTableModal
+                    returnAmount={leaveReturnAmount}
+                    isTournament={isTournamentBlinds}
+                    isInActiveHand={isInActiveHand}
+                    isSubmitting={isSubmitting}
+                    onClose={() => setLeaveOpen(false)}
+                    onConfirm={async () => {
+                        const left = await runAction("Leave", () => leaveTable(tableId, currentNetwork));
+                        if (left) setLeaveOpen(false);
+                    }}
+                />
+            )}
+            {showResult && myResult !== undefined && (
+                <SitAndGoResultModal
+                    place={myResult.place}
+                    payout={myResult.payout !== "0" ? `$${(Number(myResult.payout) / 1_000_000).toFixed(2)}` : undefined}
+                    onClose={dismissResult}
+                    onClaim={async () => {
+                        await claimWinnings(tableId, currentNetwork, gameState);
+                        showSuccess("Prize collected");
+                    }}
+                    onLeave={async () => {
+                        await leaveTable(tableId, currentNetwork);
+                        showSuccess("Left the table");
+                        dismissResult();
+                    }}
+                />
+            )}
             {modalSeat !== null && (() => {
                 const confirmJoin = async (amount: string) => {
                     const joined = await runAction("Join", () =>
