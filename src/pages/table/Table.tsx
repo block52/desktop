@@ -252,6 +252,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const hasShowAction = hasAction(legalActions.legalActions, PlayerActionType.SHOW);
     const isUsersTurn = legalActions.isPlayerTurn;
 
+    const { isDismissed: isResultDismissed, dismiss: dismissResult } = useSngResultDismissal(tableId, localAddress);
+
     useHoleCardWatchdog({
         gameState,
         localAddress,
@@ -488,7 +490,6 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const isFolded = myPlayer?.status === PlayerStatus.FOLDED;
 
     const myResult = localAddress !== null ? gameState.results.find(result => result.playerId.toLowerCase() === localAddress) : undefined;
-    const { isDismissed: isResultDismissed, dismiss: dismissResult } = useSngResultDismissal(tableId, localAddress);
     const showResult = isTournamentBlinds && myResult !== undefined && !isResultDismissed;
 
     // ---- Blind and deal steps (driven automatically; the buttons show them and allow a manual press) ----
