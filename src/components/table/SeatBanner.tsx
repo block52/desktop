@@ -21,6 +21,8 @@ export interface SeatBannerProps {
     status?: SeatStatusLabel;
     /** The seat won the pot: shows the "WINS" banner with the hand's name. */
     winner?: { description?: string };
+    /** Seat hangs its badge above the avatar (upper-half seats): the strip sits on top of the nameplate. */
+    flipped?: boolean;
 }
 
 const ANNOUNCED_MS = 2500;
@@ -55,7 +57,7 @@ const ACTION_TONES: Record<string, Tone> = {
  * The strip under a seat's nameplate: the action just taken (for a few seconds), else the
  * turn countdown while the seat is to act, else the seat's standing status (fold / all in / sitting out).
  */
-export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, turnTimeoutSec, status, winner }) => {
+export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, turnTimeoutSec, status, winner, flipped }) => {
     // The action already on the seat when it mounted is history, not news.
     const [initialIndex] = React.useState(lastAction?.index);
     const [expiredIndex, setExpiredIndex] = React.useState<number | undefined>(undefined);
@@ -67,9 +69,11 @@ export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, tu
         return () => clearTimeout(timer);
     }, [announcedIndex, initialIndex]);
 
+    const flip = flipped === true ? ` ${styles.flipped}` : "";
+
     if (winner !== undefined) {
         return (
-            <div className={`${styles.banner} ${styles.win}`} role="status">
+            <div className={`${styles.banner} ${styles.win}${flip}`} role="status">
                 <span className={styles.winTitle}>WINS</span>
                 {winner.description !== undefined && <span className={styles.winHandName}>{winner.description}</span>}
             </div>
@@ -82,7 +86,7 @@ export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, tu
 
     if (isAnnounced) {
         return (
-            <div key={`a${lastAction.index}`} className={`${styles.banner} ${styles.announce} ${styles[ACTION_TONES[lastAction.action] ?? "neutral"]}`}>
+            <div key={`a${lastAction.index}`} className={`${styles.banner} ${styles.announce} ${styles[ACTION_TONES[lastAction.action] ?? "neutral"]}${flip}`}>
                 <span className={styles.label}>{label}</span>
                 {lastAction.amount !== undefined && <span className={styles.amount}>{lastAction.amount}</span>}
             </div>
@@ -91,7 +95,7 @@ export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, tu
 
     if (isActive && turnTimeoutSec !== undefined && turnTimeoutSec > 0) {
         return (
-            <div className={`${styles.banner} ${styles.timer}`} role="timer" aria-label="Time to act">
+            <div className={`${styles.banner} ${styles.timer}${flip}`} role="timer" aria-label="Time to act">
                 <div className={styles.timerTrack}>
                     <div className={styles.timerFill} style={{ animationDuration: `${turnTimeoutSec}s` }} />
                 </div>
@@ -101,7 +105,7 @@ export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, tu
 
     if (status !== undefined) {
         return (
-            <div className={`${styles.banner} ${styles.status}`}>
+            <div className={`${styles.banner} ${styles.status}${flip}`}>
                 <span className={styles.label}>{status}</span>
             </div>
         );

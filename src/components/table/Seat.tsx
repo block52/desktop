@@ -215,9 +215,11 @@ export const Seat: React.FC<SeatProps> = ({
     }
 
     const initials = seatNumber !== undefined ? String(seatNumber) : "?";
+    // Seats in the upper half hang their badge and cards above the avatar, away from the table centre.
+    const isUpper = top < 50;
 
     return (
-        <div className={`${styles.seat} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : isIdle === true ? styles.idle : ""} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
+        <div className={`${styles.seat} ${isUpper ? styles.upper : ""} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : isIdle === true ? styles.idle : ""} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
             {winner !== undefined ? <Ripple kind="win" /> : isActive === true && <Ripple kind="turn" />}
             <WinBadge winner={winner} result={result} />
             <div className={styles.avatar}>
@@ -231,7 +233,7 @@ export const Seat: React.FC<SeatProps> = ({
                 </div>
                 <div className={`${styles.stack} ${isFolded ? styles.stackMuted : ""}`}>{isFolded ? "Folded" : stack}</div>
             </div>
-            <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} winner={winner} />
+            <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} winner={winner} flipped={isUpper} />
             {hasCards && !isFolded && (
                 <div className={styles.cards}>
                     {/* Hidden cards arrive as "X" placeholders and are drawn as card backs; revealed cards show their face. */}

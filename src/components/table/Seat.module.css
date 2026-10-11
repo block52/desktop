@@ -528,3 +528,33 @@
         animation: none;
     }
 }
+
+/* ── Upper-half seats: the stack/badge and cards sit above the avatar, bet chips below it. ──
+   column-reverse puts the avatar (first in the DOM) at the bottom; the box is then anchored
+   by its bottom edge so the avatar still lands on the seat's coordinate. */
+.upper {
+    flex-direction: column-reverse;
+    transform: translate(-50%, calc(-100% + 28px));
+}
+
+.upper .cards {
+    margin-top: 0;
+    margin-bottom: 6px;
+}
+
+.upper .betBlock {
+    order: -1;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-top: 10px;
+}
+
+.upper .ripple {
+    top: auto;
+    bottom: 28px;
+    transform: translate(-50%, 50%);
+}
+
+.upper .winBadge {
+    top: -22px;
+}

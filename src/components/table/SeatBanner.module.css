@@ -138,3 +138,9 @@
     text-transform: uppercase;
     opacity: 0.95;
 }
+
+.flipped {
+    margin-top: 0;
+    margin-bottom: 4px;
+    border-radius: 10px 10px 0 0;
+}
