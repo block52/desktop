@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import type { BlockResponse } from "@block52/poker-vm-sdk";
 import { useNetwork } from "../../context/NetworkContext";
 import { useAvgBlockTime } from "../../hooks/useAvgBlockTime";
+import { txHashFromBase64 } from "../../utils/txHash";
+import { useRecentTxs } from "../../hooks/useRecentTxs";
 import { useValidatorCount } from "../../hooks/useValidatorCount";
 import { useAccountsList } from "../../hooks/useAccountsList";
 import { useAccountTransactions } from "../../hooks/useAccountTransactions";
@@ -42,6 +44,15 @@ const TABS: { id: ExplorerTab; label: string }[] = [
     { id: "players", label: "Players" }
 ];
 
+/* Subset of CometBFT /block the height search renders. */
+interface BlockLookup {
+    height: string;
+    hash: string;
+    time: string;
+    proposer: string;
+    txCount: number;
+}
+
 const BLOCKS_FETCH_COUNT = 20;
 const ACCOUNTS_LIMIT = 15;
 
@@ -71,6 +82,8 @@ const BlockExplorer: React.FC = () => {
     const [blocks, setBlocks] = useState<BlockResponse[]>([]);
     const [blocksError, setBlocksError] = useState("");
     const [selectedHeight, setSelectedHeight] = useState<string | null>(null);
+    // height → real tx hashes of that block (block data carries raw base64 txs).
+    const [blockTxHashes, setBlockTxHashes] = useState<Record<string, string[]>>({});
     const [tab, setTab] = useState<ExplorerTab>("blocks");
     const [lookupAddress, setLookupAddress] = useState("");
 
@@ -78,6 +91,8 @@ const BlockExplorer: React.FC = () => {
     const [txResult, setTxResult] = useState<TxSummary | null>(null);
     const [txNotFound, setTxNotFound] = useState(false);
     const [txSearching, setTxSearching] = useState(false);
+    const [blockResult, setBlockResult] = useState<BlockLookup | null>(null);
+    const { txs: recentTxs, isLoading: recentTxsLoading, error: recentTxsError } = useRecentTxs();
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -105,10 +120,57 @@ const BlockExplorer: React.FC = () => {
         };
     }, [currentNetwork]);
 
+    useEffect(() => {
+        if (selectedHeight === null || blockTxHashes[selectedHeight] !== undefined) return;
+        const block = blocks.find(b => b.block.header.height === selectedHeight);
+        if (block === undefined) return;
+        let cancelled = false;
+        Promise.all(block.block.data.txs.map(txHashFromBase64))
+            .then(hashes => {
+                if (!cancelled) setBlockTxHashes(prev => ({ ...prev, [selectedHeight]: hashes }));
+            })
+            .catch(() => undefined);
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedHeight, blocks, blockTxHashes]);
+
     const searchByHash = useCallback(
         async (hash: string) => {
             const trimmed = hash.trim();
             if (trimmed === "") return;
+            setBlockResult(null);
+            // A plain number is a block height.
+            if (/^\d+$/.test(trimmed)) {
+                setTxSearching(true);
+                setTxNotFound(false);
+                setTxResult(null);
+                try {
+                    const rpc = currentNetwork.rpc.replace(/\/+$/, "");
+                    const response = await fetch(`${rpc}/block?height=${trimmed}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = (await response.json()) as {
+                        result?: {
+                            block_id?: { hash?: string };
+                            block?: { header?: { height?: string; time?: string; proposer_address?: string }; data?: { txs?: unknown[] } };
+                        };
+                    };
+                    const header = data.result?.block?.header;
+                    if (header?.height === undefined) throw new Error("Block not found");
+                    setBlockResult({
+                        height: header.height,
+                        hash: data.result?.block_id?.hash ?? "",
+                        time: header.time ?? "",
+                        proposer: header.proposer_address ?? "",
+                        txCount: data.result?.block?.data?.txs?.length ?? 0
+                    });
+                } catch {
+                    setTxNotFound(true);
+                } finally {
+                    setTxSearching(false);
+                }
+                return;
+            }
             // Addresses open the lookup tab instead of a tx search.
             if (trimmed.startsWith("b52")) {
                 setLookupAddress(trimmed);
@@ -207,12 +269,40 @@ const BlockExplorer: React.FC = () => {
                 validatorsCount={validatorsCount}
             />
 
-            {(txSearching || txNotFound || txResult) && (
+            {(txSearching || txNotFound || txResult || blockResult) && (
                 <div className={`pane-lite ${styles.searchCard}`}>
                     {txSearching && <p className={styles.stateText}>Searching…</p>}
 
                     {txNotFound && (
-                        <p className={styles.notFound}>Transaction not found on {currentNetwork.name}.</p>
+                        <p className={styles.notFound}>Nothing found for that search on {currentNetwork.name}.</p>
+                    )}
+
+                    {blockResult && (
+                        <div className={styles.txDetailPanel}>
+                            <div className={styles.txRow}>
+                                <span className={styles.txLabel}>Block</span>
+                                <span className={styles.txValueMono}>#{Number(blockResult.height).toLocaleString()}</span>
+                            </div>
+                            <div className={styles.txRow}>
+                                <span className={styles.txLabel}>Hash</span>
+                                <span className={styles.txValueWrap}>
+                                    <span className={styles.txValueMono}>{blockResult.hash}</span>
+                                    <CopyButton text={blockResult.hash} message="Block hash copied" title="Copy hash" />
+                                </span>
+                            </div>
+                            <div className={styles.txRow}>
+                                <span className={styles.txLabel}>Time</span>
+                                <span className={styles.txValue}>{new Date(blockResult.time).toLocaleString()}</span>
+                            </div>
+                            <div className={styles.txRow}>
+                                <span className={styles.txLabel}>Proposer</span>
+                                <span className={styles.txValueMono}>{blockResult.proposer}</span>
+                            </div>
+                            <div className={styles.txRow}>
+                                <span className={styles.txLabel}>Transactions</span>
+                                <span className={styles.txValue}>{blockResult.txCount}</span>
+                            </div>
+                        </div>
                     )}
 
                     {txResult && (
@@ -354,12 +444,23 @@ const BlockExplorer: React.FC = () => {
                                             </div>
                                             {block.block.data.txs.length > 0 && (
                                                 <div className={styles.txList}>
-                                                    {block.block.data.txs.map((tx, i) => (
-                                                        <span key={i} className={styles.txListItem}>
-                                                            {truncateHash(tx)}
-                                                            <CopyButton text={tx} message="Transaction hash copied" title="Copy hash" />
-                                                        </span>
-                                                    ))}
+                                                    {block.block.data.txs.map((_, i) => {
+                                                        const hash = blockTxHashes[height]?.[i];
+                                                        return (
+                                                            <span key={i} className={styles.txListItem}>
+                                                                {hash === undefined ? (
+                                                                    "…"
+                                                                ) : (
+                                                                    <>
+                                                                        <span style={{ cursor: "pointer" }} onClick={() => openTx(hash)}>
+                                                                            {truncateHash(hash)}
+                                                                        </span>
+                                                                        <CopyButton text={hash} message="Transaction hash copied" title="Copy hash" />
+                                                                    </>
+                                                                )}
+                                                            </span>
+                                                        );
+                                                    })}
                                                 </div>
                                             )}
                                         </div>
@@ -369,6 +470,39 @@ const BlockExplorer: React.FC = () => {
                         })}
                     </div>
                 </div>
+                    <div className={styles.column}>
+                        <h2 className={styles.columnTitle}>Transactions</h2>
+                        <div className={`pane-lite ${styles.panel}`}>
+                            {recentTxsLoading && recentTxs.length === 0 && (
+                                <div className={styles.stateBox}>
+                                    <div className={styles.spinner} />
+                                    <p className={styles.stateText}>Loading transactions…</p>
+                                </div>
+                            )}
+                            {recentTxsError !== "" && recentTxs.length === 0 && (
+                                <div className={styles.stateBox}>
+                                    <p className={styles.stateTitle}>Failed to load transactions</p>
+                                    <p className={styles.stateText}>{recentTxsError}</p>
+                                </div>
+                            )}
+                            {recentTxs.map(tx => (
+                                <div key={tx.hash} className={`row-hover ${styles.blockRow}`} onClick={() => openTx(tx.hash)}>
+                                    <div className={styles.blockIcon}>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M7 7h10v10" />
+                                            <path d="M7 17 17 7" />
+                                        </svg>
+                                    </div>
+                                    <div className={styles.blockIdentity}>
+                                        <span className={styles.blockHeight}>{tx.type}</span>
+                                        <span className={styles.blockMeta}>{truncateHash(tx.hash)}</span>
+                                    </div>
+                                    <span className={tx.success ? styles.txOk : styles.txFail}>{tx.success ? "OK" : "Failed"}</span>
+                                    <span className={styles.blockAge}>#{Number(tx.height).toLocaleString()}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             )}
 
