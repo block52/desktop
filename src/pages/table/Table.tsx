@@ -665,6 +665,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                         onPostSmall: () => runAction("Post small blind", () => postSmallBlind(tableId, smallBlindAmount, currentNetwork)),
                         onPostBig: () => runAction("Post big blind", () => postBigBlind(tableId, bigBlindAmount, currentNetwork))
                     }}
+                    handNumber={gameState.handNumber}
                     canDeal={hasAction(legalActions.legalActions, NonPlayerActionType.DEAL)}
                     onDeal={() => runAction("Deal", () => dealCardsWithEntropy(tableId, currentNetwork, ""))}
                     blockingStep={

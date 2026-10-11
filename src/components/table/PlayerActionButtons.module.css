@@ -364,8 +364,16 @@
 }
 
 /* Blind posting / dealing: a centred step button, like the web app's POSTING… / DEALING… */
+.bar {
+    position: relative;
+}
+
+/* Centred in the bar (and so under the felt), whatever else sits at the sides. */
 .centerActions {
-    flex: 1 1 auto;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     justify-content: center;
 }
 

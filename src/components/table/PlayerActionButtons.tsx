@@ -23,6 +23,8 @@ export interface PlayerActionButtonsProps {
         onPostSmall: () => void;
         onPostBig: () => void;
     };
+    /** Hand number shown on the dealing state ("DEALING HAND #7…"). */
+    handNumber?: number;
     /** The DEAL action is available: shows a Deal button. */
     canDeal?: boolean;
     onDeal?: () => void;
@@ -106,6 +108,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     onWagerChange,
     potValue,
     blinds,
+    handNumber,
     canDeal = false,
     onDeal,
     blockingStep = null,
@@ -314,7 +317,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                             {blockingStep === "deal" ? (
                                 <>
                                     <span className={styles.spinner} />
-                                    DEALING…
+                                    {handNumber !== undefined ? `DEALING HAND #${handNumber}…` : "DEALING…"}
                                 </>
                             ) : (
                                 <>DEAL</>
