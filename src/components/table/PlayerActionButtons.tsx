@@ -257,7 +257,33 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
             {actionsVisible && actionsBlock}
 
             {primary !== null && (
-                <>
+                <div className={styles.wagerRow}>
+                    <div className={styles.presets}>
+                        {PRESETS.map(({ label, fraction }) => {
+                            const callUnits = callMin !== null ? Number(callMin) / microPerUnit : 0;
+                            const bigBlindUnits = bigBlind !== undefined ? Number(bigBlind) / microPerUnit : 0;
+                            const sized = potBetAmount(fraction, potValue, callUnits, bigBlindUnits);
+                            const value = Math.min(Math.max(sized, primaryMin), primaryMax).toFixed(decimals);
+                            const selected = wager > 0 && value === wager.toFixed(decimals);
+                            return (
+                                <button
+                                    key={label}
+                                    className={`${styles.preset} ${selected ? styles.presetOn : ""}`}
+                                    disabled={turnLocked}
+                                    onClick={() => onWagerChange(value)}
+                                >
+                                    {label}
+                                </button>
+                            );
+                        })}
+                        <button
+                            className={`${styles.preset} ${wager > 0 && wager >= primaryMax ? styles.presetOn : ""}`}
+                            disabled={turnLocked}
+                            onClick={() => onWagerChange(primaryMax.toFixed(decimals))}
+                        >
+                            All-in
+                        </button>
+                    </div>
                     <div className={styles.wager}>
                         <button
                             type="button"
@@ -303,33 +329,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                             />
                         </label>
                     </div>
-                    <div className={styles.presets}>
-                        {PRESETS.map(({ label, fraction }) => {
-                            const callUnits = callMin !== null ? Number(callMin) / microPerUnit : 0;
-                            const bigBlindUnits = bigBlind !== undefined ? Number(bigBlind) / microPerUnit : 0;
-                            const sized = potBetAmount(fraction, potValue, callUnits, bigBlindUnits);
-                            const value = Math.min(Math.max(sized, primaryMin), primaryMax).toFixed(decimals);
-                            const selected = wager > 0 && value === wager.toFixed(decimals);
-                            return (
-                                <button
-                                    key={label}
-                                    className={`${styles.preset} ${selected ? styles.presetOn : ""}`}
-                                    disabled={turnLocked}
-                                    onClick={() => onWagerChange(value)}
-                                >
-                                    {label}
-                                </button>
-                            );
-                        })}
-                        <button
-                            className={`${styles.preset} ${wager > 0 && wager >= primaryMax ? styles.presetOn : ""}`}
-                            disabled={turnLocked}
-                            onClick={() => onWagerChange(primaryMax.toFixed(decimals))}
-                        >
-                            All-in
-                        </button>
-                    </div>
-                </>
+                </div>
             )}
         </div>
     );
