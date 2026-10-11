@@ -397,3 +397,10 @@
         transform: rotate(360deg);
     }
 }
+
+/* Floats over the felt: translucent glass so the table stays visible behind it. */
+.bar.bar {
+    background: hsl(240 26% 8% / 0.82);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 18px 40px -12px black;
+}

@@ -739,7 +739,9 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     />
                 );
             })()}
-            {isUserSeated && !waitingForPlayers && !sitAndGoWaiting && (
+            {isUserSeated && (
+                <div className={styles.actionSlot}>
+                {!waitingForPlayers && !sitAndGoWaiting && (
                 <PlayerActionButtons
                     isSubmitting={isSubmitting || isFeedStale || awaitingFrame !== null}
                     legalActions={legalActions.legalActions}
@@ -789,6 +791,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     onSitIn={() => runAction("Sit in", () => sitIn(tableId, currentNetwork))}
                     onSitInAndWait={() => runAction("Sit in and wait", () => sitInAndWait(tableId, currentNetwork))}
                 />
+                )}
+                </div>
             )}
         </>
     );
