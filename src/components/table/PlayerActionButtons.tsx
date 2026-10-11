@@ -12,6 +12,8 @@ export interface PlayerActionButtonsProps {
     onWagerChange: (value: string) => void;
     /** Pot in the same display units, for the ½/¾/Pot presets. */
     potValue: number;
+    /** Label of the action currently being sent ("Call", "Bet", ...); that button shows a spinner. */
+    pendingAction?: string | null;
     /** Plain-language strength of the player's hand ("Pair of Aces"); null when unknown or folded. */
     handLabel?: string | null;
     /** Cash games: opens the add-chips dialog. Omitted on tournaments and when not seated. */
@@ -86,6 +88,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     wagerAmount,
     onWagerChange,
     potValue,
+    pendingAction = null,
     handLabel = null,
     onTopUp,
     canTopUp = false,
@@ -127,29 +130,35 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     return (
         <div className={`pane ${styles.bar}`}>
             <div className={styles.turn}>
-                <span className={`section-label ${isPlayerTurn ? styles.turnOn : ""}`}>{isPlayerTurn ? "Your turn" : "Not your turn"}</span>
-                {handLabel !== null && <span className={styles.handLabel}>{handLabel}</span>}
-                {onTopUp !== undefined && (
-                    <button
-                        type="button"
-                        className={styles.sitButton}
-                        disabled={!canTopUp || isSubmitting}
-                        onClick={onTopUp}
-                        title={canTopUp ? "Add chips to your stack" : "You can add chips between hands, not while you are in the current hand."}
-                    >
-                        Add chips
-                    </button>
-                )}
+                <div className={styles.statusRow}>
+                    <span className={`${styles.statusChip} ${isPlayerTurn ? styles.statusOn : ""}`}>
+                        <span className={styles.statusDot} />
+                        {isPlayerTurn ? "Your turn" : "Not your turn"}
+                    </span>
+                    {handLabel !== null && <span className={styles.handLabel}>{handLabel}</span>}
+                </div>
                 {sitOut !== undefined && (
                     <div className={styles.sitOutBoxes}>
-                        <label className={styles.sitOutBox}>
-                            <input type="checkbox" checked={sitOut.nextHandChecked} onChange={sitOut.onToggleNextHand} />
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={sitOut.nextHandChecked}
+                            className={`${styles.toggle} ${sitOut.nextHandChecked ? styles.toggleOn : ""}`}
+                            onClick={sitOut.onToggleNextHand}
+                        >
+                            <span className={styles.toggleTrack} />
                             Sit out next hand
-                        </label>
-                        <label className={styles.sitOutBox}>
-                            <input type="checkbox" checked={sitOut.nextBbChecked} onChange={sitOut.onToggleNextBb} />
+                        </button>
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={sitOut.nextBbChecked}
+                            className={`${styles.toggle} ${sitOut.nextBbChecked ? styles.toggleOn : ""}`}
+                            onClick={sitOut.onToggleNextBb}
+                        >
+                            <span className={styles.toggleTrack} />
                             Sit out next big blind
-                        </label>
+                        </button>
                     </div>
                 )}
                 {(canSitIn || canSitInAndWait) && (
@@ -227,26 +236,42 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
             )}
 
             <div className={styles.actions}>
+                {onTopUp !== undefined && (
+                    <button
+                        type="button"
+                        className={`btn-ghost ${styles.addChips}`}
+                        disabled={!canTopUp || isSubmitting}
+                        onClick={onTopUp}
+                        title={canTopUp ? "Add chips to your stack" : "You can add chips between hands, not while you are in the current hand."}
+                    >
+                        + Add chips
+                    </button>
+                )}
                 <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onFold}>
+                    {pendingAction === "Fold" && <span className={styles.spinner} />}
                     Fold
                 </button>
                 {canCheck && (
                     <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onCheck}>
+                        {pendingAction === "Check" && <span className={styles.spinner} />}
                         Check
                     </button>
                 )}
                 {callMin !== null && (
                     <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onCall}>
+                        {pendingAction === "Call" && <span className={styles.spinner} />}
                         Call {currencySymbol}{formatAmount(callMin, microPerUnit)}
                     </button>
                 )}
                 {canMuck && (
                     <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onMuck}>
+                        {pendingAction === "Muck" && <span className={styles.spinner} />}
                         Muck
                     </button>
                 )}
                 {canShow && (
                     <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onShow}>
+                        {pendingAction === "Show" && <span className={styles.spinner} />}
                         Show
                     </button>
                 )}
@@ -255,6 +280,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                     disabled={turnLocked || primary === null}
                     onClick={primary?.type === "raise" ? onRaise : onBet}
                 >
+                    {(pendingAction === "Bet" || pendingAction === "Raise") && <span className={styles.spinner} />}
                     {primaryLabel}
                 </button>
             </div>

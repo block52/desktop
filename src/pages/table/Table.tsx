@@ -20,7 +20,7 @@ import { leaveTable } from "../../hooks/playerActions/leaveTable";
 import { useAutoDeal } from "../../hooks/playerActions/useAutoDeal";
 import { useAutoPostBlinds } from "../../hooks/playerActions/useAutoPostBlinds";
 import { useAutoNewHand } from "../../hooks/playerActions/useAutoNewHand";
-import { parseUsdcToMicro } from "../../utils/currency";
+import { microToDecimal, parseUsdcToMicro } from "../../utils/currency";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import type { PlayerActionResult, JoinTableResult, LeaveTableResult } from "../../types";
 import { TableHeader } from "../../components/table/TableHeader";
@@ -36,6 +36,7 @@ import { topUpTable, type TopUpResult } from "../../hooks/playerActions/topUp";
 import { maxTopUpMicro } from "../../utils/topUpLimits";
 import { ConnectionBanner } from "../../components/table/ConnectionBanner";
 import { TournamentStrip } from "../../components/table/TournamentStrip";
+import { primaryAction } from "../../components/table/PlayerActionButtons";
 import { LeaveTableModal } from "../../components/modal/LeaveTableModal";
 import { SitAndGoResultModal } from "../../components/modal/SitAndGoResultModal";
 import { claimWinnings } from "../../hooks/playerActions/claimWinnings";
@@ -81,6 +82,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     /** Table whose Sit & Go registration prompt the viewer closed — it doesn't auto-reopen. */
     const [sngDismissedTable, setSngDismissedTable] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    /** Which action is in flight ("Call", "Bet", ...), so its button can show a spinner. */
+    const [pendingAction, setPendingAction] = useState<string | null>(null);
     const [logOpen, setLogOpen] = useState<boolean>(false);
     const [leaveOpen, setLeaveOpen] = useState<boolean>(false);
     const [topUpOpen, setTopUpOpen] = useState<boolean>(false);
@@ -126,6 +129,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
 
     const runAction = async (label: string, action: () => Promise<PlayerActionResult | JoinTableResult | LeaveTableResult | TopUpResult>): Promise<boolean> => {
         setIsSubmitting(true);
+        setPendingAction(label);
         try {
             await action();
             showSuccess(`${label} confirmed`);
@@ -135,6 +139,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             return false;
         } finally {
             setIsSubmitting(false);
+            setPendingAction(null);
         }
     };
 
@@ -355,6 +360,16 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const winningCards = gameState.winners.flatMap(w => w.cards ?? []).map(code => code.toUpperCase());
     const blindText = (value: string) => formatAmount(value);
     const callMicro = legalActions.legalActions.find(a => a.action === PlayerActionType.CALL)?.min;
+    // A bet or raise must carry an amount: until the player picks one it defaults to the action's minimum.
+    const betSpec = primaryAction(legalActions.legalActions);
+    const wagerDisplay =
+        wagerAmount.trim() !== ""
+            ? wagerAmount
+            : betSpec !== null
+              ? isTournamentBlinds
+                  ? betSpec.min
+                  : microToDecimal(BigInt(betSpec.min))
+              : "";
     const callRaw = callMicro !== undefined ? BigInt(callMicro) : 0n;
     // Wagers are typed in display units; the chain wants raw units (micro-USDC, or chips for a Sit & Go).
     const toRaw = (display: string) => (isTournamentBlinds ? BigInt(Math.round(Number(display))) : parseUsdcToMicro(display));
@@ -564,7 +579,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     isSubmitting={isSubmitting || isFeedStale}
                     legalActions={legalActions.legalActions}
                     isPlayerTurn={legalActions.isPlayerTurn}
-                    wagerAmount={wagerAmount}
+                    wagerAmount={wagerDisplay}
                     onWagerChange={setWagerAmount}
                     potValue={chipValue(gameState.totalPot)}
                     sitOut={
@@ -580,14 +595,15 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     handLabel={isFolded ? null : describeHandStrength(myPlayer?.holeCards ?? undefined, gameState.communityCards)}
                     onTopUp={topUpVisible ? () => setTopUpOpen(true) : undefined}
                     canTopUp={canTopUp}
+                    pendingAction={pendingAction}
                     showPreCheck={showPreCheck}
                     preCheckQueued={preCheckQueued}
                     onPreCheckChange={setPreCheckQueued}
                     microPerUnit={isTournamentBlinds ? 1 : 1_000_000}
                     currencySymbol={isTournamentBlinds ? "" : "$"}
-                    onBet={() => runAction("Bet", () => betHand(tableId, toRaw(wagerAmount), currentNetwork))}
+                    onBet={() => runAction("Bet", () => betHand(tableId, toRaw(wagerDisplay), currentNetwork))}
                     onCall={() => runAction("Call", () => callHand(tableId, callRaw, currentNetwork))}
-                    onRaise={() => runAction("Raise", () => raiseHand(tableId, toRaw(wagerAmount), currentNetwork))}
+                    onRaise={() => runAction("Raise", () => raiseHand(tableId, toRaw(wagerDisplay), currentNetwork))}
                     onCheck={() => runAction("Check", () => checkHand(tableId, currentNetwork))}
                     onFold={() => runAction("Fold", () => foldHand(tableId, currentNetwork))}
                     onMuck={() => runAction("Muck", () => muckCards(tableId, currentNetwork))}

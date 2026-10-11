@@ -221,7 +221,7 @@
     width: auto;
     /* Nameplate bottom sits just inside the plane's bottom edge; the cards
        rise over the felt. */
-    transform: translate(-50%, -72%);
+    transform: translate(-50%, -42%);
     z-index: 4;
 }
 

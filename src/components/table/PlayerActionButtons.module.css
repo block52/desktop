@@ -229,30 +229,136 @@
     color: hsl(142 60% 30%);
 }
 
-.sitOutBoxes {
+
+
+/* ── Left block: status chip + hand, sit-out toggles ── */
+.statusRow {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-.sitOutBox {
+.statusChip {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    font-size: 11.5px;
+    height: 24px;
+    padding: 0 11px;
+    border-radius: 999px;
+    border: 1px solid hsl(245 22% 17%);
+    background: hsl(245 22% 12%);
     color: var(--text-muted);
+    font: 600 11px Inter, system-ui, sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.statusOn {
+    border-color: hsl(263 83% 62% / 0.55);
+    background: hsl(263 83% 58% / 0.2);
+    color: hsl(263 90% 85%);
+}
+
+.statusDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.handLabel {
+    font-size: 15px;
+    font-weight: 700;
+    color: hsl(210 40% 98%);
+    white-space: nowrap;
+}
+
+.sitOutBoxes {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font: 500 12px Inter, system-ui, sans-serif;
     cursor: pointer;
     white-space: nowrap;
 }
 
-.sitOutBox input {
-    accent-color: hsl(263 83% 58%);
-    margin: 0;
+.toggle:hover {
+    color: var(--text);
 }
 
-.handLabel {
-    font-size: 13px;
-    font-weight: 600;
-    color: hsl(210 40% 96%);
+.toggleTrack {
+    position: relative;
+    width: 28px;
+    height: 16px;
+    border-radius: 999px;
+    background: hsl(245 22% 22%);
+    transition: background 120ms;
+}
+
+.toggleTrack::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 120ms;
+}
+
+.toggleOn {
+    color: hsl(43 90% 75%);
+}
+
+.toggleOn .toggleTrack {
+    background: hsl(263 83% 58%);
+}
+
+.toggleOn .toggleTrack::after {
+    transform: translateX(12px);
+}
+
+/* ── Right: add chips, then the action buttons ── */
+.addChips {
+    height: 36px;
+    padding: 0 14px;
+    margin-right: 6px;
+    border-radius: 999px;
+    font: 600 12.5px Inter, system-ui, sans-serif;
     white-space: nowrap;
+}
+
+.addChips:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.spinner {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    margin-right: 8px;
+    vertical-align: -2px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    animation: actionSpin 0.7s linear infinite;
+}
+
+@keyframes actionSpin {
+    to {
+        transform: rotate(360deg);
+    }
 }

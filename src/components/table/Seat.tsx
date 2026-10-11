@@ -148,7 +148,8 @@ function useSeatExtents(): [(el: HTMLElement | null) => void, SeatExtents] {
         if (el === null) return;
         const measure = () => {
             const avatar = el.querySelector<HTMLElement>("[data-seat-avatar]");
-            const above = avatar !== null ? avatar.offsetTop + avatar.offsetHeight / 2 : AVATAR_HALF_PX;
+            // The hero panel has no avatar and sits 42% of its height above its coordinate.
+            const above = avatar !== null ? avatar.offsetTop + avatar.offsetHeight / 2 : el.dataset.seatHero !== undefined ? el.offsetHeight * 0.42 : AVATAR_HALF_PX;
             setExtents({ above, below: el.offsetHeight - above });
         };
         measure();
@@ -235,7 +236,7 @@ export const Seat: React.FC<SeatProps> = ({
         ) : null;
     if (isHero) {
         return (
-            <div ref={boxRef} className={`${styles.seat} ${styles.hero} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
+            <div ref={boxRef} data-seat-hero className={`${styles.seat} ${styles.hero} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
                 {winner !== undefined ? <Ripple kind="win" hero /> : isActive === true && <Ripple kind="turn" hero />}
                 {hasCards && (
                     <div className={styles.heroCards}>
