@@ -11,6 +11,10 @@ export interface GameSettings {
     autoMuck: boolean;
     /** Offer a "Check" box before your turn when checking would be free. */
     preSelectCheck: boolean;
+    /** Play a cue for each player action. */
+    playerActionSounds: boolean;
+    /** Chime when it becomes your turn. */
+    turnNotificationSound: boolean;
 }
 
 export type GameSettingKey = keyof GameSettings;
@@ -21,7 +25,9 @@ const STORAGE_KEYS: Record<GameSettingKey, string> = {
     autoNewHand: "setting_autonewhand",
     autoFold: "setting_autofold",
     autoMuck: "setting_automuck",
-    preSelectCheck: "setting_preselectcheck"
+    preSelectCheck: "setting_preselectcheck",
+    playerActionSounds: "setting_playeractionsounds",
+    turnNotificationSound: "setting_turnsound"
 };
 
 const DEFAULTS: GameSettings = {
@@ -30,7 +36,9 @@ const DEFAULTS: GameSettings = {
     autoNewHand: true,
     autoFold: true,
     autoMuck: false,
-    preSelectCheck: false
+    preSelectCheck: false,
+    playerActionSounds: true,
+    turnNotificationSound: true
 };
 
 function readStored(key: GameSettingKey): boolean {
@@ -49,7 +57,9 @@ function readAll(): GameSettings {
         autoNewHand: readStored("autoNewHand"),
         autoFold: readStored("autoFold"),
         autoMuck: readStored("autoMuck"),
-        preSelectCheck: readStored("preSelectCheck")
+        preSelectCheck: readStored("preSelectCheck"),
+        playerActionSounds: readStored("playerActionSounds"),
+        turnNotificationSound: readStored("turnNotificationSound")
     };
 }
 

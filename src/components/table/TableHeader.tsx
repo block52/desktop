@@ -30,6 +30,8 @@ export interface TableHeaderProps {
 }
 
 const SETTING_ROWS: ReadonlyArray<{ key: GameSettingKey; label: string; hint: string }> = [
+    { key: "turnNotificationSound", label: "Turn notification sound", hint: "Chime when it is your turn to act." },
+    { key: "playerActionSounds", label: "Player action sounds", hint: "A sound for bets, calls, checks, folds and shows." },
     { key: "autoFold", label: "Auto fold on timeout", hint: "Fold (or check when it is free) when your clock runs out." },
     { key: "autoMuck", label: "Auto muck", hint: "Muck losing cards at showdown without asking." },
     { key: "preSelectCheck", label: "Pre-select check", hint: "Offer a Check box before your turn when checking is free." },

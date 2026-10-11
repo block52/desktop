@@ -40,6 +40,7 @@ import { LeaveTableModal } from "../../components/modal/LeaveTableModal";
 import { SitAndGoResultModal } from "../../components/modal/SitAndGoResultModal";
 import { claimWinnings } from "../../hooks/playerActions/claimWinnings";
 import { useGameSettings } from "../../hooks/useGameSettings";
+import { useTableSounds } from "../../hooks/useTableSounds";
 import { useTurnTimer } from "../../hooks/useTurnTimer";
 import { useAutoFold, useAutoMuck, useAutoShowCards, usePreCheck } from "../../hooks/playerActions/useAutoActions";
 import { sitOut } from "../../hooks/playerActions/sitOut";
@@ -179,6 +180,12 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const hasMuckAction = hasAction(legalActions.legalActions, PlayerActionType.MUCK);
     const hasShowAction = hasAction(legalActions.legalActions, PlayerActionType.SHOW);
     const isUsersTurn = legalActions.isPlayerTurn;
+    useTableSounds({
+        previousActions: gameState?.previousActions,
+        isUsersTurn,
+        actionSounds: settings.playerActionSounds,
+        turnSound: settings.turnNotificationSound
+    });
 
     // Fold (or check when free) when the turn clock runs out; show cards the same way at showdown.
     useAutoFold({
