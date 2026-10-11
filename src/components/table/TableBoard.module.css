@@ -136,11 +136,24 @@
 }
 
 .communityWin {
-    translate: 0 -8px;
-    box-shadow: 0 0 0 2px hsl(43 90% 62%), 0 10px 20px -4px hsl(43 90% 50% / 0.6);
-    transition: translate 0.4s ease-out;
+    position: relative;
+    z-index: 20;
+    animation: communityLift 350ms ease-out forwards;
 }
 
 .communityMuted {
     opacity: 0.45;
+}
+
+@keyframes communityLift {
+    0% {
+        translate: 0 0;
+        scale: 1;
+        filter: brightness(1);
+    }
+    100% {
+        translate: 0 -14px;
+        scale: 1.05;
+        filter: brightness(1.25) drop-shadow(0 0 8px rgba(255, 215, 0, 0.85));
+    }
 }

@@ -34,6 +34,10 @@ export interface SeatProps {
     turnTimeoutSec?: number;
     /** Standing status shown under the nameplate when nothing else is. */
     statusLabel?: SeatStatusLabel;
+    /** Someone has won this hand: every non-winning seat dims. */
+    hasWinner?: boolean;
+    /** Seated but not in the current hand (seated / sitting out / sitting in / busted). */
+    isIdle?: boolean;
     /** Set when this seat won the pot: shows the win badge and highlights the seat. */
     winner?: { amount: string; description?: string };
     /** Final tournament placement for this seat's player; shows the place pill above the seat. */
@@ -70,6 +74,24 @@ function AvatarFace({ avatar, initials }: { avatar?: string; initials: string })
 const PLACE_SUFFIX: Record<number, string> = { 1: "1st", 2: "2nd", 3: "3rd" };
 
 /** Floating pill above a seat: the tournament place (with prize) when known, else the amount just won. */
+/** Expanding rings behind the seat: white while it is this seat's turn, gold (plus rising chips) when it won. */
+function Ripple({ kind, hero }: { kind: "turn" | "win"; hero?: boolean }) {
+    return (
+        <div className={`${styles.ripple} ${hero === true ? styles.rippleHero : ""}`} aria-hidden="true" data-testid={`ripple-${kind}`}>
+            {[0, 1, 2, 3].map(i => (
+                <div key={i} className={`${styles.ring} ${kind === "win" ? styles.ringWin : styles.ringTurn}`} />
+            ))}
+            {kind === "win" && (
+                <ul className={styles.bubbles}>
+                    {[0, 1, 2, 3, 4].map(i => (
+                        <li key={i} />
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+}
+
 function WinBadge({ winner, result }: { winner?: SeatProps["winner"]; result?: SeatProps["result"] }) {
     if (result !== undefined) {
         return (
@@ -112,6 +134,8 @@ export const Seat: React.FC<SeatProps> = ({
     stackFraction,
     currentBet,
     holeCards,
+    hasWinner,
+    isIdle,
     lastAction,
     turnTimeoutSec,
     statusLabel,
@@ -153,7 +177,8 @@ export const Seat: React.FC<SeatProps> = ({
 
     if (isHero) {
         return (
-            <div className={`${styles.seat} ${styles.hero}`} style={style}>
+            <div className={`${styles.seat} ${styles.hero} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
+                {winner !== undefined ? <Ripple kind="win" hero /> : isActive === true && <Ripple kind="turn" hero />}
                 {hasCards && (
                     <div className={styles.heroCards}>
                         {holeCards.map((code, i) => (
@@ -162,7 +187,7 @@ export const Seat: React.FC<SeatProps> = ({
                     </div>
                 )}
                 <WinBadge winner={winner} result={result} />
-                <div className={`${styles.heroPlate} ${hasCards ? styles.heroPlateWithCards : ""} ${isActive ? styles.heroPlateActive : ""} ${winner !== undefined ? styles.winGlow : ""}`}>
+                <div className={`${styles.heroPlate} ${hasCards ? styles.heroPlateWithCards : ""} ${isActive ? styles.heroPlateActive : ""}`}>
                     <div className={styles.heroNameRow}>
                         <span className={styles.heroName}>You</span>
                         <BlindTag isSmallBlind={isSmallBlind} isBigBlind={isBigBlind} />
@@ -189,7 +214,8 @@ export const Seat: React.FC<SeatProps> = ({
     const initials = (name ?? "?").replace(/[^a-zA-Z0-9]/g, "").slice(0, 2).toUpperCase() || "?";
 
     return (
-        <div className={`${styles.seat} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : ""} ${winner !== undefined ? styles.winner : ""}`} style={style}>
+        <div className={`${styles.seat} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : isIdle === true ? styles.idle : ""} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
+            {winner !== undefined ? <Ripple kind="win" /> : isActive === true && <Ripple kind="turn" />}
             <WinBadge winner={winner} result={result} />
             <div className={styles.avatar}>
                 <AvatarFace avatar={avatar} initials={initials} />

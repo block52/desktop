@@ -33,6 +33,14 @@ export interface PlayerSeatingProps {
 }
 
 
+/** Seated but not part of the current hand — dimmed like the web app's idle seats. */
+const IDLE_STATUSES: ReadonlySet<PlayerStatus> = new Set([
+    PlayerStatus.SEATED,
+    PlayerStatus.SITTING_OUT,
+    PlayerStatus.SITTING_IN,
+    PlayerStatus.BUSTED
+]);
+
 const SEAT_STATUS_LABELS: Partial<Record<PlayerStatus, SeatStatusLabel>> = {
     [PlayerStatus.FOLDED]: "FOLD",
     [PlayerStatus.ALL_IN]: "ALL IN",
@@ -125,6 +133,8 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 turnTimeoutSec={turnTimeoutSec}
                 statusLabel={SEAT_STATUS_LABELS[player.status]}
                 result={resultsByAddress?.get(player.address.toLowerCase())}
+                hasWinner={winnersBySeat !== undefined && winnersBySeat.size > 0}
+                isIdle={IDLE_STATUSES.has(player.status)}
                 winner={winnersBySeat?.get(serverSeat)}
                 winningCards={winningCards}
             />
