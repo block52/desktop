@@ -26,15 +26,15 @@ describe("resolveTableSize", () => {
 
 describe("getSeatPercent", () => {
     it("places heads-up seats at top/bottom center", () => {
-        expect(getSeatPercent(2, 0)).toEqual({ left: 50, top: 78 });
-        expect(getSeatPercent(2, 1)).toEqual({ left: 50, top: 14 });
+        expect(getSeatPercent(2, 0)).toEqual({ left: 50, top: 74 });
+        expect(getSeatPercent(2, 1)).toEqual({ left: 50, top: 19 });
     });
 
     it("places 4-max seats in a diamond (bottom/left/top/right)", () => {
-        expect(getSeatPercent(4, 0)).toEqual({ left: 50, top: 78 });
-        expect(getSeatPercent(4, 1)).toEqual({ left: 0, top: 46 });
-        expect(getSeatPercent(4, 2)).toEqual({ left: 50, top: 14 });
-        expect(getSeatPercent(4, 3)).toEqual({ left: 100, top: 46 });
+        expect(getSeatPercent(4, 0)).toEqual({ left: 50, top: 74 });
+        expect(getSeatPercent(4, 1)).toEqual({ left: 0, top: 46.5 });
+        expect(getSeatPercent(4, 2)).toEqual({ left: 50, top: 19 });
+        expect(getSeatPercent(4, 3)).toEqual({ left: 100, top: 46.5 });
     });
 
     it("places 6-max seats symmetrically on both sides", () => {
@@ -57,20 +57,20 @@ describe("getSeatPercent", () => {
         const left = getSeatPercent(9, 4);
         const right = getSeatPercent(9, 5);
         expect(left.top).toBe(right.top);
-        expect(left.top).toBe(14);
+        expect(left.top).toBe(19);
     });
 
     it("9-max: the bottom-row trio is NOT at the compressed-range maximum (there's clearance below them)", () => {
         const hero = getSeatPercent(9, 0);
-        expect(hero.top).toBeLessThan(78);
+        expect(hero.top).toBeLessThan(74);
     });
 
-    it("compresses the vertical range into [14, 78], never touching the raw [0, 100] extremes", () => {
+    it("compresses the vertical range into [19, 74], never touching the raw [0, 100] extremes", () => {
         for (const size of [2, 4, 6, 9] as const) {
             for (let i = 0; i < size; i++) {
                 const { top } = getSeatPercent(size, i);
-                expect(top).toBeGreaterThanOrEqual(14);
-                expect(top).toBeLessThanOrEqual(78);
+                expect(top).toBeGreaterThanOrEqual(19);
+                expect(top).toBeLessThanOrEqual(74);
             }
         }
     });

@@ -13,10 +13,10 @@
    itself (cqw/cqh) instead of the viewport. */
 .feltBox {
     position: absolute;
-    left: 7%;
-    right: 7%;
-    top: 12%;
-    bottom: 20%;
+    left: 9%;
+    right: 9%;
+    top: 17%;
+    bottom: 24%;
     container-type: size;
 }
 

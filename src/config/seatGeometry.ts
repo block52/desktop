@@ -70,13 +70,13 @@ const SEAT_PERCENT_RAW: Record<TableSize, Array<{ left: number; top: number }>> 
     ],
 };
 
-// Compresses the raw [0,100] vertical range into [14,78]. The felt spans
-// 12%–80% of the seat plane (see TableBoard's .feltBox), so the top seat
+// Compresses the raw [0,100] vertical range into [19,74]. The felt spans
+// 17%–76% of the seat plane (see TableBoard's .feltBox), so the top seat
 // sits 2% inside its edge and the bottom seat 2% inside the opposite one —
 // seats hug the rail evenly instead of the bottom seat floating below it,
-// and side seats land on the felt's vertical centre (46%).
-const SAFE_TOP_MIN = 14;
-const SAFE_TOP_MAX = 78;
+// and side seats land on the felt's vertical centre (46.5%).
+const SAFE_TOP_MIN = 19;
+const SAFE_TOP_MAX = 74;
 
 function compressTop(rawTop: number): number {
     return SAFE_TOP_MIN + (rawTop / 100) * (SAFE_TOP_MAX - SAFE_TOP_MIN);

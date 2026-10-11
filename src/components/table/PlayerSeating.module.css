@@ -1,8 +1,8 @@
-/* Seat plane: spans the felt pane's height and the felt's own width (7%
+/* Seat plane: spans the felt pane's height and the felt's own width (9%
    side insets), so a seat at left 0%/100% lands on the rail's edge like the
    mock. container-type lets hole cards scale with the pane height. */
 .plane {
     position: absolute;
-    inset: 0 7%;
+    inset: 0 9%;
     container-type: size;
 }
