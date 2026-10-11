@@ -31,6 +31,49 @@ export function resolveTableSize(maxPlayers: number): TableSize {
     return 9;
 }
 
+/** Width / height of the felt's box, as it renders in the default window. */
+const FELT_ASPECT = 1.7;
+
+/**
+ * Seats spaced at equal arc length around the felt's stadium outline (straights joined by
+ * semicircles), starting at bottom-centre and running clockwise on screen — so the gaps between
+ * neighbours are all the same, unlike the web app's hand-placed coordinates. Output is in the same
+ * 0-100 box percentages as the other layouts.
+ */
+function evenStadiumSeats(count: number): Array<{ left: number; top: number }> {
+    const width = FELT_ASPECT;
+    const radius = 0.5;
+    const straight = width - 1;
+    const arc = Math.PI * radius;
+    const perimeter = 2 * straight + 2 * arc;
+
+    return Array.from({ length: count }, (_, i) => {
+        let s = (i * perimeter) / count;
+        let x: number;
+        let y: number;
+        if (s <= straight / 2) {
+            x = width / 2 - s;
+            y = 1;
+        } else if ((s -= straight / 2) <= arc) {
+            const angle = s / radius;
+            x = radius - radius * Math.sin(angle);
+            y = radius + radius * Math.cos(angle);
+        } else if ((s -= arc) <= straight) {
+            x = radius + s;
+            y = 0;
+        } else if ((s -= straight) <= arc) {
+            const angle = s / radius;
+            x = width - radius + radius * Math.sin(angle);
+            y = radius - radius * Math.cos(angle);
+        } else {
+            s -= arc;
+            x = width - radius - s;
+            y = 1;
+        }
+        return { left: Math.round((x / width) * 1000) / 10, top: Math.round(y * 1000) / 10 };
+    });
+}
+
 /**
  * Raw seat coordinates as percentages of each table size's own bounding
  * box (0-100 range), before the vertical-safe-zone compression below.
@@ -57,17 +100,7 @@ const SEAT_PERCENT_RAW: Record<TableSize, Array<{ left: number; top: number }>> 
         { left: 100, top: 25 },
         { left: 100, top: 75 },
     ],
-    9: [
-        { left: 50, top: 100 },
-        { left: 27.7, top: 98.3 },
-        { left: 0, top: 66.0 },
-        { left: 8.75, top: 11.5 },
-        { left: 38.1, top: 0 },
-        { left: 61.9, top: 0 },
-        { left: 91.25, top: 11.5 },
-        { left: 100, top: 66.0 },
-        { left: 72.3, top: 98.3 },
-    ],
+    9: evenStadiumSeats(9),
 };
 
 // Compresses the raw [0,100] vertical range into [19,74]. The felt spans
