@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { isTournamentFormat, formatGameFormatDisplay, COSMOS_CONSTANTS, GameVariant } from "@block52/poker-vm-sdk";
 import { useFindGames } from "../../hooks/useFindGames";
 import type { GameWithFormat } from "../../hooks/useFindGames";
+import { sortGamesNewestFirst } from "../../utils/convertUtils";
 import CreateTableModal from "../modal/CreateTableModal";
 import CopyButton from "../copyButton/CopyButton";
+import { getCosmosAddress } from "../../utils/cosmos/storage";
 import styles from "./TableList.module.css";
 
 function microToUsdc(micro: string): string {
@@ -46,7 +48,7 @@ function formatBuyIn(game: GameWithFormat): string {
     return `$${microToUsdc(game.minBuyIn)} – $${microToUsdc(game.maxBuyIn)}`;
 }
 
-type FormatFilter = "all" | "cash" | "sit-and-go";
+type FormatFilter = "all" | "cash" | "sit-and-go" | "mine";
 
 interface TableListProps {
     search: string;
@@ -59,12 +61,19 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
     const [formatFilter, setFormatFilter] = useState<FormatFilter>("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
 
+    const myAddress = getCosmosAddress()?.toLowerCase() ?? null;
+    const isMine = (game: GameWithFormat): boolean =>
+        myAddress !== null && game.creator !== undefined && game.creator.toLowerCase() === myAddress;
+
+    const mineCount = rawGames.filter(isMine).length;
     const cashCount = useMemo(() => rawGames.filter(g => !isSitAndGo(g)).length, [rawGames]);
     const sngCount = useMemo(() => rawGames.filter(isSitAndGo).length, [rawGames]);
 
     const games = useMemo(() => {
-        let list = rawGames;
-        if (formatFilter !== "all") {
+        let list = sortGamesNewestFirst(rawGames);
+        if (formatFilter === "mine") {
+            list = list.filter(isMine);
+        } else if (formatFilter !== "all") {
             list = list.filter(g => (formatFilter === "sit-and-go" ? isSitAndGo(g) : !isSitAndGo(g)));
         }
         if (search.trim()) {
@@ -98,6 +107,12 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                         onClick={() => setFormatFilter("sit-and-go")}
                     >
                         Sit &amp; Go <span className="seg-count">{sngCount}</span>
+                    </button>
+                    <button
+                        className={formatFilter === "mine" ? "seg on" : "seg"}
+                        onClick={() => setFormatFilter("mine")}
+                    >
+                        Mine <span className="seg-count">{mineCount}</span>
                     </button>
                 </div>
             </div>
@@ -183,7 +198,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                         return (
                             <div
                                 key={game.gameId}
-                                className={`row-hover ${styles.row}`}
+                                className={`row-hover ${styles.row}${isMine(game) ? ` ${styles.rowMine}` : ""}`}
                                 onClick={() => navigate(`/table/${game.gameId}`)}
                             >
                                 <div className={styles.identity}>
@@ -196,11 +211,27 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                                 <CopyButton text={game.gameId} message="Table ID copied" title="Copy table ID" />
                                             </span>
                                             <span>· {variantLabel(game)}</span>
+                                            {game.creator !== undefined && !isMine(game) && (
+                                                <span>· by {shortId(game.creator)}</span>
+                                            )}
+                                            {isMine(game) && (
+                                                <span>
+                                                    ·
+                                                    <span className={styles.mineBadge} title="Created by you" aria-label="Created by you">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                            <path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                                        </svg>
+                                                        Yours
+                                                    </span>
+                                                </span>
+                                            )}
                                         </span>
                                     </div>
                                 </div>
 
-                                <span className={styles.formatCell}>{formatGameFormatDisplay(game.gameFormat)}</span>
+                                <span className={styles.formatCell}>
+                                    {formatGameFormatDisplay(game.gameFormat)}
+                                </span>
 
                                 <div className={styles.playersCell}>
                                     <div className={styles.playerTrack}>

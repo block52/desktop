@@ -14,6 +14,7 @@ import {
     setCosmosAddress,
 } from "../utils/cosmos/storage";
 import { useCosmosWallet } from "../hooks/useCosmosWallet";
+import { microToDecimal } from "../utils/currency";
 import { useNetwork } from "../context/NetworkContext";
 import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
 import { useWithdrawalActivity } from "../hooks/useWithdrawalActivity";
@@ -33,6 +34,18 @@ const Wallet: React.FC = () => {
     const [showSendModal, setShowSendModal] = useState(false);
     const [showKeysModal, setShowKeysModal] = useState(false);
     const [walletTab, setWalletTab] = useState<WalletTab>("deposit");
+    const [refreshToken, setRefreshToken] = useState(0);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const handleRefresh = useCallback(async () => {
+        setIsRefreshing(true);
+        setRefreshToken(t => t + 1);
+        try {
+            await refreshBalance();
+        } finally {
+            setIsRefreshing(false);
+        }
+    }, [refreshBalance]);
 
     const usdcBalanceAmount =
         balance.find(b => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)?.amount ?? "0";
@@ -75,7 +88,7 @@ const Wallet: React.FC = () => {
 
     const { open: openAppKit } = useAppKit();
     const { address: web3Address, isConnected: isWeb3Connected } = useAppKitAccount();
-    const { items: activityItems } = useWithdrawalActivity(existingAddress);
+    const { items: activityItems } = useWithdrawalActivity(existingAddress, undefined, refreshToken);
 
     const pendingWithdrawalMicro = activityItems
         .filter(i => i.status === "pending")
@@ -178,6 +191,8 @@ const Wallet: React.FC = () => {
                             onSend={() => setShowSendModal(true)}
                             onManageWeb3={() => openAppKit({ view: "Account" })}
                             onShowKeys={() => setShowKeysModal(true)}
+                            onRefresh={handleRefresh}
+                            isRefreshing={isRefreshing}
                         />
                         <DepositWithdrawPanel
                             tab={walletTab}
@@ -191,7 +206,7 @@ const Wallet: React.FC = () => {
                 {existingAddress && (
                     <>
                         <h2 className={styles.sectionTitle}>Activity</h2>
-                        <ActivityPanel address={existingAddress} />
+                        <ActivityPanel address={existingAddress} refreshToken={refreshToken} />
                     </>
                 )}
 
@@ -294,7 +309,7 @@ const Wallet: React.FC = () => {
             {showSendModal && cosmosAddress && (
                 <SendModal
                     fromAddress={cosmosAddress}
-                    usdcBalance={usdcBalanceAmount}
+                    usdcBalance={microToDecimal(BigInt(usdcBalanceAmount))}
                     onSend={handleSend}
                     onClose={() => setShowSendModal(false)}
                 />

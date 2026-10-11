@@ -12,6 +12,7 @@ export interface GameStateValue {
     gameFormat: GameFormat | undefined;
     gameVariant: GameVariant | undefined;
     gameName: string | undefined;
+    gameCreator: string | undefined;
     isLoading: boolean;
     error: Error | null;
     validationError: ValidationError | null;
@@ -21,6 +22,9 @@ export interface GameStateValue {
     unsubscribeFromTable: () => void;
     getLatestSnapshot: () => TexasHoldemStateDTO | undefined;
 }
+
+/** Extra reconnects (5s apart) when a table sends nothing, e.g. right after creation. */
+const MAX_SUBSCRIBE_RETRIES = 3;
 
 const GameStateContext = createContext<GameStateValue | null>(null);
 
@@ -33,6 +37,7 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
     const [gameFormat, setGameFormat] = useState<GameFormat | undefined>(undefined);
     const [gameVariant, setGameVariant] = useState<GameVariant | undefined>(undefined);
     const [gameName, setGameName] = useState<string | undefined>(undefined);
+    const [gameCreator, setGameCreator] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
     const [validationError, setValidationError] = useState<ValidationError | null>(null);
@@ -51,7 +56,10 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
         busRef.current = new GameMessageBus();
     }
 
-    const subscribeToTable = useCallback(
+    const attemptRef = useRef(0);
+    const connectRef = useRef<(tableId: string) => void>(() => undefined);
+
+    const connect = useCallback(
         (tableId: string) => {
             if (currentTableIdRef.current === tableId && wsRef.current?.readyState === WebSocket.OPEN) {
                 return;
@@ -121,6 +129,17 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
                         return;
                     }
                     if (!hasReceivedMessageRef.current && currentTableIdRef.current === tableId) {
+                        // A just-created table may not be served yet: reconnect a few times before giving up.
+                        if (attemptRef.current < MAX_SUBSCRIBE_RETRIES) {
+                            attemptRef.current += 1;
+                            if (wsRef.current) {
+                                wsRef.current.close();
+                                wsRef.current = null;
+                            }
+                            currentTableIdRef.current = null;
+                            connectRef.current(tableId);
+                            return;
+                        }
                         console.error("[GameStateContext] WebSocket server did not respond within 5 seconds");
                         setError(
                             new Error(
@@ -161,6 +180,7 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
                         setGameFormat(item.classified.format);
                         setGameVariant(item.classified.variant);
                         setGameName(item.classified.name);
+                        setGameCreator(item.classified.creator);
                         setPendingAction(null);
                         if (item.classified.validationError) {
                             setValidationError(item.classified.validationError);
@@ -213,6 +233,18 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
         [currentNetwork]
     );
 
+    useEffect(() => {
+        connectRef.current = connect;
+    }, [connect]);
+
+    const subscribeToTable = useCallback(
+        (tableId: string) => {
+            attemptRef.current = 0;
+            connect(tableId);
+        },
+        [connect]
+    );
+
     const unsubscribeFromTable = useCallback(() => {
         generationRef.current += 1;
         if (fallbackTimeoutRef.current) {
@@ -231,6 +263,7 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
         setGameFormat(undefined);
         setGameVariant(undefined);
         setGameName(undefined);
+        setGameCreator(undefined);
         setIsLoading(false);
         setError(null);
         setValidationError(null);
@@ -260,6 +293,7 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
                 gameFormat,
                 gameVariant,
                 gameName,
+                gameCreator,
                 isLoading,
                 error,
                 validationError,

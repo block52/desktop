@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createGame } from "./createGame";
+import { createGame, waitForGameId } from "./createGame";
 import * as cosmosClient from "../utils/cosmos/client";
 import type { NetworkEndpoints } from "../context/NetworkContext";
 
@@ -16,8 +16,16 @@ describe("createGame", () => {
         vi.restoreAllMocks();
     });
 
-    it("calls signingClient.createGame with the given params and returns the game ID", async () => {
-        const mockCreateGame = vi.fn().mockResolvedValue("game-abc-123");
+    it("calls signingClient.createGame with the given params and returns the game ID from the tx event", async () => {
+        const mockCreateGame = vi.fn().mockResolvedValue("TXHASH");
+        vi.spyOn(cosmosClient, "getCosmosClient").mockReturnValue({
+            getTx: vi.fn().mockResolvedValue({
+                tx_response: {
+                    code: 0,
+                    events: [{ type: "game_created", attributes: [{ key: "game_id", value: "game-abc-123" }] }]
+                }
+            })
+        } as never);
         vi.spyOn(cosmosClient, "withMoneyMoverRetry").mockImplementation(
             async (_network, fn) => fn({ signingClient: { createGame: mockCreateGame } } as never)
         );
@@ -45,7 +53,12 @@ describe("createGame", () => {
     });
 
     it("passes rakeConfig, sngConfig, and name through when provided", async () => {
-        const mockCreateGame = vi.fn().mockResolvedValue("game-xyz");
+        const mockCreateGame = vi.fn().mockResolvedValue("TXHASH");
+        vi.spyOn(cosmosClient, "getCosmosClient").mockReturnValue({
+            getTx: vi.fn().mockResolvedValue({
+                tx_response: { code: 0, events: [{ type: "game_created", attributes: [{ key: "game_id", value: "game-xyz" }] }] }
+            })
+        } as never);
         vi.spyOn(cosmosClient, "withMoneyMoverRetry").mockImplementation(
             async (_network, fn) => fn({ signingClient: { createGame: mockCreateGame } } as never)
         );
@@ -75,5 +88,35 @@ describe("createGame", () => {
             "sit-and-go", "texas-holdem", 6, 6, 1000000n, 1000000n, 10000n, 20000n, 30,
             rakeConfig, sngConfig, "Friday Degens"
         );
+    });
+});
+
+describe("waitForGameId", () => {
+    const created = (gameId: string) => ({
+        tx_response: { code: 0, events: [{ type: "game_created", attributes: [{ key: "game_id", value: gameId }] }] }
+    });
+
+    it("retries until the transaction is indexed, then returns the game id", async () => {
+        const getTx = vi
+            .fn()
+            .mockRejectedValueOnce(new Error("not found"))
+            .mockResolvedValueOnce(created("0xabc"));
+        await expect(waitForGameId({ getTx }, "HASH", { attempts: 5, delayMs: 0 })).resolves.toBe("0xabc");
+        expect(getTx).toHaveBeenCalledTimes(2);
+    });
+
+    it("throws the raw log when the transaction failed", async () => {
+        const getTx = vi.fn().mockResolvedValue({ tx_response: { code: 5, raw_log: "insufficient funds" } });
+        await expect(waitForGameId({ getTx }, "HASH", { attempts: 2, delayMs: 0 })).rejects.toThrow("insufficient funds");
+    });
+
+    it("throws when the transaction never shows up", async () => {
+        const getTx = vi.fn().mockRejectedValue(new Error("not found"));
+        await expect(waitForGameId({ getTx }, "HASH", { attempts: 3, delayMs: 0 })).rejects.toThrow(/not confirmed/);
+    });
+
+    it("throws when no game_created event is present", async () => {
+        const getTx = vi.fn().mockResolvedValue({ tx_response: { code: 0, events: [] } });
+        await expect(waitForGameId({ getTx }, "HASH", { attempts: 1, delayMs: 0 })).rejects.toThrow(/game_created/);
     });
 });

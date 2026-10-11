@@ -47,3 +47,12 @@ export const convertGameList = (games: GameListItem[]): GameWithFormat[] =>
             return true;
         })
         .map(convertGameListItemToGameWithFormat);
+
+/** Newest first by createdAt; games without a timestamp sort last. Does not mutate the input. */
+export const sortGamesNewestFirst = (games: GameWithFormat[]): GameWithFormat[] =>
+    [...games].sort((a, b) => {
+        const aTime = a.createdAt === undefined ? Number.NEGATIVE_INFINITY : Date.parse(a.createdAt);
+        const bTime = b.createdAt === undefined ? Number.NEGATIVE_INFINITY : Date.parse(b.createdAt);
+        if (aTime === bTime) return 0;
+        return bTime > aTime ? 1 : -1;
+    });

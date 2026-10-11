@@ -125,3 +125,12 @@
     align-items: center;
     flex-shrink: 0;
 }
+
+.option:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.option:disabled:hover {
+    background: transparent;
+}

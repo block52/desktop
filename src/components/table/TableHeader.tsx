@@ -10,6 +10,8 @@ export interface TableHeaderProps {
     smallBlind: string;
     bigBlind: string;
     handNumber: number;
+    /** True when the connected wallet created this table. */
+    isCreatedByYou?: boolean;
     onBack: () => void;
     /** Omitted when the viewer isn't seated — there is nothing to leave. */
     onLeave?: () => void;
@@ -25,6 +27,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     smallBlind,
     bigBlind,
     handNumber,
+    isCreatedByYou = false,
     onBack,
     onLeave,
     leaveDisabled,
@@ -84,6 +87,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                     {variantLabel} · ${smallBlind} / ${bigBlind} · Hand #{handNumber}
                 </span>
             </div>
+            {isCreatedByYou && <span className={styles.creatorPill}>Created by you</span>}
             <span className={styles.verifiedPill}>
                 <span className={styles.verifiedDot} />
                 Shuffle verified

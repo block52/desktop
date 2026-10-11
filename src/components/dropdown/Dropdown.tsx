@@ -5,6 +5,7 @@ export interface DropdownOption {
     value: string;
     label: string;
     hint?: string;
+    disabled?: boolean;
 }
 
 interface DropdownProps {
@@ -14,6 +15,8 @@ interface DropdownProps {
     placeholder: string;
     align?: "up" | "down";
     className?: string;
+    /** Adds the placeholder as a selectable "none" row. Off for required choices. */
+    allowEmpty?: boolean;
 }
 
 const ChevronDownIcon: React.FC = () => (
@@ -30,7 +33,7 @@ const CheckIcon: React.FC = () => (
 
 /** Custom dropdown in the sidebar NetworkSwitcher pattern: button trigger, popover
  *  list, checkmark on the selected option, closes on outside mousedown / Escape. */
-const Dropdown: React.FC<DropdownProps> = ({ value, options, onSelect, placeholder, align = "down", className }) => {
+const Dropdown: React.FC<DropdownProps> = ({ value, options, onSelect, placeholder, align = "down", className, allowEmpty = true }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -61,6 +64,7 @@ const Dropdown: React.FC<DropdownProps> = ({ value, options, onSelect, placehold
                 type="button"
                 className={isSelected ? `${styles.option} ${styles.optionSelected}` : styles.option}
                 onClick={() => choose(option.value)}
+                disabled={option.disabled}
             >
                 <span className={styles.optionText}>
                     <span className={styles.optionLabel}>{option.label}</span>
@@ -85,7 +89,7 @@ const Dropdown: React.FC<DropdownProps> = ({ value, options, onSelect, placehold
         >
             {isOpen && (
                 <div className={align === "up" ? `${styles.popover} ${styles.popoverUp}` : styles.popover}>
-                    {renderOption({ value: "", label: placeholder })}
+                    {allowEmpty && renderOption({ value: "", label: placeholder })}
                     {options.map(renderOption)}
                 </div>
             )}

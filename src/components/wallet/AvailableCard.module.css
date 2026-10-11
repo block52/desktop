@@ -118,3 +118,17 @@
     font-size: 12px;
     color: rgb(148, 163, 184);
 }
+
+.iconButton:disabled {
+    cursor: default;
+}
+
+.spinning {
+    animation: refreshSpin 800ms linear infinite;
+}
+
+@keyframes refreshSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}

@@ -1,13 +1,19 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import ActivityPanel from "./ActivityPanel";
 import { useWithdrawalActivity } from "../../hooks/useWithdrawalActivity";
+import { useWalletTransfers } from "../../hooks/useWalletTransfers";
 
 vi.mock("../../hooks/useWithdrawalActivity", () => ({
     useWithdrawalActivity: vi.fn()
 }));
 
+vi.mock("../../hooks/useWalletTransfers", () => ({
+    useWalletTransfers: vi.fn()
+}));
+
+const mockedUseWalletTransfers = vi.mocked(useWalletTransfers);
 const mockedUseWithdrawalActivity = vi.mocked(useWithdrawalActivity);
 
 const ITEM = (over: Record<string, unknown> = {}) => ({
@@ -17,6 +23,10 @@ const ITEM = (over: Record<string, unknown> = {}) => ({
     status: "completed" as const,
     createdAt: 1700000000,
     ...over
+});
+
+beforeEach(() => {
+    mockedUseWalletTransfers.mockReturnValue({ transfers: [], isLoading: false, error: "" });
 });
 
 afterEach(() => {
@@ -63,5 +73,29 @@ describe("ActivityPanel", () => {
         mockedUseWithdrawalActivity.mockReturnValue({ items: [], isLoading: true, error: "" });
         render(<ActivityPanel address="b52addr" />);
         expect(screen.getByText("Loading activity…")).toBeTruthy();
+    });
+
+    it("renders received transfers alongside withdrawals", () => {
+        mockedUseWithdrawalActivity.mockReturnValue({ items: [], isLoading: false, error: "boom" });
+        mockedUseWalletTransfers.mockReturnValue({
+            transfers: [
+                {
+                    hash: "H1",
+                    direction: "in",
+                    counterparty: "b52senderaddress1234",
+                    amountMicro: "2500000",
+                    timestamp: 1700000000,
+                    success: true
+                }
+            ],
+            isLoading: false,
+            error: ""
+        });
+        render(<ActivityPanel address="b52addr" />);
+
+        expect(screen.getByText("Received")).toBeTruthy();
+        expect(screen.getByText("+$2.50")).toBeTruthy();
+        expect(screen.getByText("CONFIRMED")).toBeTruthy();
+        expect(screen.queryByText("boom")).toBeNull();
     });
 });

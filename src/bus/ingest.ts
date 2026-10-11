@@ -53,6 +53,7 @@ export interface RawWsMessage {
         format?: string;
         variant?: string;
         name?: string;
+        creator?: string;
     };
     state?: {
         gameId?: string;
@@ -76,6 +77,8 @@ export type ClassifiedMessage =
           variant: GameVariant | undefined;
           /** Optional ENS-style table name; undefined for unnamed tables. */
           name: string | undefined;
+          /** Address that created the table, when the server reports it. */
+          creator: string | undefined;
           /** null = valid; non-null = invalid but still committed. */
           validationError: ValidationError | null;
       }
@@ -108,6 +111,7 @@ function extractGameDataFromMessage(message: RawWsMessage): {
     format: string | undefined;
     variant: string | undefined;
     name: string | undefined;
+    creator: string | undefined;
 } {
     const fromData = message.data?.gameState;
     const fromState = message.state?.gameState as TexasHoldemStateDTO | undefined;
@@ -116,6 +120,7 @@ function extractGameDataFromMessage(message: RawWsMessage): {
         format: message.data?.format ?? message.state?.format,
         variant: message.data?.variant ?? message.state?.variant,
         name: message.data?.name,
+        creator: message.data?.creator,
     };
 }
 
@@ -137,7 +142,7 @@ export function classifyMessage(raw: RawWsMessage | null | undefined, tableId: s
         (message.event !== undefined && COSMOS_STATE_EVENTS.includes(message.event) && message.gameId === tableId);
 
     if (isStateUpdate) {
-        const { gameState: gameStateData, format: rawFormat, variant: rawVariant, name } = extractGameDataFromMessage(message);
+        const { gameState: gameStateData, format: rawFormat, variant: rawVariant, name, creator } = extractGameDataFromMessage(message);
 
         if (!gameStateData) {
             return {
@@ -156,6 +161,7 @@ export function classifyMessage(raw: RawWsMessage | null | undefined, tableId: s
             format: toGameFormat(rawFormat),
             variant: toGameVariant(rawVariant),
             name,
+            creator,
             validationError: null,
         };
     }
