@@ -25,6 +25,8 @@ import DepositWithdrawPanel, { WalletTab } from "../components/wallet/DepositWit
 import WalletKeysModal from "../components/wallet/WalletKeysModal";
 import SeedPhraseGrid from "../components/wallet/SeedPhraseGrid";
 import SendModal from "../components/modal/SendModal";
+import AvatarPickerModal from "../components/modal/AvatarPickerModal";
+import { useOnChainAvatar } from "../hooks/useOnChainAvatar";
 import styles from "./Wallet.module.css";
 
 const Wallet: React.FC = () => {
@@ -33,6 +35,8 @@ const Wallet: React.FC = () => {
 
     const [showSendModal, setShowSendModal] = useState(false);
     const [showKeysModal, setShowKeysModal] = useState(false);
+    const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+    const [avatarRefresh, setAvatarRefresh] = useState(0);
     const [walletTab, setWalletTab] = useState<WalletTab>("deposit");
     const [refreshToken, setRefreshToken] = useState(0);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -89,6 +93,7 @@ const Wallet: React.FC = () => {
     const { open: openAppKit } = useAppKit();
     const { address: web3Address, isConnected: isWeb3Connected } = useAppKitAccount();
     const { items: activityItems } = useWithdrawalActivity(existingAddress, undefined, refreshToken);
+    const onChainAvatar = useOnChainAvatar(existingAddress, avatarRefresh);
 
     const pendingWithdrawalMicro = activityItems
         .filter(i => i.status === "pending")
@@ -201,6 +206,29 @@ const Wallet: React.FC = () => {
                             onBalanceRefresh={refreshBalance}
                         />
                     </div>
+                )}
+
+                {existingAddress && (
+                    <div className={`pane-lite ${styles.card}`}>
+                        <span className="section-label">Table avatar</span>
+                        <p className={styles.cardDesc}>
+                            {onChainAvatar === null
+                                ? "Show one of your NFTs on your seat at the tables."
+                                : `Registered: ${onChainAvatar.contractAddress.slice(0, 8)}…${onChainAvatar.contractAddress.slice(-4)} #${onChainAvatar.tokenId}`}
+                        </p>
+                        <button type="button" className={`btn-ghost ${styles.primaryAction}`} onClick={() => setShowAvatarPicker(true)}>
+                            {onChainAvatar === null ? "Choose NFT avatar" : "Change NFT avatar"}
+                        </button>
+                    </div>
+                )}
+
+                {showAvatarPicker && existingAddress && (
+                    <AvatarPickerModal
+                        cosmosAddress={existingAddress}
+                        current={onChainAvatar}
+                        onClose={() => setShowAvatarPicker(false)}
+                        onRegistered={() => setAvatarRefresh(count => count + 1)}
+                    />
                 )}
 
                 {existingAddress && (
