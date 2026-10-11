@@ -18,7 +18,16 @@
     font-size: 32px;
     font-weight: 700;
     line-height: 1;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.netWon {
     color: rgb(82, 224, 134);
+}
+
+.netLost {
+    color: hsl(0 80% 68%);
 }
 
 .summary {
