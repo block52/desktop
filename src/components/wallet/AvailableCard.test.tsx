@@ -14,7 +14,9 @@ const BASE_PROPS = {
     onTabChange: vi.fn(),
     onSend: vi.fn(),
     onManageWeb3: vi.fn(),
-    onShowKeys: vi.fn()
+    onShowKeys: vi.fn(),
+    onRefresh: vi.fn(),
+    isRefreshing: false
 };
 
 function renderCard(overrides: Partial<typeof BASE_PROPS> = {}) {
@@ -61,6 +63,18 @@ describe("AvailableCard", () => {
         const props = renderCard();
         fireEvent.click(screen.getByRole("button", { name: "Wallet keys" }));
         expect(props.onShowKeys).toHaveBeenCalledTimes(1);
+    });
+
+    it("fires onRefresh when the refresh icon is clicked", () => {
+        const props = renderCard();
+        fireEvent.click(screen.getByRole("button", { name: "Refresh balance and activity" }));
+        expect(props.onRefresh).toHaveBeenCalledTimes(1);
+    });
+
+    it("disables the refresh icon while refreshing", () => {
+        renderCard({ isRefreshing: true });
+        const button = screen.getByRole("button", { name: "Refresh balance and activity" }) as HTMLButtonElement;
+        expect(button.disabled).toBe(true);
     });
 
     it("hides the web3 row when disconnected", () => {

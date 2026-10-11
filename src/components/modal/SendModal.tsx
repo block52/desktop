@@ -60,7 +60,7 @@ const SendModal: React.FC<SendModalProps> = ({ fromAddress, usdcBalance, onSend,
                         <p className={styles.hashLabel}>Transaction hash</p>
                         <p className={styles.hashValue}>{txHash}</p>
                     </div>
-                    <button onClick={onClose} className={`${styles.primaryButton} ${styles.fullWidth}`}>
+                    <button onClick={onClose} className={`btn-glow ${styles.primaryButton} ${styles.fullWidth}`}>
                         Done
                     </button>
                 </div>
@@ -123,10 +123,10 @@ const SendModal: React.FC<SendModalProps> = ({ fromAddress, usdcBalance, onSend,
                 {error && <div className={styles.errorBanner}>{error}</div>}
 
                 <div className={styles.actions}>
-                    <button onClick={onClose} className={styles.cancelButton}>
+                    <button onClick={onClose} className={`btn-ghost ${styles.cancelButton}`}>
                         Cancel
                     </button>
-                    <button onClick={handleSend} disabled={!canSend} className={styles.primaryButton}>
+                    <button onClick={handleSend} disabled={!canSend} className={`btn-glow ${styles.primaryButton}`}>
                         {isSending ? "Sending..." : "Send"}
                     </button>
                 </div>

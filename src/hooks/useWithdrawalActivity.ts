@@ -45,7 +45,8 @@ export function normalizeWithdrawal(raw: unknown): WithdrawalActivityItem | null
 
 export function useWithdrawalActivity(
     address: string | null,
-    pollMs = 10000
+    pollMs = 10000,
+    refreshToken = 0
 ): { items: WithdrawalActivityItem[]; isLoading: boolean; error: string } {
     const { currentNetwork } = useNetwork();
     const [items, setItems] = useState<WithdrawalActivityItem[]>([]);
@@ -82,7 +83,7 @@ export function useWithdrawalActivity(
             cancelled = true;
             clearInterval(interval);
         };
-    }, [address, currentNetwork, pollMs]);
+    }, [address, currentNetwork, pollMs, refreshToken]);
 
     return { items, isLoading, error };
 }

@@ -13,6 +13,8 @@ interface AvailableCardProps {
     onSend: () => void;
     onManageWeb3: () => void;
     onShowKeys: () => void;
+    onRefresh: () => void;
+    isRefreshing: boolean;
 }
 
 function microToUsd(micro: string): string {
@@ -29,7 +31,9 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
     onTabChange,
     onSend,
     onManageWeb3,
-    onShowKeys
+    onShowKeys,
+    onRefresh,
+    isRefreshing
 }) => {
     const shortAddress = `${address.slice(0, 3)}…${address.slice(-4)}`;
     const web3Short = web3Address ? `${web3Address.slice(0, 6)}…${web3Address.slice(-4)}` : "";
@@ -40,6 +44,28 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
                 <span className="section-label">Available</span>
                 <span className={styles.headRight}>
                     <span className={styles.headAddress}>{shortAddress}</span>
+                    <button
+                        className={styles.iconButton}
+                        title="Refresh"
+                        aria-label="Refresh balance and activity"
+                        onClick={onRefresh}
+                        disabled={isRefreshing}
+                    >
+                        <svg
+                            className={isRefreshing ? styles.spinning : undefined}
+                            width="13"
+                            height="13"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            viewBox="0 0 24 24"
+                        >
+                            <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+                            <path d="M21 3v5h-5" />
+                        </svg>
+                    </button>
                     <button
                         className={styles.iconButton}
                         title="Wallet keys"
