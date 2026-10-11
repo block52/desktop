@@ -1,4 +1,5 @@
 import usdcUrl from "../../assets/lobby/usdc.svg";
+import CopyButton from "../copyButton/CopyButton";
 import type { WalletTab } from "./DepositWithdrawPanel";
 import styles from "./AvailableCard.module.css";
 
@@ -44,6 +45,7 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
                 <span className="section-label">Available</span>
                 <span className={styles.headRight}>
                     <span className={styles.headAddress}>{shortAddress}</span>
+                    <CopyButton text={address} message="Address copied" title="Copy address" />
                     <button
                         className={styles.iconButton}
                         title="Refresh"

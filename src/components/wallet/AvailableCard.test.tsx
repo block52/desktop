@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import AvailableCard from "./AvailableCard";
+import { ToastProvider } from "../../context/ToastContext";
 import type { WalletTab } from "./DepositWithdrawPanel";
 
 const BASE_PROPS = {
@@ -21,7 +22,11 @@ const BASE_PROPS = {
 
 function renderCard(overrides: Partial<typeof BASE_PROPS> = {}) {
     const props = { ...BASE_PROPS, ...overrides };
-    render(<AvailableCard {...props} />);
+    render(
+        <ToastProvider>
+            <AvailableCard {...props} />
+        </ToastProvider>
+    );
     return props;
 }
 
@@ -63,6 +68,11 @@ describe("AvailableCard", () => {
         const props = renderCard();
         fireEvent.click(screen.getByRole("button", { name: "Wallet keys" }));
         expect(props.onShowKeys).toHaveBeenCalledTimes(1);
+    });
+
+    it("renders a copy button for the wallet address", () => {
+        renderCard();
+        expect(screen.getByRole("button", { name: "Copy address" })).toBeTruthy();
     });
 
     it("fires onRefresh when the refresh icon is clicked", () => {
