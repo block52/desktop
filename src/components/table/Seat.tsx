@@ -19,8 +19,10 @@ export interface SeatProps {
     isFolded?: boolean;
     /** The local player's seat — rendered as the large bottom-center hero panel. */
     isHero?: boolean;
-    /** Required when occupied. */
+    /** Required when occupied. Player addresses are never shown at the table, so this is a seat label. */
     name?: string;
+    /** Shown in the avatar when the player has no NFT avatar. */
+    seatNumber?: number;
     stack?: string;
     /** Stack as a 0–1 fraction of the max buy-in; drawn as the hero's stack bar. Omit for no bar. */
     stackFraction?: number;
@@ -52,7 +54,7 @@ export interface SeatProps {
     onSelect?: () => void;
 }
 
-/** NFT avatar with gateway fallback; falls back to the player's initials when nothing loads. */
+/** NFT avatar with gateway fallback; falls back to the seat number when nothing loads. */
 function AvatarFace({ avatar, initials }: { avatar?: string; initials: string }) {
     const candidates = React.useMemo(() => avatarImageCandidates(avatar), [avatar]);
     const [attempt, setAttempt] = React.useState({ avatar, index: 0 });
@@ -130,6 +132,7 @@ export const Seat: React.FC<SeatProps> = ({
     isFolded,
     isHero,
     name,
+    seatNumber,
     stack,
     stackFraction,
     currentBet,
@@ -211,7 +214,7 @@ export const Seat: React.FC<SeatProps> = ({
         );
     }
 
-    const initials = (name ?? "?").replace(/[^a-zA-Z0-9]/g, "").slice(0, 2).toUpperCase() || "?";
+    const initials = seatNumber !== undefined ? String(seatNumber) : "?";
 
     return (
         <div className={`${styles.seat} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : isIdle === true ? styles.idle : ""} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>

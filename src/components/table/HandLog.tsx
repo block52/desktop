@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import type { ActionDTO } from "@block52/poker-vm-sdk";
-import { shortAddress } from "./shortAddress";
 import styles from "./HandLog.module.css";
 
 export interface HandLogProps {
@@ -72,7 +71,7 @@ export const HandLog: React.FC<HandLogProps> = ({ actions, handNumber, localAddr
                             <div key={action.index} className={styles.row}>
                                 <span className={styles.round}>{roundLabel(action.round)}</span>
                                 <span className={styles.what}>
-                                    <b>{localAddress !== null && action.playerId.toLowerCase() === localAddress ? "You" : shortAddress(action.playerId)}</b>{" "}
+                                    <b>{localAddress !== null && action.playerId.toLowerCase() === localAddress ? "You" : `Seat ${action.seat}`}</b>{" "}
                                     {describeAction(action, formatAmount)}
                                 </span>
                             </div>

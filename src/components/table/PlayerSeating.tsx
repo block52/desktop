@@ -3,7 +3,6 @@ import { PlayerStatus, type PlayerDTO } from "@block52/poker-vm-sdk";
 import { getSeatPercent, resolveTableSize, seatToUiPosition } from "../../config/seatGeometry";
 import { Seat } from "./Seat";
 import type { SeatStatusLabel } from "./SeatBanner";
-import { shortAddress } from "./shortAddress";
 import styles from "./PlayerSeating.module.css";
 
 export interface PlayerSeatingProps {
@@ -112,7 +111,8 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 isFolded={player.status === PlayerStatus.FOLDED}
                 isHero={isHero}
                 stackFraction={isHero && maxBuyInMicro > 0 ? Number(player.stack) / maxBuyInMicro : undefined}
-                name={shortAddress(player.address)}
+                name={`Seat ${serverSeat}`}
+                seatNumber={serverSeat}
                 stack={formatStack(player.stack)}
                 currentBet={player.sumOfBets !== "0" ? formatStack(player.sumOfBets) : undefined}
                 betValue={player.sumOfBets !== "0" ? chipValue(player.sumOfBets) : undefined}
