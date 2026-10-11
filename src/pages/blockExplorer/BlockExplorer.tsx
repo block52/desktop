@@ -13,7 +13,6 @@ import CopyButton from "../../components/copyButton/CopyButton";
 import ExplorerStats from "../../components/explorer/ExplorerStats";
 import AccountsColumn, { type AccountSortField } from "../../components/explorer/AccountsColumn";
 import AddressLookupTab from "../../components/explorer/AddressLookupTab";
-import MyHandsTab from "../../components/explorer/MyHandsTab";
 import PlayersTab from "../../components/explorer/PlayersTab";
 import Pagination, { PAGE_SIZES } from "../../components/pagination/Pagination";
 import { pageInfo, paginate } from "../../utils/paginate";
@@ -36,13 +35,12 @@ interface TxLookupResponse {
     tx_response?: TxSummary;
 }
 
-type ExplorerTab = "blocks" | "accounts" | "address" | "hands" | "players";
+type ExplorerTab = "blocks" | "accounts" | "address" | "players";
 
 const TABS: { id: ExplorerTab; label: string }[] = [
     { id: "blocks", label: "Latest blocks" },
     { id: "accounts", label: "All accounts" },
     { id: "address", label: "Address lookup" },
-    { id: "hands", label: "My hands" },
     { id: "players", label: "Players" }
 ];
 
@@ -577,7 +575,6 @@ const BlockExplorer: React.FC = () => {
             )}
 
             {tab === "address" && <AddressLookupTab address={lookupAddress} onAddressChange={setLookupAddress} onTxClick={openTx} />}
-            {tab === "hands" && <MyHandsTab />}
             {tab === "players" && <PlayersTab onOpenPlayer={address => navigate(`/players/${address}`)} />}
         </div>
     );

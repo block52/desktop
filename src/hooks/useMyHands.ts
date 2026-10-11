@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { GameFormat, isTournamentFormat, type GameStateResponseDTO } from "@block52/poker-vm-sdk";
 import { useNetwork } from "../context/NetworkContext";
 import { getCosmosClient } from "../utils/cosmos/client";
-import { indexerApi, type PlayerHand } from "../utils/indexer";
+import type { PlayerHand } from "../utils/indexer";
+import { fetchWalletHands } from "../utils/walletHands";
 
 const PAGE_SIZE = 25;
 
@@ -12,6 +13,8 @@ export interface MyHandsState {
     isLoading: boolean;
     error: string;
     hasMore: boolean;
+    /** The indexer had no hands attributed to the wallet; these were matched from its table sessions. */
+    estimated: boolean;
     loadMore: () => void;
     reload: () => void;
     /** true = chips (Sit & Go / tournament), false = micro-USDC; absent while unknown. */
@@ -59,6 +62,7 @@ export function useMyHands(address: string | null): MyHandsState {
     const [error, setError] = useState("");
     const [nonce, setNonce] = useState(0);
     const [loadedCount, setLoadedCount] = useState(0);
+    const [estimated, setEstimated] = useState(false);
 
     // Fresh list on wallet / network change or reload.
     useEffect(() => {
@@ -69,12 +73,12 @@ export function useMyHands(address: string | null): MyHandsState {
         if (address === null) return;
         const controller = new AbortController();
         setIsLoading(true);
-        indexerApi
-            .getPlayerHands(address, PAGE_SIZE, 0, controller.signal)
+        fetchWalletHands(address, PAGE_SIZE, 0, controller.signal)
             .then(res => {
                 setHands(res.data);
-                setTotal(res.pagination.total);
+                setTotal(res.total);
                 setLoadedCount(res.data.length);
+                setEstimated(res.estimated);
             })
             .catch(err => {
                 if (!controller.signal.aborted) setError(err instanceof Error ? err.message : "Failed to load hands");
@@ -88,15 +92,14 @@ export function useMyHands(address: string | null): MyHandsState {
     const loadMore = useCallback(() => {
         if (address === null || isLoading) return;
         setIsLoading(true);
-        indexerApi
-            .getPlayerHands(address, PAGE_SIZE, loadedCount)
+        fetchWalletHands(address, PAGE_SIZE, loadedCount)
             .then(res => {
                 setHands(prev => {
                     const seen = new Set(prev.map(h => `${h.game_id}#${h.hand_number}`));
                     return [...prev, ...res.data.filter(h => !seen.has(`${h.game_id}#${h.hand_number}`))];
                 });
                 setLoadedCount(c => c + res.data.length);
-                setTotal(res.pagination.total);
+                setTotal(res.total);
             })
             .catch(err => setError(err instanceof Error ? err.message : "Failed to load hands"))
             .finally(() => setIsLoading(false));
@@ -106,5 +109,5 @@ export function useMyHands(address: string | null): MyHandsState {
 
     const reload = useCallback(() => setNonce(n => n + 1), []);
 
-    return { hands, total, isLoading, error, hasMore: hands.length < total, loadMore, reload, chipTables };
+    return { hands, total, isLoading, error, hasMore: hands.length < total, estimated, loadMore, reload, chipTables };
 }

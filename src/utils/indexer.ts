@@ -95,6 +95,11 @@ export interface PlayerHand {
     ended_at?: string;
     community_cards: string[];
     winner_count: number;
+    /**
+     * Set when the indexer has not attributed this hand to the wallet and it was matched from the wallet's
+     * table sessions instead: the player was seated for it, but seat, cards and result are unknown.
+     */
+    estimated?: boolean;
 }
 
 // GET /api/v1/players/:address/stats — money is micro-USDC; percentage fields
@@ -171,6 +176,8 @@ export const indexerApi = {
         if (params.search !== "") query.set("search", params.search);
         return getJson<Paged<PlayerListItem>>(`/api/v1/players?${query.toString()}`, signal);
     },
+    getHandsForGame: (gameId: string, limit: number, offset: number, signal?: AbortSignal) =>
+        getJson<Paged<IndexedHand>>(`/api/v1/hands?game_id=${encodeURIComponent(gameId)}&limit=${limit}&offset=${offset}`, signal),
     getRecentHands: (limit: number, offset: number, signal?: AbortSignal) =>
         getJson<Paged<IndexedHand>>(`/api/v1/hands?limit=${limit}&offset=${offset}`, signal),
     getHand: (gameId: string, handNumber: number, signal?: AbortSignal) =>

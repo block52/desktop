@@ -14,7 +14,11 @@ export interface HandOutcome {
  * (true = Sit & Go / tournament chips, false = micro-USDC, undefined = not
  * known yet — the amount then shows without units).
  */
-export function describeHandOutcome(hand: Pick<PlayerHand, "status" | "won_amount">, isChips: boolean | undefined): HandOutcome {
+export function describeHandOutcome(hand: Pick<PlayerHand, "status" | "won_amount" | "estimated">, isChips: boolean | undefined): HandOutcome {
+    // Matched from the wallet's table sessions: it was seated for the hand, but the result is not known.
+    if (hand.estimated === true) {
+        return { label: "Played", tone: "neutral" };
+    }
     if (hand.won_amount > 0) {
         const amount = isChips === false ? formatMicroUsd(hand.won_amount) : hand.won_amount.toLocaleString();
         return { label: `Won ${amount}${isChips === true ? " chips" : ""}`, tone: "won" };

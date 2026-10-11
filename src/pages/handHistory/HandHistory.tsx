@@ -78,6 +78,12 @@ const HandHistory: React.FC = () => {
                             {!mine.isLoading && mine.error === "" && mine.hands.length === 0 && (
                                 <p className={styles.state}>No indexed hands for this wallet yet.</p>
                             )}
+                            {mine.estimated && mine.hands.length > 0 && (
+                                <p className={styles.state}>
+                                    The indexer has not attributed these hands to your wallet yet, so they are the hands of the tables you sat
+                                    at while you were seated. Open one to replay it; results show once the indexer links them.
+                                </p>
+                            )}
                             {mine.hands.map(hand => {
                                 const outcome = describeHandOutcome(hand, mine.chipTables.get(hand.game_id));
                                 return (
@@ -91,7 +97,8 @@ const HandHistory: React.FC = () => {
                                                 Hand #{hand.hand_number} · {shortId(hand.game_id)}
                                             </span>
                                             <span className={styles.handMeta}>
-                                                Seat {hand.seat} · {formatWhen(hand.ended_at, hand.block_height)}
+                                                {hand.estimated === true ? "" : `Seat ${hand.seat} · `}
+                                                {formatWhen(hand.ended_at, hand.block_height)}
                                             </span>
                                         </div>
                                         <span className={`${styles.amount} ${outcome.tone === "won" ? styles.won : outcome.tone === "lost" ? styles.lost : ""}`}>
