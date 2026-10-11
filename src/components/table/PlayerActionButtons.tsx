@@ -188,6 +188,9 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
         </div>
     );
 
+    // A blind or the deal is due: the step buttons on the felt take over, so the floating bar stays out of their way.
+    if (stepActive) return null;
+
     return (
         <div className={`pane ${styles.bar}`}>
             <div className={styles.turn}>

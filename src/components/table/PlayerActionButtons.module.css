@@ -96,7 +96,7 @@
 
 .presets .preset {
     padding: 0 10px;
-    height: 32px;
+    height: 30px;
 }
 
 .preset {
@@ -209,7 +209,7 @@
 }
 
 .btn {
-    height: 36px;
+    height: 34px;
     padding: 0 16px;
     border-radius: 10px;
     font: 600 14px/1 Inter, system-ui, sans-serif;
@@ -224,7 +224,7 @@
 
 .primaryBtn {
     border: 0;
-    height: 36px;
+    height: 34px;
     padding: 0 16px;
     border-radius: 10px;
     font: 600 14px/1 Inter, system-ui, sans-serif;
@@ -241,7 +241,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    height: 36px;
+    height: 34px;
     padding: 0 16px;
     border-radius: 999px;
     font: 600 13px Inter, system-ui, sans-serif;
@@ -402,4 +402,11 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Floats over the felt: translucent glass so the table stays visible behind it. */
+.bar.bar {
+    background: hsl(240 26% 8% / 0.86);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 14px 34px -12px black;
 }
