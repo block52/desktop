@@ -1,5 +1,6 @@
 import React from "react";
-import PlayingCard from "./PlayingCard";
+import PlayingCard, { parseCard } from "./PlayingCard";
+import { avatarImageCandidates } from "../../utils/playerAvatar";
 import styles from "./Seat.module.css";
 
 export interface SeatProps {
@@ -25,8 +26,29 @@ export interface SeatProps {
     currentBet?: string;
     /** Hole cards (SDK codes) — rendered face-up when present. */
     holeCards?: string[];
+    /** Raw `player.avatar` from table state (NFT ref or image URL). */
+    avatar?: string;
     /** Vacant seats only: makes the seat clickable (e.g. to open the join modal). */
     onSelect?: () => void;
+}
+
+/** NFT avatar with gateway fallback; falls back to the player's initials when nothing loads. */
+function AvatarFace({ avatar, initials }: { avatar?: string; initials: string }) {
+    const candidates = React.useMemo(() => avatarImageCandidates(avatar), [avatar]);
+    const [attempt, setAttempt] = React.useState({ avatar, index: 0 });
+    const index = attempt.avatar === avatar ? attempt.index : 0;
+    if (index >= candidates.length) {
+        return <span className={styles.initials}>{initials}</span>;
+    }
+    return (
+        <img
+            className={styles.avatarImage}
+            src={candidates[index]}
+            alt="Player avatar"
+            referrerPolicy="no-referrer"
+            onError={() => setAttempt({ avatar, index: index + 1 })}
+        />
+    );
 }
 
 function BlindTag({ isSmallBlind, isBigBlind }: Pick<SeatProps, "isSmallBlind" | "isBigBlind">) {
@@ -54,6 +76,7 @@ export const Seat: React.FC<SeatProps> = ({
     stackFraction,
     currentBet,
     holeCards,
+    avatar,
     onSelect,
 }) => {
     const style: React.CSSProperties = { left: `${left}%`, top: `${top}%` };
@@ -104,7 +127,12 @@ export const Seat: React.FC<SeatProps> = ({
                         </div>
                     )}
                 </div>
-                {currentBet && <div className={styles.bet}>{currentBet}</div>}
+                {currentBet && (
+                <div className={styles.bet}>
+                    <span className={styles.betChip} />
+                    {currentBet}
+                </div>
+            )}
             </div>
         );
     }
@@ -114,7 +142,7 @@ export const Seat: React.FC<SeatProps> = ({
     return (
         <div className={`${styles.seat} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : ""}`} style={style}>
             <div className={styles.avatar}>
-                <span className={styles.initials}>{initials}</span>
+                <AvatarFace avatar={avatar} initials={initials} />
                 {isDealer && <span className={styles.dealer}>D</span>}
             </div>
             <div className={styles.nameplate}>
@@ -124,14 +152,19 @@ export const Seat: React.FC<SeatProps> = ({
                 </div>
                 <div className={`${styles.stack} ${isFolded ? styles.stackMuted : ""}`}>{isFolded ? "Folded" : stack}</div>
             </div>
-            {hasCards && (
+            {hasCards && !isFolded && (
                 <div className={styles.cards}>
                     {holeCards.map((code, i) => (
-                        <PlayingCard key={i} code={code} className={styles.holeCard} />
+                        <PlayingCard key={i} code={code} faceDown={parseCard(code) === null} className={styles.holeCard} />
                     ))}
                 </div>
             )}
-            {currentBet && <div className={styles.bet}>{currentBet}</div>}
+            {currentBet && (
+                <div className={styles.bet}>
+                    <span className={styles.betChip} />
+                    {currentBet}
+                </div>
+            )}
         </div>
     );
 };

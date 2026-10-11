@@ -86,6 +86,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 stack={formatStack(player.stack)}
                 currentBet={player.sumOfBets !== "0" ? formatStack(player.sumOfBets) : undefined}
                 holeCards={player.holeCards ?? undefined}
+                avatar={player.avatar}
             />
         );
     }
