@@ -44,6 +44,7 @@ import { useTurnTimer } from "../../hooks/useTurnTimer";
 import { useAutoFold, useAutoMuck, useAutoShowCards, usePreCheck } from "../../hooks/playerActions/useAutoActions";
 import { sitOut } from "../../hooks/playerActions/sitOut";
 import { useAutoSitOutNextBB } from "../../hooks/playerActions/useAutoSitOutNextBB";
+import { describeHandStrength } from "../../utils/handStrength";
 import { isCheckFreeForPlayer } from "../../utils/checkFree";
 import { loadTableTheme, nextTableTheme, saveTableTheme, type TableTheme } from "../../config/tableTheme";
 import styles from "./Table.module.css";
@@ -371,6 +372,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             ? maxTopUpMicro(BigInt(myPlayer.stack), BigInt(gameState.gameOptions.maxBuyIn), BigInt(usdcBalanceAmount))
             : 0n;
 
+    const isFolded = myPlayer?.status === PlayerStatus.FOLDED;
+
     const myResult = localAddress !== null ? gameState.results.find(r => r.playerId.toLowerCase() === localAddress) : undefined;
     const resultKey = `viewed_sng_result_${tableId}_${localAddress ?? ""}`;
     const isResultDismissed = resultDismissed[resultKey] ?? (() => {
@@ -566,6 +569,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                               }
                             : undefined
                     }
+                    handLabel={isFolded ? null : describeHandStrength(myPlayer?.holeCards ?? undefined, gameState.communityCards)}
                     onTopUp={topUpVisible ? () => setTopUpOpen(true) : undefined}
                     canTopUp={canTopUp}
                     showPreCheck={showPreCheck}

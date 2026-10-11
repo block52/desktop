@@ -249,3 +249,10 @@
     accent-color: hsl(263 83% 58%);
     margin: 0;
 }
+
+.handLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: hsl(210 40% 96%);
+    white-space: nowrap;
+}

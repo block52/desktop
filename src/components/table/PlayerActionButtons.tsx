@@ -12,6 +12,8 @@ export interface PlayerActionButtonsProps {
     onWagerChange: (value: string) => void;
     /** Pot in the same display units, for the ½/¾/Pot presets. */
     potValue: number;
+    /** Plain-language strength of the player's hand ("Pair of Aces"); null when unknown or folded. */
+    handLabel?: string | null;
     /** Cash games: opens the add-chips dialog. Omitted on tournaments and when not seated. */
     onTopUp?: () => void;
     /** Whether the chain currently allows a top-up (not while in the hand). */
@@ -84,6 +86,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     wagerAmount,
     onWagerChange,
     potValue,
+    handLabel = null,
     onTopUp,
     canTopUp = false,
     sitOut,
@@ -125,6 +128,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
         <div className={`pane ${styles.bar}`}>
             <div className={styles.turn}>
                 <span className={`section-label ${isPlayerTurn ? styles.turnOn : ""}`}>{isPlayerTurn ? "Your turn" : "Not your turn"}</span>
+                {handLabel !== null && <span className={styles.handLabel}>{handLabel}</span>}
                 {onTopUp !== undefined && (
                     <button
                         type="button"
