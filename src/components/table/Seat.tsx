@@ -121,6 +121,11 @@ function BlindTag({ isSmallBlind, isBigBlind }: Pick<SeatProps, "isSmallBlind" |
     return null;
 }
 
+/** Space above an upper seat's avatar for its cards, badge and action strip. */
+const UPPER_SEAT_CLEARANCE_PX = 140;
+/** Space below a lower seat's avatar for its badge, cards and bet chips. */
+const LOWER_SEAT_CLEARANCE_PX = 175;
+
 export const Seat: React.FC<SeatProps> = ({
     left,
     top,
@@ -149,7 +154,12 @@ export const Seat: React.FC<SeatProps> = ({
     avatar,
     onSelect,
 }) => {
-    const style: React.CSSProperties = { left: `${left}%`, top: `${top}%` };
+    // Upper-half seats hang their badge and cards above the avatar, lower-half seats below it. On a
+    // short pane the percentage coordinate alone would push that content out of the pane and clip
+    // it, so keep room for it: upper seats never sit closer to the top than UPPER_SEAT_CLEARANCE_PX,
+    // lower seats never closer to the bottom than LOWER_SEAT_CLEARANCE_PX.
+    const seatTop = top < 50 ? `max(${top}%, ${UPPER_SEAT_CLEARANCE_PX}px)` : `min(${top}%, calc(100% - ${LOWER_SEAT_CLEARANCE_PX}px))`;
+    const style: React.CSSProperties = { left: `${left}%`, top: seatTop };
 
     if (!occupied) {
         if (onSelect !== undefined) {
