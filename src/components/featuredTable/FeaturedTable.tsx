@@ -24,6 +24,8 @@ const FeaturedTable: React.FC<FeaturedTableProps> = ({ game }) => {
 
     if (!game) return null;
 
+    // A full Sit & Go has started: there is no seat to register for, only to watch.
+    const isFull = game.currentPlayers >= game.maxPlayers;
     const buyInUsdc = microToUsdc(game.minBuyIn);
     const prizePoolUsdc = (
         (Number(game.minBuyIn) * game.maxPlayers * 0.9) /
@@ -41,22 +43,24 @@ const FeaturedTable: React.FC<FeaturedTableProps> = ({ game }) => {
 
             <div className={styles.badges}>
                 <span className={styles.badgeSng}>SIT &amp; GO</span>
-                <span className={styles.badgeStatus}>Starts when full</span>
+                <span className={styles.badgeStatus}>{isFull ? "In progress" : "Starts when full"}</span>
             </div>
 
             <div className={styles.textBlock}>
                 <div className={styles.heroTitle}>{game.name ?? shortId(game.gameId)}</div>
                 <div className={styles.heroDescription}>
-                    Starts when full. Winner takes the pot — every hand settled on-chain.
+                    {isFull
+                        ? "The table is full and playing. Watch it live — every hand settled on-chain."
+                        : "Starts when full. Winner takes the pot — every hand settled on-chain."}
                 </div>
             </div>
 
             <div className={styles.footer}>
                 <button
-                    className={`btn-glow shimmer-hover ${styles.registerButton}`}
+                    className={`${isFull ? "btn-ghost" : "btn-glow shimmer-hover"} ${styles.registerButton}`}
                     onClick={() => navigate(`/table/${game.gameId}`)}
                 >
-                    Register · ${buyInUsdc}
+                    {isFull ? "Watch" : `Register · $${buyInUsdc}`}
                 </button>
                 <div className={styles.metaStack}>
                     <span className={`section-label ${styles.metaLabel}`}>Seats</span>
