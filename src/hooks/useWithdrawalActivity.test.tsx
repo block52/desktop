@@ -3,25 +3,29 @@ import { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import { normalizeWithdrawal, useWithdrawalActivity } from "./useWithdrawalActivity";
-import { getCosmosClient } from "../utils/cosmos/client";
 import { useNetwork } from "../context/NetworkContext";
 
-vi.mock("../utils/cosmos/client", () => ({ getCosmosClient: vi.fn() }));
 vi.mock("../context/NetworkContext", () => ({ useNetwork: vi.fn() }));
 
-const mockedGetCosmosClient = vi.mocked(getCosmosClient);
+const fetchMock = vi.fn();
+vi.stubGlobal("fetch", fetchMock);
 const mockedUseNetwork = vi.mocked(useNetwork);
 
 const wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
 
+function mockNetwork() {
+    mockedUseNetwork.mockReturnValue({ currentNetwork: { name: "t", rpc: "r", rest: "https://node.test" } } as never);
+}
+
 function mockClient(withdrawals: unknown[]) {
-    mockedUseNetwork.mockReturnValue({ currentNetwork: { name: "t", rpc: "r", rest: "e" } } as never);
-    mockedGetCosmosClient.mockReturnValue({ listWithdrawalRequests: vi.fn().mockResolvedValue(withdrawals) } as never);
+    mockNetwork();
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ withdrawal_requests: withdrawals }) });
 }
 
 afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    fetchMock.mockReset();
 });
 
 describe("normalizeWithdrawal", () => {
@@ -66,17 +70,41 @@ describe("useWithdrawalActivity", () => {
         expect(result.current.error).toBe("");
     });
 
-    it("sets error when the client call rejects", async () => {
-        mockedUseNetwork.mockReturnValue({ currentNetwork: { name: "t", rpc: "r", rest: "e" } } as never);
-        mockedGetCosmosClient.mockReturnValue({ listWithdrawalRequests: vi.fn().mockRejectedValue(new Error("boom")) } as never);
+    it("sets error when the request rejects", async () => {
+        mockNetwork();
+        fetchMock.mockRejectedValue(new Error("boom"));
         const { result } = renderHook(() => useWithdrawalActivity("b52addr"), { wrapper });
         await waitFor(() => expect(result.current.error).toBe("boom"));
+    });
+
+    it("treats 501 as no withdrawals and stops polling", async () => {
+        mockNetwork();
+        fetchMock.mockResolvedValue({ ok: false, status: 501, json: async () => ({}) });
+        const { result } = renderHook(() => useWithdrawalActivity("b52addr", 20), { wrapper });
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.items).toEqual([]);
+        expect(result.current.error).toBe("");
+        await new Promise(resolve => setTimeout(resolve, 100));
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not ask a node again once it answered 501", async () => {
+        mockedUseNetwork.mockReturnValue({ currentNetwork: { name: "t", rpc: "r", rest: "https://node.cached" } } as never);
+        fetchMock.mockResolvedValue({ ok: false, status: 501, json: async () => ({}) });
+        const first = renderHook(() => useWithdrawalActivity("b52addr", 1000), { wrapper });
+        await waitFor(() => expect(first.result.current.isLoading).toBe(false));
+        first.unmount();
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+
+        const second = renderHook(() => useWithdrawalActivity("b52addr", 1000), { wrapper });
+        await waitFor(() => expect(second.result.current.isLoading).toBe(false));
+        expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
     it("does nothing when address is null", () => {
         const { result } = renderHook(() => useWithdrawalActivity(null), { wrapper });
         expect(result.current.items).toEqual([]);
         expect(result.current.isLoading).toBe(false);
-        expect(mockedGetCosmosClient).not.toHaveBeenCalled();
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 });
