@@ -137,7 +137,11 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         }
     }, [validationMessage, showWarning]);
 
+    const actionInFlight = useRef(false);
     const runAction = async (label: string, action: () => Promise<PlayerActionResult | JoinTableResult | LeaveTableResult | TopUpResult>): Promise<boolean> => {
+        // State updates land after the render, so a fast double click would slip through `disabled`.
+        if (actionInFlight.current) return false;
+        actionInFlight.current = true;
         setIsSubmitting(true);
         setPendingAction(label);
         try {
@@ -151,8 +155,19 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             showError(err instanceof Error ? err.message : String(err));
             return false;
         } finally {
+            actionInFlight.current = false;
             setIsSubmitting(false);
             setPendingAction(null);
+        }
+    };
+
+    const confirmJoin = async (amount: string) => {
+        if (modalSeat === null) return;
+        const joined = await runAction("Join", () =>
+            joinTable(tableId, { amount, seatNumber: modalSeat }, currentNetwork, getLatestSnapshot)
+        );
+        if (joined) {
+            closeJoinModal();
         }
     };
 
@@ -691,14 +706,6 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                 />
             )}
             {modalSeat !== null && (() => {
-                const confirmJoin = async (amount: string) => {
-                    const joined = await runAction("Join", () =>
-                        joinTable(tableId, { amount, seatNumber: modalSeat }, currentNetwork, getLatestSnapshot)
-                    );
-                    if (joined) {
-                        closeJoinModal();
-                    }
-                };
                 const { gameOptions } = gameState;
                 return isTournamentBlinds ? (
                     <SitAndGoJoinModal
@@ -730,7 +737,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             })()}
             {isUserSeated && !waitingForPlayers && !sitAndGoWaiting && (
                 <PlayerActionButtons
-                    isSubmitting={isSubmitting || isFeedStale}
+                    isSubmitting={isSubmitting || isFeedStale || awaitingFrame !== null}
                     legalActions={legalActions.legalActions}
                     isPlayerTurn={legalActions.isPlayerTurn}
                     wagerAmount={wagerDisplay}

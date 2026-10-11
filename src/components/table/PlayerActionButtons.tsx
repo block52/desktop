@@ -140,6 +140,54 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
               ? `All-in ${currencySymbol}${primaryMax.toFixed(decimals)}`
               : `${primary.type === "bet" ? "Bet" : "Raise to"} ${currencySymbol}${wager > 0 ? wager.toFixed(decimals) : primaryMin.toFixed(decimals)}`;
 
+    const sliderStep = primaryMin > 0 ? primaryMin : 0.01;
+    const stepWager = (direction: 1 | -1): string => {
+        const next = Math.min(Math.max((wager > 0 ? wager : primaryMin) + direction * sliderStep, primaryMin), primaryMax);
+        return next.toFixed(decimals);
+    };
+    const actionsVisible = !(stepActive || sitInMode !== "none" || seatNotice !== null);
+
+    const actionsBlock = (
+        <div className={styles.actions}>
+            <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onFold}>
+                {pendingAction === "Fold" && <span className={styles.spinner} />}
+                Fold
+            </button>
+            {canCheck && (
+                <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onCheck}>
+                    {pendingAction === "Check" && <span className={styles.spinner} />}
+                    Check
+                </button>
+            )}
+            {callMin !== null && (
+                <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onCall}>
+                    {pendingAction === "Call" && <span className={styles.spinner} />}
+                    Call {currencySymbol}{formatAmount(callMin, microPerUnit)}
+                </button>
+            )}
+            {canMuck && (
+                <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onMuck}>
+                    {pendingAction === "Muck" && <span className={styles.spinner} />}
+                    Muck cards
+                </button>
+            )}
+            {canShow && (
+                <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onShow}>
+                    {pendingAction === "Show" && <span className={styles.spinner} />}
+                    Show cards
+                </button>
+            )}
+            <button
+                className={`btn-glow shimmer-hover ${styles.primaryBtn}`}
+                disabled={turnLocked || primary === null}
+                onClick={primary?.type === "raise" ? onRaise : onBet}
+            >
+                {(pendingAction === "Bet" || pendingAction === "Raise") && <span className={styles.spinner} />}
+                {primaryLabel}
+            </button>
+        </div>
+    );
+
     return (
         <div className={`pane ${styles.bar}`}>
             <div className={styles.turn}>
@@ -206,99 +254,82 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                 </button>
             )}
 
+            {actionsVisible && actionsBlock}
+
             {primary !== null && (
-                <div className={styles.wager}>
-                    {PRESETS.map(({ label, fraction }) => {
-                        const callUnits = callMin !== null ? Number(callMin) / microPerUnit : 0;
-                        const bigBlindUnits = bigBlind !== undefined ? Number(bigBlind) / microPerUnit : 0;
-                        const sized = potBetAmount(fraction, potValue, callUnits, bigBlindUnits);
-                        const value = Math.min(Math.max(sized, primaryMin), primaryMax).toFixed(decimals);
-                        const selected = wager > 0 && value === wager.toFixed(decimals);
-                        return (
-                            <button
-                                key={label}
-                                className={`${styles.preset} ${selected ? styles.presetOn : ""}`}
-                                disabled={turnLocked}
-                                onClick={() => onWagerChange(value)}
-                            >
-                                {label}
-                            </button>
-                        );
-                    })}
-                    <button
-                        className={`${styles.preset} ${styles.allIn} ${wager > 0 && wager >= primaryMax ? styles.presetOn : ""}`}
-                        disabled={turnLocked}
-                        onClick={() => onWagerChange(primaryMax.toFixed(decimals))}
-                    >
-                        All-in
-                    </button>
-                    <input
-                        type="range"
-                        className={styles.slider}
-                        min={primaryMin}
-                        max={primaryMax}
-                        step={primaryMin > 0 ? primaryMin : 0.01}
-                        value={Math.min(Math.max(wager, primaryMin), primaryMax)}
-                        disabled={turnLocked}
-                        onChange={e => onWagerChange(e.target.value)}
-                        aria-label="Wager amount"
-                    />
-                    <label className={styles.amountBox}>
-                        <span className={styles.amountPrefix}>{currencySymbol}</span>
+                <>
+                    <div className={styles.wager}>
+                        <button
+                            type="button"
+                            className={styles.stepBtn}
+                            disabled={turnLocked}
+                            onClick={() => onWagerChange(stepWager(-1))}
+                            aria-label="Decrease wager"
+                        >
+                            -
+                        </button>
                         <input
-                            type="number"
-                            className={styles.amountInput}
-                            value={wagerAmount}
+                            type="range"
+                            className={styles.slider}
                             min={primaryMin}
                             max={primaryMax}
-                            step="0.01"
+                            step={sliderStep}
+                            value={Math.min(Math.max(wager, primaryMin), primaryMax)}
                             disabled={turnLocked}
                             onChange={e => onWagerChange(e.target.value)}
-                            aria-label="Wager value"
+                            aria-label="Wager amount"
                         />
-                    </label>
-                </div>
-            )}
-
-            {stepActive || sitInMode !== "none" || seatNotice !== null ? null : (
-            <div className={styles.actions}>
-                <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onFold}>
-                    {pendingAction === "Fold" && <span className={styles.spinner} />}
-                    Fold
-                </button>
-                {canCheck && (
-                    <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onCheck}>
-                        {pendingAction === "Check" && <span className={styles.spinner} />}
-                        Check
-                    </button>
-                )}
-                {callMin !== null && (
-                    <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onCall}>
-                        {pendingAction === "Call" && <span className={styles.spinner} />}
-                        Call {currencySymbol}{formatAmount(callMin, microPerUnit)}
-                    </button>
-                )}
-                {canMuck && (
-                    <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onMuck}>
-                        {pendingAction === "Muck" && <span className={styles.spinner} />}
-                        Muck cards
-                    </button>
-                )}
-                {canShow && (
-                    <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onShow}>
-                        {pendingAction === "Show" && <span className={styles.spinner} />}
-                        Show cards
-                    </button>
-                )}
-                <button
-                    className={`btn-glow shimmer-hover ${styles.primaryBtn}`}
-                    disabled={turnLocked || primary === null}
-                    onClick={primary?.type === "raise" ? onRaise : onBet}
-                >
-                    {(pendingAction === "Bet" || pendingAction === "Raise") && <span className={styles.spinner} />}
-                    {primaryLabel}
-                </button>
-            </div>
+                        <button
+                            type="button"
+                            className={styles.stepBtn}
+                            disabled={turnLocked}
+                            onClick={() => onWagerChange(stepWager(1))}
+                            aria-label="Increase wager"
+                        >
+                            +
+                        </button>
+                        <label className={styles.amountBox}>
+                            <span className={styles.amountPrefix}>{currencySymbol}</span>
+                            <input
+                                type="number"
+                                className={styles.amountInput}
+                                value={wagerAmount}
+                                min={primaryMin}
+                                max={primaryMax}
+                                step="0.01"
+                                disabled={turnLocked}
+                                onChange={e => onWagerChange(e.target.value)}
+                                aria-label="Wager value"
+                            />
+                        </label>
+                    </div>
+                    <div className={styles.presets}>
+                        {PRESETS.map(({ label, fraction }) => {
+                            const callUnits = callMin !== null ? Number(callMin) / microPerUnit : 0;
+                            const bigBlindUnits = bigBlind !== undefined ? Number(bigBlind) / microPerUnit : 0;
+                            const sized = potBetAmount(fraction, potValue, callUnits, bigBlindUnits);
+                            const value = Math.min(Math.max(sized, primaryMin), primaryMax).toFixed(decimals);
+                            const selected = wager > 0 && value === wager.toFixed(decimals);
+                            return (
+                                <button
+                                    key={label}
+                                    className={`${styles.preset} ${selected ? styles.presetOn : ""}`}
+                                    disabled={turnLocked}
+                                    onClick={() => onWagerChange(value)}
+                                >
+                                    {label}
+                                </button>
+                            );
+                        })}
+                        <button
+                            className={`${styles.preset} ${wager > 0 && wager >= primaryMax ? styles.presetOn : ""}`}
+                            disabled={turnLocked}
+                            onClick={() => onWagerChange(primaryMax.toFixed(decimals))}
+                        >
+                            All-in
+                        </button>
+                    </div>
+                </>
             )}
         </div>
     );

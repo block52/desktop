@@ -2,18 +2,22 @@
    controls centered, 48px action buttons right. */
 .bar {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 12px 16px;
     flex-shrink: 0;
-    flex-wrap: wrap;
 }
 
 .turn {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 0 0 auto;
+    flex-flow: row wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 16px;
 }
 
 .turnOn {
@@ -49,12 +53,44 @@
 }
 
 .wager {
-    flex: 1 1 320px;
-    min-width: 220px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid hsl(245 22% 17%);
+    background: hsl(240 26% 8%);
+}
+
+.stepBtn {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid hsl(245 22% 17%);
+    background: hsl(245 22% 14%);
+    color: var(--text);
+    font: 600 16px/1 Inter, system-ui, sans-serif;
+    cursor: pointer;
+}
+
+.stepBtn:hover:not(:disabled) {
+    background: hsl(245 25% 18%);
+}
+
+.stepBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.presets {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     gap: 8px;
+}
+
+.presets .preset {
+    padding: 11px 6px;
 }
 
 .preset {
@@ -84,10 +120,9 @@
 }
 
 .slider {
-    flex: 1 1 120px;
-    max-width: 220px;
+    flex: 1 1 auto;
     min-width: 80px;
-    margin: 0 10px;
+    margin: 0 4px;
     height: 16px;
     background: transparent;
     -webkit-appearance: none;
@@ -121,7 +156,8 @@
 .amountBox {
     display: inline-flex;
     align-items: center;
-    min-width: 70px;
+    flex: 0 0 auto;
+    min-width: 90px;
     padding: 0 12px;
     height: 36px;
     border-radius: 8px;
@@ -160,16 +196,15 @@
 }
 
 .actions {
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     gap: 10px;
-    flex: 0 0 auto;
-    margin-left: auto;
 }
 
 .btn {
-    height: 48px;
-    padding: 0 22px;
+    height: 52px;
+    padding: 0 16px;
     border-radius: 12px;
     font: 600 14px/1 Inter, system-ui, sans-serif;
     white-space: nowrap;
@@ -183,8 +218,8 @@
 
 .primaryBtn {
     border: 0;
-    height: 48px;
-    padding: 0 22px;
+    height: 52px;
+    padding: 0 16px;
     border-radius: 12px;
     font: 600 14px/1 Inter, system-ui, sans-serif;
     white-space: nowrap;
