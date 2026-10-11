@@ -44,6 +44,9 @@ import { useGameSettings } from "../../hooks/useGameSettings";
 import { useTableSounds } from "../../hooks/useTableSounds";
 import { useTurnTimer } from "../../hooks/useTurnTimer";
 import { useAutoFold, useAutoMuck, useAutoShowCards, usePreCheck } from "../../hooks/playerActions/useAutoActions";
+import { postSmallBlind } from "../../hooks/playerActions/postSmallBlind";
+import { postBigBlind } from "../../hooks/playerActions/postBigBlind";
+import { dealCardsWithEntropy } from "../../hooks/playerActions/dealCards";
 import { sitOut } from "../../hooks/playerActions/sitOut";
 import { useAutoSitOutNextBB } from "../../hooks/playerActions/useAutoSitOutNextBB";
 import { describeHandStrength } from "../../utils/handStrength";
@@ -654,6 +657,25 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                             : undefined
                     }
                     handLabel={isFolded ? null : describeHandStrength(myPlayer?.holeCards ?? undefined, gameState.communityCards)}
+                    blinds={{
+                        showSmall: hasAction(legalActions.legalActions, PlayerActionType.SMALL_BLIND),
+                        showBig: hasAction(legalActions.legalActions, PlayerActionType.BIG_BLIND),
+                        smallAmount: formatAmount(gameState.gameOptions.smallBlind),
+                        bigAmount: formatAmount(gameState.gameOptions.bigBlind),
+                        onPostSmall: () => runAction("Post small blind", () => postSmallBlind(tableId, smallBlindAmount, currentNetwork)),
+                        onPostBig: () => runAction("Post big blind", () => postBigBlind(tableId, bigBlindAmount, currentNetwork))
+                    }}
+                    canDeal={hasAction(legalActions.legalActions, NonPlayerActionType.DEAL)}
+                    onDeal={() => runAction("Deal", () => dealCardsWithEntropy(tableId, currentNetwork, ""))}
+                    blockingStep={
+                        autoActivity === "Posting small blind…" || pendingAction === "Post small blind"
+                            ? "small-blind"
+                            : autoActivity === "Posting big blind…" || pendingAction === "Post big blind"
+                              ? "big-blind"
+                              : autoActivity === "Dealing cards…" || pendingAction === "Deal"
+                                ? "deal"
+                                : null
+                    }
                     pendingAction={pendingAction ?? awaitingFrame?.label ?? null}
                     activity={autoActivity}
                     bigBlind={gameState.gameOptions.bigBlind}

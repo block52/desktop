@@ -116,4 +116,26 @@ describe("PlayerActionButtons", () => {
         render(<PlayerActionButtons {...BASE_PROPS} legalActions={[CALL, FOLD] as never} />);
         expect(screen.queryByRole("button", { name: "Pot" })).toBeNull();
     });
+
+    it("shows blind posting buttons while a blind is due, with a posting state", () => {
+        const onPostSmall = vi.fn();
+        const blinds = { showSmall: true, showBig: false, smallAmount: "0.010", bigAmount: "0.020", onPostSmall, onPostBig: vi.fn() };
+        const { rerender } = render(<PlayerActionButtons {...BASE_PROPS} blinds={blinds} />);
+        fireEvent.click(screen.getByRole("button", { name: "Post small blind $0.010" }));
+        expect(onPostSmall).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole("button", { name: /^Fold/ })).toBeNull();
+
+        rerender(<PlayerActionButtons {...BASE_PROPS} blinds={blinds} blockingStep="small-blind" />);
+        expect(screen.getByRole("button", { name: "Posting…" })).toHaveProperty("disabled", true);
+    });
+
+    it("shows a Deal button when dealing is available", () => {
+        const onDeal = vi.fn();
+        const { rerender } = render(<PlayerActionButtons {...BASE_PROPS} canDeal onDeal={onDeal} />);
+        fireEvent.click(screen.getByRole("button", { name: "Deal" }));
+        expect(onDeal).toHaveBeenCalledTimes(1);
+
+        rerender(<PlayerActionButtons {...BASE_PROPS} canDeal onDeal={onDeal} blockingStep="deal" />);
+        expect(screen.getByRole("button", { name: "Dealing…" })).toHaveProperty("disabled", true);
+    });
 });
