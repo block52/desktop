@@ -47,7 +47,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const { id } = useParams<{ id: string }>();
     const tableId = id ?? "";
     const { currentNetwork } = useNetwork();
-    const { gameState, gameFormat, gameVariant, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot } =
+    const { gameState, gameFormat, gameVariant, gameCreator, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot } =
         useGameState();
     const { showSuccess, showError, showWarning } = useToast();
     const legalActions = usePlayerLegalActions();
@@ -203,6 +203,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                 smallBlind={blindText(gameState.gameOptions.smallBlind)}
                 bigBlind={blindText(gameState.gameOptions.bigBlind)}
                 handNumber={gameState.handNumber}
+                isCreatedByYou={gameCreator !== undefined && localAddress !== null && gameCreator.toLowerCase() === localAddress}
                 onBack={() => navigate("/")}
                 onLeave={isUserSeated ? () => runAction("Leave", () => leaveTable(tableId, currentNetwork)) : undefined}
                 leaveDisabled={isSubmitting}

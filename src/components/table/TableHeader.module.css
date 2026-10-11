@@ -59,6 +59,18 @@
     text-overflow: ellipsis;
 }
 
+.creatorPill {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: hsl(263 83% 58% / 0.14);
+    color: hsl(263 90% 78%);
+    white-space: nowrap;
+}
+
 .verifiedPill {
     display: inline-flex;
     align-items: center;
@@ -98,6 +110,7 @@
 }
 
 @media (max-width: 900px) {
+    .creatorPill,
     .verifiedPill,
     .blockHeight {
         display: none;

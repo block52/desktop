@@ -117,12 +117,46 @@
     text-overflow: ellipsis;
 }
 
+.tableSubline > * {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.tableSubline > * + * {
+    margin-left: 6px;
+}
+
 /* ── Format ── */
 .formatCell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 13px;
     font-weight: 500;
     line-height: 1;
     color: rgb(148, 163, 184);
+}
+
+.mineBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 22px;
+    padding: 0 12px;
+    margin-left: 8px;
+    border-radius: 999px;
+    background: hsl(263 83% 58% / 0.18);
+    color: hsl(263 90% 78%);
+    font-family: Inter, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.rowMine {
+    box-shadow: inset 2px 0 0 hsl(263 83% 62%);
 }
 
 /* ── Players ── */
