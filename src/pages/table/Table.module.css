@@ -154,3 +154,18 @@
 .actionSlot > * {
     pointer-events: auto;
 }
+
+/* Briefly under your own seat right after you sit down. */
+.joinNotice {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid hsl(263 83% 62% / 0.55);
+    background: hsl(263 83% 58% / 0.22);
+    color: hsl(263 90% 88%);
+    font: 700 10.5px Inter, system-ui, sans-serif;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+}

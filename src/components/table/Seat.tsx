@@ -46,6 +46,8 @@ export interface SeatProps {
     winner?: { amount: string; description?: string };
     /** Final tournament placement for this seat's player; shows the place pill above the seat. */
     result?: { place: number; payout?: string };
+    /** Win chance (0-100) while the hand is all-in or at showdown; shown as a pill above the seat. */
+    equity?: number;
     /** Codes of the cards in the winning hands; matching hole cards lift, the rest dim. */
     winningCards?: string[];
     /** Current-round bet as a whole-dollar/chip value; draws the chip pile above the bet pill. */
@@ -98,7 +100,7 @@ function Ripple({ kind, hero }: { kind: "turn" | "win"; hero?: boolean }) {
     );
 }
 
-function WinBadge({ winner, result }: { winner?: SeatProps["winner"]; result?: SeatProps["result"] }) {
+function WinBadge({ winner, result, equity }: { winner?: SeatProps["winner"]; result?: SeatProps["result"]; equity?: number }) {
     if (result !== undefined) {
         return (
             <div className={`${styles.winBadge} ${styles.placeBadge}`} role="status">
@@ -107,7 +109,14 @@ function WinBadge({ winner, result }: { winner?: SeatProps["winner"]; result?: S
             </div>
         );
     }
-    if (winner === undefined) return null;
+    if (winner === undefined) {
+        if (equity === undefined) return null;
+        return (
+            <div className={`${styles.winBadge} ${styles.equityBadge}`} role="status" aria-label={`Win chance ${Math.round(equity)} percent`}>
+                <span className={styles.winAmount}>{Math.round(equity)}%</span>
+            </div>
+        );
+    }
     return (
         <div className={styles.winBadge} role="status">
             <span className={styles.winAmount}>+{winner.amount}</span>
@@ -190,6 +199,7 @@ export const Seat: React.FC<SeatProps> = ({
     turnKey,
     statusLabel,
     winner,
+    equity,
     result,
     winningCards,
     betValue,
@@ -253,7 +263,7 @@ export const Seat: React.FC<SeatProps> = ({
                         {betBlock(`${styles.betBeside} ${styles.betRight}`)}
                     </div>
                 )}
-                <WinBadge winner={winner} result={result} />
+                <WinBadge winner={winner} result={result} equity={equity} />
                 <div className={`${styles.heroPlate} ${hasCards ? styles.heroPlateWithCards : ""} ${isActive ? styles.heroPlateActive : ""}`}>
                     <div className={styles.heroNameRow}>
                         <span className={styles.heroName}>You</span>
@@ -281,7 +291,7 @@ export const Seat: React.FC<SeatProps> = ({
     return (
         <div ref={boxRef} className={`${styles.seat} ${isUpper ? styles.upper : ""} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : isIdle === true ? styles.idle : ""} ${hasWinner === true && winner === undefined ? styles.lost : ""}`} style={style}>
             {winner !== undefined ? <Ripple kind="win" /> : isActive === true && <Ripple kind="turn" />}
-            <WinBadge winner={winner} result={result} />
+            <WinBadge winner={winner} result={result} equity={equity} />
             <div className={styles.avatar} data-seat-avatar>
                 <AvatarFace avatar={avatar} initials={initials} />
                 {isDealer && <span className={styles.dealer}>D</span>}

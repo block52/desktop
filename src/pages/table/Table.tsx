@@ -28,7 +28,10 @@ import { TableBoard } from "../../components/table/TableBoard";
 import { HandLog } from "../../components/table/HandLog";
 import { JoinTableModal } from "../../components/modal/JoinTableModal";
 import { SitAndGoJoinModal } from "../../components/modal/SitAndGoJoinModal";
+import { useSeatJoinNotice } from "../../hooks/useSeatJoinNotice";
+import { useAllInEquity } from "../../hooks/useAllInEquity";
 import { useHandSeed } from "../../hooks/useHandSeed";
+import { useHoleCardWatchdog } from "../../hooks/useHoleCardWatchdog";
 import { PlayerActionButtons } from "../../components/table/PlayerActionButtons";
 import { NoWalletOverlay } from "../../components/table/NoWalletOverlay";
 import { TableErrorPage } from "../../components/table/TableErrorPage";
@@ -77,7 +80,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const { id } = useParams<{ id: string }>();
     const tableId = id ?? "";
     const { currentNetwork } = useNetwork();
-    const { gameState, gameFormat, gameVariant, gameCreator, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot, connection, retryConnection } =
+    const { gameState, gameFormat, gameVariant, gameCreator, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot, connection, retryConnection, latestEvents } =
         useGameState();
     const { showSuccess, showError, showWarning } = useToast();
     const legalActions = usePlayerLegalActions();
@@ -249,6 +252,17 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const hasShowAction = hasAction(legalActions.legalActions, PlayerActionType.SHOW);
     const isUsersTurn = legalActions.isPlayerTurn;
 
+    useHoleCardWatchdog({
+        gameState,
+        localAddress,
+        resubscribe: () => {
+            unsubscribeFromTable();
+            subscribeToTable(tableId);
+        }
+    });
+
+    const equityBySeat = useAllInEquity(gameState);
+    const justJoined = useSeatJoinNotice(latestEvents, localAddress);
     const handSeed = useHandSeed(tableId, gameState !== undefined ? gameState.handNumber : null);
 
     // ---- Sitting in (cash): what the panel offers, and the automatic sit-in for a fresh joiner ----
@@ -588,6 +602,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     resultsByAddress={resultsByAddress}
                     winnersBySeat={winnersBySeat}
                     winningCards={winningCards}
+                    equityBySeat={equityBySeat}
+                    heroFooter={justJoined ? <span className={styles.joinNotice}>YOUR SEAT</span> : undefined}
                     maxBuyIn={gameState.gameOptions.maxBuyIn}
                     onVacantSeatClick={isUserSeated ? undefined : setJoinSeat}
                     communityCards={gameState.communityCards}

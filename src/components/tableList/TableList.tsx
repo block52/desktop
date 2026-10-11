@@ -1,12 +1,16 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { isTournamentFormat, formatGameFormatDisplay, COSMOS_CONSTANTS, GameVariant } from "@block52/poker-vm-sdk";
+import { isTournamentFormat, isCashFormat, formatGameFormatDisplay, COSMOS_CONSTANTS, GameVariant } from "@block52/poker-vm-sdk";
 import { useFindGames } from "../../hooks/useFindGames";
 import type { GameWithFormat } from "../../hooks/useFindGames";
 import { sortGamesNewestFirst } from "../../utils/convertUtils";
 import { paginate } from "../../utils/paginate";
 import Pagination, { PAGE_SIZES } from "../pagination/Pagination";
 import CreateTableModal from "../modal/CreateTableModal";
+import CloseTableModal from "../modal/CloseTableModal";
+import { useNetwork } from "../../context/NetworkContext";
+import { useToast } from "../../context/ToastContext";
+import { deleteTable, forceCloseTable } from "../../hooks/playerActions/closeTable";
 import CopyButton from "../copyButton/CopyButton";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import styles from "./TableList.module.css";
@@ -62,6 +66,30 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
 
     const [formatFilter, setFormatFilter] = useState<FormatFilter>("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const { currentNetwork } = useNetwork();
+    const { showSuccess, showError } = useToast();
+    const [closeTarget, setCloseTarget] = useState<{ game: GameWithFormat; mode: "delete" | "force-close" } | null>(null);
+    const [isClosing, setIsClosing] = useState(false);
+
+    const confirmClose = async () => {
+        if (closeTarget === null) return;
+        setIsClosing(true);
+        try {
+            if (closeTarget.mode === "delete") {
+                await deleteTable(currentNetwork, closeTarget.game.gameId);
+                showSuccess("Table deleted");
+            } else {
+                await forceCloseTable(currentNetwork, closeTarget.game.gameId);
+                showSuccess("Table closed — all players refunded");
+            }
+            setCloseTarget(null);
+            await refetch();
+        } catch (err) {
+            showError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setIsClosing(false);
+        }
+    };
     const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
     // The page belongs to one filter/search/size combination; changing any of them starts again at page 1.
     const pageKey = `${formatFilter}|${search.trim()}|${pageSize}`;
@@ -223,6 +251,36 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                             {game.creator !== undefined && !isMine(game) && (
                                                 <span>· by {shortId(game.creator)}</span>
                                             )}
+                                            {isMine(game) && game.currentPlayers === 0 && (
+                                                <button
+                                                    type="button"
+                                                    className={styles.ownerAction}
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        setCloseTarget({ game, mode: "delete" });
+                                                    }}
+                                                >
+                                                    Delete
+                                                </button>
+                                            )}
+                                            {isMine(game) && game.currentPlayers > 0 && (
+                                                <button
+                                                    type="button"
+                                                    className={styles.ownerAction}
+                                                    disabled={!isCashFormat(game.gameFormat)}
+                                                    title={
+                                                        isCashFormat(game.gameFormat)
+                                                            ? "Remove everyone and refund their stacks"
+                                                            : "Tournaments can't be closed while players are seated"
+                                                    }
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        setCloseTarget({ game, mode: "force-close" });
+                                                    }}
+                                                >
+                                                    Close table
+                                                </button>
+                                            )}
                                             {isMine(game) && (
                                                 <span>
                                                     ·
@@ -277,6 +335,17 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                     onPageSizeChange={setPageSize}
                 />
             </div>
+
+            {closeTarget !== null && (
+                <CloseTableModal
+                    mode={closeTarget.mode}
+                    tableName={closeTarget.game.name ?? shortId(closeTarget.game.gameId)}
+                    seatedPlayers={closeTarget.game.currentPlayers}
+                    isSubmitting={isClosing}
+                    onConfirm={() => void confirmClose()}
+                    onClose={() => setCloseTarget(null)}
+                />
+            )}
 
             {showCreateModal && (
                 <CreateTableModal

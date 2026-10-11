@@ -336,3 +336,22 @@
     align-items: center;
     gap: 4px;
 }
+
+/* Creator-only text actions in a row's subline. */
+.ownerAction {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: hsl(0 80% 72%);
+    font: 500 11.5px Inter, system-ui, sans-serif;
+    cursor: pointer;
+}
+
+.ownerAction:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+.ownerAction:disabled {
+    color: rgb(100, 116, 139);
+    cursor: not-allowed;
+}

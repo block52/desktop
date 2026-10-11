@@ -28,6 +28,8 @@ export interface PlayerSeatingProps {
     winnersBySeat?: Map<number, { amount: string; description?: string }>;
     /** Codes of the cards in the winning hands. */
     winningCards?: string[];
+    /** Win chance (0-100) per server seat while all-in / at showdown. */
+    equityBySeat?: ReadonlyMap<number, number>;
     /** Converts a raw amount to the whole-dollar/chip value used to draw chip piles. */
     chipValue: (amount: string) => number;
     /** Max buy-in in the same micro units as player stacks; drives the hero's stack bar. Omit/0 to hide it. */
@@ -68,6 +70,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     resultsByAddress,
     winnersBySeat,
     winningCards,
+    equityBySeat,
     maxBuyIn,
     onVacantSeatClick,
 }) => {
@@ -162,6 +165,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 isIdle={IDLE_STATUSES.has(player.status)}
                 winner={winnersBySeat?.get(serverSeat)}
                 winningCards={winningCards}
+                equity={equityBySeat?.get(serverSeat)}
             />
         );
     }
