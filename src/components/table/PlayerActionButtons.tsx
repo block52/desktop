@@ -12,6 +12,13 @@ export interface PlayerActionButtonsProps {
     onWagerChange: (value: string) => void;
     /** Pot in the same display units, for the ½/¾/Pot presets. */
     potValue: number;
+    /** Cash games: the "sit out next hand / next big blind" boxes. Omitted when sitting out isn't allowed. */
+    sitOut?: {
+        nextHandChecked: boolean;
+        nextBbChecked: boolean;
+        onToggleNextHand: () => void;
+        onToggleNextBb: () => void;
+    };
     /** Offer the pre-selected "Check" box (before your turn, check is free). */
     showPreCheck?: boolean;
     preCheckQueued?: boolean;
@@ -73,6 +80,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     wagerAmount,
     onWagerChange,
     potValue,
+    sitOut,
     showPreCheck = false,
     preCheckQueued = false,
     onPreCheckChange,
@@ -111,6 +119,18 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
         <div className={`pane ${styles.bar}`}>
             <div className={styles.turn}>
                 <span className={`section-label ${isPlayerTurn ? styles.turnOn : ""}`}>{isPlayerTurn ? "Your turn" : "Not your turn"}</span>
+                {sitOut !== undefined && (
+                    <div className={styles.sitOutBoxes}>
+                        <label className={styles.sitOutBox}>
+                            <input type="checkbox" checked={sitOut.nextHandChecked} onChange={sitOut.onToggleNextHand} />
+                            Sit out next hand
+                        </label>
+                        <label className={styles.sitOutBox}>
+                            <input type="checkbox" checked={sitOut.nextBbChecked} onChange={sitOut.onToggleNextBb} />
+                            Sit out next big blind
+                        </label>
+                    </div>
+                )}
                 {(canSitIn || canSitInAndWait) && (
                     <div className={styles.sitRow}>
                         {canSitIn && (

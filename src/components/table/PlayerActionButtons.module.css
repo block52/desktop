@@ -228,3 +228,24 @@
     border-color: #fff;
     color: hsl(142 60% 30%);
 }
+
+.sitOutBoxes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sitOutBox {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.sitOutBox input {
+    accent-color: hsl(263 83% 58%);
+    margin: 0;
+}

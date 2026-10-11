@@ -37,6 +37,8 @@ import { claimWinnings } from "../../hooks/playerActions/claimWinnings";
 import { useGameSettings } from "../../hooks/useGameSettings";
 import { useTurnTimer } from "../../hooks/useTurnTimer";
 import { useAutoFold, useAutoMuck, useAutoShowCards, usePreCheck } from "../../hooks/playerActions/useAutoActions";
+import { sitOut } from "../../hooks/playerActions/sitOut";
+import { useAutoSitOutNextBB } from "../../hooks/playerActions/useAutoSitOutNextBB";
 import { isCheckFreeForPlayer } from "../../utils/checkFree";
 import { loadTableTheme, nextTableTheme, saveTableTheme, type TableTheme } from "../../config/tableTheme";
 import styles from "./Table.module.css";
@@ -80,6 +82,10 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const turn = useTurnTimer(gameState);
     /** Pre-selected "Check": ephemeral per-round intent, not a saved setting. */
     const [preCheckQueued, setPreCheckQueued] = useState<boolean>(false);
+    /** "Sit out next hand": an optimistic overlay on the chain's pendingSitOut, cleared when the chain reports. */
+    const [sitOutNextHandOptimistic, setSitOutNextHandOptimistic] = useState<{ source: string | null; checked: boolean } | null>(null);
+    /** "Sit out next big blind": held in the app until the big blind reaches the seat. */
+    const [sitOutNextBbQueued, setSitOutNextBbQueued] = useState<boolean>(false);
     const [tableTheme, setTableTheme] = useState<TableTheme>(loadTableTheme);
     const cycleTheme = () => {
         const next = nextTableTheme(tableTheme);
@@ -194,6 +200,33 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         muck: () => muckCards(tableId, currentNetwork),
         onError: err => showError(err.message)
     });
+
+    // ---- Sit out (cash games only: tournament seats never sit out voluntarily) ----
+    const pendingSitOut = legalActions.pendingSitOut;
+    const sitOutAllowed = !isSitAndGoFormat(gameFormat) && hasAction(legalActions.legalActions, NonPlayerActionType.SIT_OUT);
+    const sitOutNextHandChecked =
+        sitOutNextHandOptimistic !== null && sitOutNextHandOptimistic.source === pendingSitOut
+            ? sitOutNextHandOptimistic.checked
+            : pendingSitOut === "next-hand";
+    const submitSitOut = () => {
+        void sitOut(tableId, currentNetwork).catch(err => {
+            setSitOutNextHandOptimistic(null);
+            showError(err instanceof Error ? err.message : String(err));
+        });
+    };
+    const toggleSitOutNextHand = () => {
+        setSitOutNextHandOptimistic({ source: pendingSitOut, checked: !sitOutNextHandChecked });
+        submitSitOut();
+    };
+    useAutoSitOutNextBB(
+        legalActions.playerSeat ?? undefined,
+        gameState?.bigBlindPosition,
+        sitOutNextBbQueued && sitOutAllowed,
+        () => {
+            submitSitOut();
+            setSitOutNextBbQueued(false);
+        }
+    );
 
     // "Checking is free for me right now" — offered before the turn, only while seated in the hand.
     const myPlayer = gameState?.players.find(p => p.address.toLowerCase() === localAddress);
@@ -476,6 +509,16 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     wagerAmount={wagerAmount}
                     onWagerChange={setWagerAmount}
                     potValue={chipValue(gameState.totalPot)}
+                    sitOut={
+                        sitOutAllowed
+                            ? {
+                                  nextHandChecked: sitOutNextHandChecked,
+                                  nextBbChecked: sitOutNextBbQueued,
+                                  onToggleNextHand: toggleSitOutNextHand,
+                                  onToggleNextBb: () => setSitOutNextBbQueued(queued => !queued)
+                              }
+                            : undefined
+                    }
                     showPreCheck={showPreCheck}
                     preCheckQueued={preCheckQueued}
                     onPreCheckChange={setPreCheckQueued}
