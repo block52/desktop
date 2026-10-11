@@ -1,0 +1,27 @@
+.banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    background: hsl(43 90% 50% / 0.92);
+    color: #1a1204;
+    font: 600 13px Inter, system-ui, sans-serif;
+}
+
+.offline {
+    background: hsl(348 70% 55% / 0.95);
+    color: #fff;
+}
+
+.retry {
+    height: 28px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    font: 600 12px Inter, system-ui, sans-serif;
+    cursor: pointer;
+}

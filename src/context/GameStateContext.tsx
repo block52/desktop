@@ -7,6 +7,20 @@ import { GameMessageBus } from "../bus/GameMessageBus";
 import type { RawWsMessage } from "../bus/ingest";
 import type { ValidationError, PendingAction, GameEvent } from "../bus/types";
 
+/** Freshness of the live table feed: what is on screen is the last snapshot unless the status is "live". */
+export type ConnectionStatus = "idle" | "connecting" | "live" | "reconnecting" | "offline";
+
+export interface ConnectionState {
+    status: ConnectionStatus;
+    /** Reconnect attempt in progress (1-based) while "reconnecting". */
+    attempt: number;
+}
+
+/** Automatic reconnects after an unexpected close before the table is declared offline. */
+export const RECONNECT_MAX_ATTEMPTS = 5;
+const RECONNECT_BASE_DELAY_MS = 1000;
+const RECONNECT_MAX_DELAY_MS = 15000;
+
 export interface GameStateValue {
     gameState: TexasHoldemStateDTO | undefined;
     gameFormat: GameFormat | undefined;
@@ -21,6 +35,9 @@ export interface GameStateValue {
     subscribeToTable: (tableId: string) => void;
     unsubscribeFromTable: () => void;
     getLatestSnapshot: () => TexasHoldemStateDTO | undefined;
+    connection: ConnectionState;
+    /** Manual retry once automatic reconnects have run out. */
+    retryConnection: () => void;
 }
 
 /** Extra reconnects (5s apart) when a table sends nothing, e.g. right after creation. */
@@ -44,6 +61,8 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
     const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
     const [latestEvents, setLatestEvents] = useState<GameEvent[]>([]);
 
+    const [connection, setConnection] = useState<ConnectionState>({ status: "idle", attempt: 0 });
+
     const { currentNetwork } = useNetwork();
 
     const currentTableIdRef = useRef<string | null>(null);
@@ -57,10 +76,12 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
     }
 
     const attemptRef = useRef(0);
-    const connectRef = useRef<(tableId: string) => void>(() => undefined);
+    const reconnectAttemptRef = useRef(0);
+    const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const connectRef = useRef<(tableId: string, isReconnect?: boolean) => void>(() => undefined);
 
     const connect = useCallback(
-        (tableId: string) => {
+        (tableId: string, isReconnect = false) => {
             if (currentTableIdRef.current === tableId && wsRef.current?.readyState === WebSocket.OPEN) {
                 return;
             }
@@ -74,14 +95,20 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
 
             const generation = ++generationRef.current;
 
-            setIsLoading(true);
-            setError(null);
-            setValidationError(null);
+            // A reconnect keeps the table on screen (stale, flagged by the connection banner) instead of blanking it.
+            if (!isReconnect) {
+                setIsLoading(true);
+                setError(null);
+                setValidationError(null);
+                setConnection({ status: "connecting", attempt: 0 });
+            }
             currentTableIdRef.current = tableId;
             hasReceivedMessageRef.current = false;
 
             busRef.current?.reset();
-            setLatestEvents([]);
+            if (!isReconnect) {
+                setLatestEvents([]);
+            }
 
             if (fallbackTimeoutRef.current) {
                 clearTimeout(fallbackTimeoutRef.current);
@@ -167,6 +194,8 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
                 }
 
                 hasReceivedMessageRef.current = true;
+                reconnectAttemptRef.current = 0;
+                setConnection(prev => (prev.status === "live" ? prev : { status: "live", attempt: 0 }));
 
                 const item = busRef.current?.ingest(message, tableId);
                 if (!item) {
@@ -219,6 +248,26 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
                 if (wsRef.current === ws) {
                     wsRef.current = null;
                 }
+                // An unexpected drop of a table we still want: reconnect with backoff, keeping the last state.
+                if (generationRef.current !== generation || currentTableIdRef.current !== tableId) {
+                    return;
+                }
+                if (reconnectAttemptRef.current >= RECONNECT_MAX_ATTEMPTS) {
+                    setConnection({ status: "offline", attempt: reconnectAttemptRef.current });
+                    return;
+                }
+                reconnectAttemptRef.current += 1;
+                const attempt = reconnectAttemptRef.current;
+                setConnection({ status: "reconnecting", attempt });
+                const delay = Math.min(RECONNECT_BASE_DELAY_MS * 2 ** (attempt - 1), RECONNECT_MAX_DELAY_MS);
+                reconnectTimerRef.current = setTimeout(() => {
+                    reconnectTimerRef.current = null;
+                    if (generationRef.current !== generation || currentTableIdRef.current !== tableId) {
+                        return;
+                    }
+                    currentTableIdRef.current = null;
+                    connectRef.current(tableId, true);
+                }, delay);
             };
 
             ws.onerror = wsError => {
@@ -240,13 +289,29 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
     const subscribeToTable = useCallback(
         (tableId: string) => {
             attemptRef.current = 0;
+            reconnectAttemptRef.current = 0;
             connect(tableId);
         },
         [connect]
     );
 
+    const retryConnection = useCallback(() => {
+        const tableId = currentTableIdRef.current;
+        if (tableId === null) return;
+        reconnectAttemptRef.current = 0;
+        setConnection({ status: "reconnecting", attempt: 1 });
+        currentTableIdRef.current = null;
+        connectRef.current(tableId, true);
+    }, []);
+
     const unsubscribeFromTable = useCallback(() => {
         generationRef.current += 1;
+        if (reconnectTimerRef.current) {
+            clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
+        reconnectAttemptRef.current = 0;
+        setConnection({ status: "idle", attempt: 0 });
         if (fallbackTimeoutRef.current) {
             clearTimeout(fallbackTimeoutRef.current);
             fallbackTimeoutRef.current = null;
@@ -280,6 +345,9 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
             if (fallbackTimeoutRef.current) {
                 clearTimeout(fallbackTimeoutRef.current);
             }
+            if (reconnectTimerRef.current) {
+                clearTimeout(reconnectTimerRef.current);
+            }
             if (wsRef.current) {
                 wsRef.current.close();
             }
@@ -302,6 +370,8 @@ export const GameStateProvider: React.FC<GameStateProviderProps> = ({ children }
                 subscribeToTable,
                 unsubscribeFromTable,
                 getLatestSnapshot,
+                connection,
+                retryConnection,
             }}
         >
             {children}

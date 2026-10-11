@@ -34,6 +34,7 @@ import { TableErrorPage } from "../../components/table/TableErrorPage";
 import { TopUpModal } from "../../components/modal/TopUpModal";
 import { topUpTable, type TopUpResult } from "../../hooks/playerActions/topUp";
 import { maxTopUpMicro } from "../../utils/topUpLimits";
+import { ConnectionBanner } from "../../components/table/ConnectionBanner";
 import { TournamentStrip } from "../../components/table/TournamentStrip";
 import { LeaveTableModal } from "../../components/modal/LeaveTableModal";
 import { SitAndGoResultModal } from "../../components/modal/SitAndGoResultModal";
@@ -66,7 +67,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const { id } = useParams<{ id: string }>();
     const tableId = id ?? "";
     const { currentNetwork } = useNetwork();
-    const { gameState, gameFormat, gameVariant, gameCreator, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot } =
+    const { gameState, gameFormat, gameVariant, gameCreator, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot, connection, retryConnection } =
         useGameState();
     const { showSuccess, showError, showWarning } = useToast();
     const legalActions = usePlayerLegalActions();
@@ -84,6 +85,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     /** Tables whose Sit & Go result dialog the player closed (remembered per table and wallet). */
     const [resultDismissed, setResultDismissed] = useState<Record<string, boolean>>({});
     const settings = useGameSettings();
+    // Actions pause while the live feed is stale: the table on screen may not match the chain.
+    const isFeedStale = connection.status !== "live";
     const turn = useTurnTimer(gameState);
     /** Pre-selected "Check": ephemeral per-round intent, not a saved setting. */
     const [preCheckQueued, setPreCheckQueued] = useState<boolean>(false);
@@ -183,7 +186,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         hasCheckAction,
         isUsersTurn,
         timeRemaining: turn.timeRemaining,
-        isBusy: isSubmitting,
+        isBusy: isSubmitting || isFeedStale,
         fold: () => foldHand(tableId, currentNetwork),
         check: () => checkHand(tableId, currentNetwork),
         onSubmitted: action => showWarning(action === "check" ? "Time ran out — checked for you" : "Time ran out — folded for you"),
@@ -193,7 +196,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         hasShowAction,
         isUsersTurn,
         timeRemaining: turn.timeRemaining,
-        isBusy: isSubmitting,
+        isBusy: isSubmitting || isFeedStale,
         show: () => showCards(tableId, currentNetwork),
         onError: err => showError(err.message)
     });
@@ -201,7 +204,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         enabled: settings.autoMuck,
         hasMuckAction,
         isUsersTurn,
-        isBusy: isSubmitting,
+        isBusy: isSubmitting || isFeedStale,
         muck: () => muckCards(tableId, currentNetwork),
         onError: err => showError(err.message)
     });
@@ -249,7 +252,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         queued: preCheckQueued,
         hasCheckAction,
         isUsersTurn,
-        isBusy: isSubmitting,
+        isBusy: isSubmitting || isFeedStale,
         check: () => checkHand(tableId, currentNetwork),
         onResolved: () => setPreCheckQueued(false),
         onError: err => showError(err.message)
@@ -389,6 +392,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
 
     const content = (
         <>
+            <ConnectionBanner connection={connection} onRetry={retryConnection} />
             <TableHeader
                 tableLabel={`Table ${tableId.slice(0, 6)}…${tableId.slice(-4)}`}
                 variantLabel={getVariantLabel(gameVariant !== undefined ? String(gameVariant) : undefined)}
@@ -546,7 +550,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             })()}
             {isUserSeated && !waitingForPlayers && !sitAndGoWaiting && (
                 <PlayerActionButtons
-                    isSubmitting={isSubmitting}
+                    isSubmitting={isSubmitting || isFeedStale}
                     legalActions={legalActions.legalActions}
                     isPlayerTurn={legalActions.isPlayerTurn}
                     wagerAmount={wagerAmount}
