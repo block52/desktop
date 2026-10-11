@@ -4,6 +4,8 @@ import { isTournamentFormat, formatGameFormatDisplay, COSMOS_CONSTANTS, GameVari
 import { useFindGames } from "../../hooks/useFindGames";
 import type { GameWithFormat } from "../../hooks/useFindGames";
 import { sortGamesNewestFirst } from "../../utils/convertUtils";
+import { paginate } from "../../utils/paginate";
+import Pagination, { PAGE_SIZES } from "./Pagination";
 import CreateTableModal from "../modal/CreateTableModal";
 import CopyButton from "../copyButton/CopyButton";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
@@ -60,6 +62,11 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
 
     const [formatFilter, setFormatFilter] = useState<FormatFilter>("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
+    // The page belongs to one filter/search/size combination; changing any of them starts again at page 1.
+    const pageKey = `${formatFilter}|${search.trim()}|${pageSize}`;
+    const [pageState, setPageState] = useState({ key: pageKey, page: 1 });
+    const requestedPage = pageState.key === pageKey ? pageState.page : 1;
 
     const myAddress = getCosmosAddress()?.toLowerCase() ?? null;
     const isMine = (game: GameWithFormat): boolean =>
@@ -84,6 +91,8 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
         }
         return list;
     }, [rawGames, search, formatFilter]);
+
+    const slice = paginate(games, requestedPage, pageSize);
 
     const headerRow = (
         <div className={styles.headerRow}>
@@ -187,7 +196,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                         <p className={styles.stateText}>Create the first table to get started!</p>
                     </div>
                 ) : (
-                    games.map(game => {
+                    slice.items.map(game => {
                         const isSng = isSitAndGo(game);
                         const isFull = game.currentPlayers >= game.maxPlayers;
                         const fillPct = game.maxPlayers > 0
@@ -261,6 +270,12 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                         );
                     })
                 )}
+                <Pagination
+                    slice={slice}
+                    pageSize={pageSize}
+                    onPageChange={page => setPageState({ key: pageKey, page })}
+                    onPageSizeChange={setPageSize}
+                />
             </div>
 
             {showCreateModal && (

@@ -1,0 +1,73 @@
+.bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    border-top: 1px solid hsl(245 22% 17%);
+    font-family: Inter, system-ui, sans-serif;
+}
+
+.summary {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.sizeLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.sizeSelect {
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 8px;
+    border: 1px solid hsl(245 22% 17%);
+    background: hsl(240 38% 5.5%);
+    color: var(--text);
+    font: 500 12px Inter, system-ui, sans-serif;
+    outline: none;
+}
+
+.pages {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pageButton {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font: 600 12px Inter, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+
+.pageButton:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.current {
+    background: hsl(263 83% 58% / 0.22);
+    border-color: hsl(263 83% 62% / 0.5);
+}
+
+.gap {
+    min-width: 18px;
+    text-align: center;
+    color: var(--text-muted);
+}
