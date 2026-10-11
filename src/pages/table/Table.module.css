@@ -128,3 +128,12 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* The blind / deal step: centred at the bottom of the felt pane, just above the action bar. */
+.stepDock {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    z-index: 9;
+    transform: translateX(-50%);
+}

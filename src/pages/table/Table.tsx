@@ -576,7 +576,6 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     turnRemainingSec={turn.timeRemaining}
                     turnKey={turn.turnKey}
                     resultsByAddress={resultsByAddress}
-                    heroFooter={stepButtons}
                     winnersBySeat={winnersBySeat}
                     winningCards={winningCards}
                     maxBuyIn={gameState.gameOptions.maxBuyIn}
@@ -591,6 +590,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     sitAndGoWaiting={sitAndGoWaiting}
                     waitingForPlayers={waitingForPlayers}
                 >
+                    {stepButtons !== undefined && <div className={styles.stepDock}>{stepButtons}</div>}
                     <button
                         type="button"
                         className={styles.historyTab}

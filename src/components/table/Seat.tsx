@@ -129,8 +129,8 @@ function BlindTag({ isSmallBlind, isBigBlind }: Pick<SeatProps, "isSmallBlind" |
 const AVATAR_HALF_PX = 28;
 /** Breathing room kept between a seat's content and the edge of the pane. */
 const PANE_EDGE_GAP_PX = 4;
-/** Room kept under the hero panel for the blind / deal step buttons. */
-const HERO_FOOTER_RESERVE_PX = 90;
+/** Room kept under the hero panel for the blind / deal step buttons docked at the pane's bottom. */
+const HERO_FOOTER_RESERVE_PX = 64;
 /** How far the floating win / place pill overhangs the top of the seat box (it is out of flow). */
 /* The pill overhangs by ~22px; a winning hole card lifts 14px, so this covers both. */
 const RESULT_PILL_OVERHANG_PX = 26;
