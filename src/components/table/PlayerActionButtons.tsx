@@ -13,6 +13,10 @@ export interface PlayerActionButtonsProps {
     onWagerChange: (value: string) => void;
     /** Pot in the same display units, for the ½/¾/Pot presets. */
     potValue: number;
+    /** How the player may sit in right now: no buttons, a single "Sit in", or the post-now / next-big-blind choice. */
+    sitInMode?: "none" | "bootstrap" | "options";
+    /** Passive status text ("Waiting for next big blind…", "Waiting for players to join…"); replaces the turn label. */
+    seatNotice?: string | null;
     /** A blind or the deal is due: the step buttons under your seat take over, so the bar holds back its actions. */
     stepActive?: boolean;
     /** Big blind in raw units; floors an opening pot-fraction bet. */
@@ -93,6 +97,8 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     onWagerChange,
     potValue,
     bigBlind,
+    sitInMode = "none",
+    seatNotice = null,
     stepActive = false,
     activity = null,
     pendingAction = null,
@@ -118,8 +124,8 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     const canCheck = hasAction(legalActions, PlayerActionType.CHECK);
     const canMuck = hasAction(legalActions, PlayerActionType.MUCK);
     const canShow = hasAction(legalActions, PlayerActionType.SHOW);
-    const canSitIn = hasAction(legalActions, NonPlayerActionType.SIT_IN);
-    const canSitInAndWait = hasAction(legalActions, NonPlayerActionType.SIT_IN_AND_WAIT);
+    const canSitIn = sitInMode !== "none" && hasAction(legalActions, NonPlayerActionType.SIT_IN);
+    const canSitInAndWait = sitInMode === "options" && hasAction(legalActions, NonPlayerActionType.SIT_IN_AND_WAIT);
     const turnLocked = isSubmitting || !isPlayerTurn;
 
     const primaryMin = primary !== null ? Number(primary.min) / microPerUnit : 0;
@@ -139,8 +145,8 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
             <div className={styles.turn}>
                 <div className={styles.statusRow}>
                     <span className={`${styles.statusChip} ${isPlayerTurn || activity !== null ? styles.statusOn : ""}`}>
-                        {activity !== null ? <span className={styles.spinner} /> : <span className={styles.statusDot} />}
-                        {activity !== null ? activity : isPlayerTurn ? "Your turn" : "Not your turn"}
+                        {activity !== null || seatNotice !== null ? <span className={styles.spinner} /> : <span className={styles.statusDot} />}
+                        {activity !== null ? activity : seatNotice !== null ? seatNotice : isPlayerTurn ? "Your turn" : "Not your turn"}
                     </span>
                     {handLabel !== null && <span className={styles.handLabel}>{handLabel}</span>}
                 </div>
@@ -172,12 +178,14 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                     <div className={styles.sitRow}>
                         {canSitIn && (
                             <button className={styles.sitButton} disabled={isSubmitting} onClick={onSitIn}>
-                                Sit in
+                                {pendingAction === "Sit in" && <span className={styles.spinner} />}
+                                {sitInMode === "options" ? "Post blinds now" : "Sit in"}
                             </button>
                         )}
                         {canSitInAndWait && (
                             <button className={styles.sitButton} disabled={isSubmitting} onClick={onSitInAndWait}>
-                                Sit in and wait
+                                {pendingAction === "Sit in and wait" && <span className={styles.spinner} />}
+                                Wait for big blind
                             </button>
                         )}
                     </div>
@@ -252,7 +260,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                 </div>
             )}
 
-            {stepActive ? null : (
+            {stepActive || sitInMode !== "none" || seatNotice !== null ? null : (
             <div className={styles.actions}>
                 <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onFold}>
                     {pendingAction === "Fold" && <span className={styles.spinner} />}

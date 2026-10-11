@@ -11,6 +11,8 @@ export interface GameSettings {
     autoMuck: boolean;
     /** Offer a "Check" box before your turn when checking would be free. */
     preSelectCheck: boolean;
+    /** Choose how to sit in (post now vs next big blind) instead of being sat in automatically. */
+    sitInOptions: boolean;
     /** Play a cue for each player action. */
     playerActionSounds: boolean;
     /** Chime when it becomes your turn. */
@@ -26,6 +28,7 @@ const STORAGE_KEYS: Record<GameSettingKey, string> = {
     autoFold: "setting_autofold",
     autoMuck: "setting_automuck",
     preSelectCheck: "setting_preselectcheck",
+    sitInOptions: "setting_sitinoptions",
     playerActionSounds: "setting_playeractionsounds",
     turnNotificationSound: "setting_turnsound"
 };
@@ -37,6 +40,7 @@ const DEFAULTS: GameSettings = {
     autoFold: true,
     autoMuck: false,
     preSelectCheck: false,
+    sitInOptions: false,
     playerActionSounds: true,
     turnNotificationSound: true
 };
@@ -58,6 +62,7 @@ function readAll(): GameSettings {
         autoFold: readStored("autoFold"),
         autoMuck: readStored("autoMuck"),
         preSelectCheck: readStored("preSelectCheck"),
+        sitInOptions: readStored("sitInOptions"),
         playerActionSounds: readStored("playerActionSounds"),
         turnNotificationSound: readStored("turnNotificationSound")
     };

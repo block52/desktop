@@ -38,6 +38,7 @@ const SETTING_ROWS: ReadonlyArray<{ key: GameSettingKey; label: string; hint: st
     { key: "autoFold", label: "Auto fold on timeout", hint: "Fold (or check when it is free) when your clock runs out." },
     { key: "autoMuck", label: "Auto muck", hint: "Muck losing cards at showdown without asking." },
     { key: "preSelectCheck", label: "Pre-select check", hint: "Offer a Check box before your turn when checking is free." },
+    { key: "sitInOptions", label: "Sit-in options", hint: "Choose to post now or wait for the big blind when you sit in. Off: you are sat in automatically." },
     { key: "autoPostBlinds", label: "Auto post blinds", hint: "Post your blind as soon as it is due." },
     { key: "autoDeal", label: "Auto deal", hint: "Deal the hand when it is your turn to." },
     { key: "autoNewHand", label: "Auto new hand", hint: "Start the next hand automatically." }

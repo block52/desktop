@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { COSMOS_CONSTANTS, PlayerActionType, NonPlayerActionType, TexasHoldemRound, GameVariant, PlayerStatus, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
 import { useGameState } from "../../context/GameStateContext";
@@ -48,6 +48,7 @@ import { useAutoFold, useAutoMuck, useAutoShowCards, usePreCheck } from "../../h
 import { postSmallBlind } from "../../hooks/playerActions/postSmallBlind";
 import { postBigBlind } from "../../hooks/playerActions/postBigBlind";
 import { dealCardsWithEntropy } from "../../hooks/playerActions/dealCards";
+import { getPlayerActionDisplay } from "../../utils/playerActionDisplay";
 import { sitOut } from "../../hooks/playerActions/sitOut";
 import { useAutoSitOutNextBB } from "../../hooks/playerActions/useAutoSitOutNextBB";
 import { describeHandStrength } from "../../utils/handStrength";
@@ -229,6 +230,35 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const hasMuckAction = hasAction(legalActions.legalActions, PlayerActionType.MUCK);
     const hasShowAction = hasAction(legalActions.legalActions, PlayerActionType.SHOW);
     const isUsersTurn = legalActions.isPlayerTurn;
+
+    // ---- Sitting in (cash): what the panel offers, and the automatic sit-in for a fresh joiner ----
+    const seatDisplay = getPlayerActionDisplay({
+        playerStatus: legalActions.playerStatus,
+        sitInMethod: legalActions.sitInMethod,
+        legalActions: legalActions.legalActions,
+        totalSeatedPlayers: gameState?.players.length ?? 0,
+        handNumber: gameState?.handNumber ?? 0,
+        hasActivePlayers: gameState?.players.some(p => p.status === PlayerStatus.ACTIVE || p.status === PlayerStatus.ALL_IN) ?? false,
+        sitInOptions: settings.sitInOptions,
+        gameFormat
+    });
+    const autoSitInFired = useRef<boolean>(false);
+    const wantsAutoSitIn = seatDisplay.kind === "auto-sit-in" && !isFeedStale && legalActions.isPlayerInGame;
+    useEffect(() => {
+        if (wantsAutoSitIn && !autoSitInFired.current) {
+            autoSitInFired.current = true;
+            setAutoActivity("Sitting you in…");
+            sitIn(tableId, currentNetwork)
+                .then(() => {
+                    setAwaitingFrame({ label: "Sit in", actionCount: gameState?.previousActions.length ?? 0 });
+                })
+                .catch(err => showError(err instanceof Error ? err.message : String(err)))
+                .finally(() => setAutoActivity(null));
+        }
+        if (!wantsAutoSitIn) {
+            autoSitInFired.current = false;
+        }
+    }, [wantsAutoSitIn, tableId, currentNetwork, showError, gameState?.previousActions.length]);
     useTableSounds({
         previousActions: gameState?.previousActions,
         isUsersTurn,
@@ -696,6 +726,18 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     }
                     handLabel={isFolded ? null : describeHandStrength(myPlayer?.holeCards ?? undefined, gameState.communityCards)}
                     stepActive={stepDue}
+                    sitInMode={
+                        seatDisplay.kind === "sit-in-bootstrap" ? "bootstrap" : seatDisplay.kind === "sit-in-options" ? "options" : "none"
+                    }
+                    seatNotice={
+                        seatDisplay.kind === "pending"
+                            ? seatDisplay.waitingMessage
+                            : seatDisplay.kind === "waiting-for-players"
+                              ? "Waiting for players to join…"
+                              : seatDisplay.kind === "auto-sit-in"
+                                ? "Sitting you in…"
+                                : null
+                    }
                     pendingAction={pendingAction ?? awaitingFrame?.label ?? null}
                     activity={autoActivity}
                     bigBlind={gameState.gameOptions.bigBlind}
