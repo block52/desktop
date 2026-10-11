@@ -1,6 +1,7 @@
 import React from "react";
 import PlayingCard, { parseCard } from "./PlayingCard";
 import ChipPile from "./ChipPile";
+import SeatBanner, { type SeatBannerAction, type SeatStatusLabel } from "./SeatBanner";
 import { avatarImageCandidates } from "../../utils/playerAvatar";
 import styles from "./Seat.module.css";
 
@@ -27,6 +28,12 @@ export interface SeatProps {
     currentBet?: string;
     /** Hole cards (SDK codes) — rendered face-up when present. */
     holeCards?: string[];
+    /** The seat's last action (amount pre-formatted), announced briefly under the nameplate. */
+    lastAction?: SeatBannerAction;
+    /** Seconds this seat has to act; drives the turn countdown while it is to act. */
+    turnTimeoutSec?: number;
+    /** Standing status shown under the nameplate when nothing else is. */
+    statusLabel?: SeatStatusLabel;
     /** Set when this seat won the pot: shows the win badge and highlights the seat. */
     winner?: { amount: string; description?: string };
     /** Codes of the cards in the winning hands; matching hole cards lift, the rest dim. */
@@ -92,6 +99,9 @@ export const Seat: React.FC<SeatProps> = ({
     stackFraction,
     currentBet,
     holeCards,
+    lastAction,
+    turnTimeoutSec,
+    statusLabel,
     winner,
     winningCards,
     betValue,
@@ -151,6 +161,7 @@ export const Seat: React.FC<SeatProps> = ({
                         </div>
                     )}
                 </div>
+                <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} />
                 {currentBet && (
                 <div className={styles.betBlock}>
                     {betValue !== undefined && <ChipPile amount={betValue} />}
@@ -177,6 +188,7 @@ export const Seat: React.FC<SeatProps> = ({
                 </div>
                 <div className={`${styles.stack} ${isFolded ? styles.stackMuted : ""}`}>{isFolded ? "Folded" : stack}</div>
             </div>
+            <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} />
             {hasCards && !isFolded && (
                 <div className={styles.cards}>
                     {/* Hidden cards arrive as "X" placeholders and are drawn as card backs; revealed cards show their face. */}

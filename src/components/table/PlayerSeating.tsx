@@ -2,6 +2,7 @@ import React from "react";
 import { PlayerStatus, type PlayerDTO } from "@block52/poker-vm-sdk";
 import { getSeatPercent, resolveTableSize, seatToUiPosition } from "../../config/seatGeometry";
 import { Seat } from "./Seat";
+import type { SeatStatusLabel } from "./SeatBanner";
 import { shortAddress } from "./shortAddress";
 import styles from "./PlayerSeating.module.css";
 
@@ -15,6 +16,8 @@ export interface PlayerSeatingProps {
     bigBlindPosition?: number;
     dealer?: number;
     formatStack: (stack: string) => string;
+    /** Seconds a seat has to act; drives the turn countdown on the seat to act. */
+    turnTimeoutSec?: number;
     /** Pot winners keyed by server seat, with the amount already formatted for display. */
     winnersBySeat?: Map<number, { amount: string; description?: string }>;
     /** Codes of the cards in the winning hands. */
@@ -28,6 +31,12 @@ export interface PlayerSeatingProps {
 }
 
 
+const SEAT_STATUS_LABELS: Partial<Record<PlayerStatus, SeatStatusLabel>> = {
+    [PlayerStatus.FOLDED]: "FOLD",
+    [PlayerStatus.ALL_IN]: "ALL IN",
+    [PlayerStatus.SITTING_OUT]: "SITTING OUT"
+};
+
 export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     players,
     maxPlayers,
@@ -38,6 +47,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     dealer,
     formatStack,
     chipValue,
+    turnTimeoutSec,
     winnersBySeat,
     winningCards,
     maxBuyIn,
@@ -97,6 +107,20 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 betValue={player.sumOfBets !== "0" ? chipValue(player.sumOfBets) : undefined}
                 holeCards={player.holeCards ?? undefined}
                 avatar={player.avatar}
+                lastAction={
+                    player.lastAction !== undefined
+                        ? {
+                              action: player.lastAction.action,
+                              amount:
+                                  player.lastAction.amount !== "" && player.lastAction.amount !== "0"
+                                      ? formatStack(player.lastAction.amount)
+                                      : undefined,
+                              index: player.lastAction.index
+                          }
+                        : undefined
+                }
+                turnTimeoutSec={turnTimeoutSec}
+                statusLabel={SEAT_STATUS_LABELS[player.status]}
                 winner={winnersBySeat?.get(serverSeat)}
                 winningCards={winningCards}
             />

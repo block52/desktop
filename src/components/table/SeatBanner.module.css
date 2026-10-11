@@ -1,0 +1,115 @@
+.banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 76px;
+    height: 22px;
+    margin-top: 4px;
+    padding: 0 10px;
+    border-radius: 0 0 10px 10px;
+    border: 1px solid hsl(245 22% 17%);
+    background: hsl(240 28% 9.5% / 0.92);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.label {
+    text-transform: uppercase;
+}
+
+.amount {
+    font-weight: 600;
+    opacity: 0.9;
+    font-variant-numeric: tabular-nums;
+}
+
+.announce {
+    animation: bannerDrop 0.28s ease-out both;
+}
+
+.aggressive {
+    background: linear-gradient(180deg, hsl(28 92% 52%), hsl(22 88% 44%));
+    border-color: hsl(28 92% 62%);
+}
+
+.passive {
+    background: linear-gradient(180deg, hsl(212 82% 52%), hsl(214 78% 42%));
+    border-color: hsl(212 82% 62%);
+}
+
+.fold {
+    background: hsl(240 10% 24%);
+    border-color: hsl(240 10% 34%);
+    color: hsl(215 20% 75%);
+}
+
+.blind {
+    background: linear-gradient(180deg, hsl(263 70% 50%), hsl(263 70% 40%));
+    border-color: hsl(263 83% 62%);
+}
+
+.neutral {
+    background: hsl(240 10% 24%);
+}
+
+.status {
+    color: hsl(215 20% 70%);
+    font-weight: 700;
+}
+
+.timer {
+    padding: 0 8px;
+    border-color: hsl(28 92% 52% / 0.6);
+}
+
+.timerTrack {
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: hsl(240 10% 20%);
+    overflow: hidden;
+}
+
+.timerFill {
+    height: 100%;
+    width: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, hsl(142 70% 45%), hsl(43 90% 55%) 55%, hsl(0 75% 55%));
+    background-size: 220% 100%;
+    transform-origin: left center;
+    animation-name: timerDrain;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+@keyframes timerDrain {
+    from {
+        transform: scaleX(1);
+        background-position: 0 0;
+    }
+    to {
+        transform: scaleX(0);
+        background-position: 100% 0;
+    }
+}
+
+@keyframes bannerDrop {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .announce {
+        animation: none;
+    }
+}

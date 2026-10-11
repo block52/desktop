@@ -248,6 +248,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     dealer={gameState.dealer}
                     formatStack={formatAmount}
                     chipValue={chipValue}
+                    turnTimeoutSec={gameState.gameOptions.timeout}
                     winnersBySeat={winnersBySeat}
                     winningCards={winningCards}
                     maxBuyIn={gameState.gameOptions.maxBuyIn}
