@@ -1,17 +1,15 @@
 .seat {
     position: absolute;
-    width: 78px;
-    /* Anchor on the avatar's own fixed half-height (44px / 2 = 22px), not
-       the seat box's own total height. The box's height varies — a bet
-       chip or hole cards add height below the avatar — so translateY(-50%)
-       would center the WHOLE variable-height box, pushing taller seats'
-       avatars higher than shorter ones at the identical nominal row. The
-       avatar is always the first element in this top-aligned flex column
-       regardless of what renders below it, so a fixed -22px consistently
-       keeps the avatar itself pinned to the seat's coordinate. Do not
-       change this to -50% and do not add any element ABOVE the avatar in
-       this flex column without revisiting this value. */
-    transform: translate(-50%, -22px);
+    width: 100px;
+    /* Anchor on the avatar's own fixed half-height (56px / 2 = 28px), not
+       the seat box's total height. The box height varies — a bet chip or
+       hole cards add height below the avatar — so translateY(-50%) would
+       push taller seats' avatars higher than shorter ones at the identical
+       nominal row. The avatar is always the first element in this
+       top-aligned column, so a fixed -28px keeps it pinned to the seat's
+       coordinate. Do not add any element ABOVE the avatar without
+       revisiting this value. */
+    transform: translate(-50%, -28px);
     z-index: 3;
     display: flex;
     flex-direction: column;
@@ -19,125 +17,273 @@
 }
 
 .avatar {
-    width: 44px;
-    height: 44px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    background: var(--accent);
-    border: 2px solid var(--bg-card);
-    outline: 2px solid var(--border);
+    background: hsl(240 26% 14%);
+    border: 2px solid hsl(250 28% 22%);
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    overflow: hidden;
 }
 
-.avatarIcon {
-    width: 26px;
-    height: 26px;
-    color: var(--accent-text);
+.initials {
+    font-size: 15px;
+    font-weight: 700;
+    color: rgb(148, 163, 184);
+    line-height: 1;
 }
 
-.seat.active .avatar,
 .active .avatar {
-    outline: 2px solid var(--accent);
+    border-color: hsl(263 83% 62%);
+    box-shadow: 0 0 0 3px hsl(263 83% 58% / 0.18);
 }
 
-.badge {
+.folded {
+    opacity: 0.5;
+}
+
+/* Dealer button: white disc hanging off the avatar's bottom-right. */
+.dealer {
     position: absolute;
-    top: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: "Barlow Condensed", system-ui, sans-serif;
-    font-size: 8px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-    color: var(--accent-text);
-    background: var(--accent);
-    border-radius: 999px;
-    padding: 1px 6px;
-    white-space: nowrap;
-    z-index: 4;
-}
-
-.badgeDealer {
-    color: var(--text);
-    background: var(--bg-app);
-    border: 1px solid var(--border-strong);
+    right: -12px;
+    bottom: -4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+    color: hsl(240 30% 10%);
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 22px;
+    text-align: center;
+    box-shadow: 0 2px 6px black;
 }
 
 .nameplate {
-    margin-top: -6px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 3px 10px 2px;
+    margin-top: 6px;
+    background: hsl(240 28% 8% / 0.92);
+    border: 1px solid hsl(245 22% 17%);
+    border-radius: 10px;
+    padding: 6px 10px;
     text-align: center;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.nameRow {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     max-width: 100%;
 }
 
 .name {
-    font-family: Barlow, system-ui, sans-serif;
-    font-size: 9.5px;
+    font-size: 12px;
     font-weight: 600;
-    line-height: 1.1;
+    line-height: 1;
+    color: var(--text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+.blindTag {
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 999px;
+    color: hsl(263 90% 80%);
+    background: hsl(263 83% 58% / 0.2);
+    flex-shrink: 0;
+}
+
 .stack {
-    font-family: "Barlow Condensed", system-ui, sans-serif;
-    font-size: 11.5px;
-    font-weight: 600;
-    line-height: 1.2;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    color: hsl(43 80% 72%);
+    font-variant-numeric: tabular-nums;
+}
+
+.stackMuted {
+    color: rgb(148, 163, 184);
 }
 
 .cards {
     display: flex;
-    gap: 2px;
-    margin-top: 4px;
+    margin-top: 6px;
 }
 
-.miniCard {
-    width: 12px;
-    height: 16px;
-    background: var(--bg-app);
-    border: 1px solid var(--border-strong);
-    border-radius: 2px;
+.holeCard {
+    width: clamp(40px, 9cqh, 64px);
+    box-shadow: 0 3px 6px -2px rgba(0, 0, 0, 0.6);
+}
+
+.holeCard + .holeCard {
+    margin-left: -14px;
+    transform: rotate(6deg);
+}
+
+.holeCard:first-child {
+    transform: rotate(-6deg);
 }
 
 .bet {
-    margin-top: 4px;
-    font-family: Barlow, system-ui, sans-serif;
-    font-size: 9px;
-    color: var(--text-muted);
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: hsl(43 80% 76%);
     white-space: nowrap;
-    background: var(--bg-app);
-    border: 1px solid var(--border);
+    background: hsl(158 50% 6% / 0.7);
+    border: 1px solid hsl(245 22% 17%);
     border-radius: 999px;
-    padding: 1px 7px;
+    padding: 2px 9px;
 }
 
 .vacant .avatar {
-    background: transparent;
-    border-style: dashed;
-    border-color: var(--border-strong);
-    outline: none;
+    background: hsl(240 28% 8% / 0.6);
+    border: 1.5px dashed hsl(250 28% 22%);
+}
+
+/* Vacant seat that opens the join modal — a <button> reset to look like a seat. */
+.selectable {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+.selectable:hover .avatar,
+.selectable:focus-visible .avatar {
+    border-color: hsl(263 83% 62%);
+    background: hsl(263 83% 58% / 0.15);
+}
+
+.selectable:hover .plus,
+.selectable:hover .openSeat {
+    color: var(--text);
 }
 
 .plus {
-    font-size: 18px;
-    color: var(--text-muted);
+    font-size: 20px;
+    font-weight: 500;
+    color: rgb(148, 163, 184);
+    line-height: 1;
 }
 
-.vacant .nameplate {
-    border-style: dashed;
-    color: var(--text-muted);
+.openSeat {
+    margin-top: 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1;
+    color: rgb(148, 163, 184);
+    white-space: nowrap;
 }
 
-.vacant .name {
-    color: var(--text-muted);
-    font-size: 9.5px;
+/* ── Hero (local player): large cards over a purple-ringed nameplate ── */
+
+.hero {
+    width: auto;
+    /* Nameplate bottom sits just inside the plane's bottom edge; the cards
+       rise over the felt. */
+    transform: translate(-50%, -72%);
+    z-index: 4;
+}
+
+.heroCards {
+    display: flex;
+    gap: 4px;
+    margin-bottom: -28px;
+    position: relative;
+    z-index: 1;
+}
+
+.heroCard {
+    width: clamp(56px, 13cqh, 92px);
+    border-radius: 6px;
+    box-shadow: 0 8px 18px -6px black;
+}
+
+.heroCard:first-child {
+    transform: rotate(-6deg);
+}
+
+.heroCard + .heroCard {
+    transform: rotate(6deg);
+}
+
+.heroPlate {
+    min-width: 150px;
+    padding: 10px 18px 10px;
+    border-radius: 12px;
+    background: hsl(240 28% 8% / 0.96);
+    border: 1px solid hsl(263 83% 62% / 0.6);
+    box-shadow: 0 0 0 3px hsl(263 83% 58% / 0.18);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.heroPlateWithCards {
+    padding-top: 32px;
+}
+
+.heroPlateActive {
+    border-color: hsl(263 83% 68%);
+    box-shadow: 0 0 0 4px hsl(263 83% 58% / 0.32);
+}
+
+.heroNameRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.heroName {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.heroDealer {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    color: hsl(240 30% 10%);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+}
+
+.heroStack {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    color: hsl(43 80% 72%);
+    font-variant-numeric: tabular-nums;
+}
+
+.stackTrack {
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background: hsl(245 22% 16%);
+    overflow: hidden;
+    margin-top: 2px;
+}
+
+.stackFill {
+    height: 100%;
+    background: hsl(263 83% 62%);
 }

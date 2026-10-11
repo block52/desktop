@@ -1,109 +1,188 @@
+/* Dashboard lives inside the shell's main.pane (see router.tsx) — the pane
+   carries padding/background; this page only stacks its sections. */
 .page {
-    min-height: 100vh;
-    position: relative;
-    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    width: 100%;
     color: var(--text);
     font-family: Inter, system-ui, sans-serif;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px 16px;
 }
 
-@media (min-width: 640px) {
-    .page {
-        padding: 24px 20px;
-    }
-}
-
-@media (min-width: 1024px) {
-    .page {
-        padding: 32px 32px;
-    }
-}
-
-@media (min-width: 1280px) {
-    .page {
-        padding: 40px 48px;
-    }
-}
-
+/* ── Header (spec §3) ── */
 .header {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    gap: 16px;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.titleBlock {
+    flex: 1 1 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .title {
-    font-family: Inter, system-ui, sans-serif;
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
-    color: var(--text);
-    margin: 0 0 4px;
-}
-
-.subtitle {
-    font-size: 13px;
-    color: var(--text-muted);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: #f8fafc;
     margin: 0;
 }
 
-.headerActions {
+.subtitle {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: rgb(148, 163, 184);
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* Search field — colors/borders from global .search-field; layout here. */
+.searchField {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    flex: 1 1 220px;
+    max-width: 320px;
+    min-width: 0;
+}
+
+.searchIcon {
+    color: rgb(148, 163, 184);
     flex-shrink: 0;
 }
 
-.balancePill {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
+.searchField:focus-within .searchIcon {
+    color: rgb(187, 148, 249);
 }
 
-.depositButton {
-    background: var(--accent);
-    border: 1px solid var(--accent);
+.searchInput {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: none;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 400;
+    font-family: Inter, system-ui, sans-serif;
+    color: var(--text);
+}
+
+.searchInput::placeholder {
+    color: rgb(148, 163, 184);
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.balancePill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    padding: 0 5px 0 12px;
     border-radius: 999px;
-    color: var(--accent-text);
-    cursor: pointer;
+    border: 1px solid hsl(245 22% 17%);
+    background: hsl(240 28% 9.5%);
+}
+
+.usdcIcon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.balanceAmount {
     font-size: 14px;
     font-weight: 600;
-    padding: 9px 18px;
-    transition: opacity 0.15s;
+    line-height: 1;
+    color: var(--text);
+    white-space: nowrap;
 }
 
-.depositButton:hover {
-    opacity: 0.85;
+.depositChip {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    font-family: Inter, system-ui, sans-serif;
+    padding: 8px 11px;
+    border-radius: 999px;
+    border: 0;
+    background: rgb(31, 30, 47);
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 120ms;
 }
 
-.depositButton:disabled {
+.depositChip:hover:not(:disabled) {
+    background: rgb(40, 38, 60);
+}
+
+.depositChip:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
 
 .avatar {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background-color: color-mix(in srgb, var(--accent) 25%, transparent);
-    color: var(--accent);
+    background: linear-gradient(135deg, rgb(228, 186, 78), rgb(230, 128, 26));
+    color: rgb(65, 32, 6);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
     flex-shrink: 0;
 }
 
-.overviewRow {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
+/* ── Hero row (spec §4/§5) ── */
+.heroRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 14px;
+}
+
+.statColumn {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 14px;
+}
+
+/* Tablet: hero stacks, stat cards auto-fit below it. */
+@media (max-width: 1100px) {
+    .heroRow {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mobile: header sections take full-width rows. */
+@media (max-width: 768px) {
+    .titleBlock {
+        flex: 1 1 100%;
+    }
+
+    .searchField {
+        flex: 1 1 100%;
+        max-width: none;
+    }
+
+    .headerRight {
+        flex: 1 1 100%;
+    }
 }

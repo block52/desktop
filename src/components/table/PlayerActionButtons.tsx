@@ -1,5 +1,5 @@
 import React from "react";
-import { PlayerActionType, hasAction } from "@block52/poker-vm-sdk";
+import { NonPlayerActionType, PlayerActionType, hasAction } from "@block52/poker-vm-sdk";
 import type { LegalActionDTO } from "@block52/poker-vm-sdk";
 import styles from "./PlayerActionButtons.module.css";
 
@@ -7,12 +7,11 @@ export interface PlayerActionButtonsProps {
     isSubmitting: boolean;
     legalActions: LegalActionDTO[];
     isPlayerTurn: boolean;
-    betAmount: string;
-    onBetAmountChange: (value: string) => void;
-    callAmount: string;
-    onCallAmountChange: (value: string) => void;
-    raiseAmount: string;
-    onRaiseAmountChange: (value: string) => void;
+    /** Wager amount in display units (USDC for cash, chips for tournaments). */
+    wagerAmount: string;
+    onWagerChange: (value: string) => void;
+    /** Pot in the same display units, for the ½/¾/Pot presets. */
+    potValue: number;
     onBet: () => void;
     onCall: () => void;
     onRaise: () => void;
@@ -22,20 +21,50 @@ export interface PlayerActionButtonsProps {
     onShow: () => void;
     onSitIn: () => void;
     onSitInAndWait: () => void;
-    onSitOut: () => void;
-    autoStatusNote: string;
 }
+
+/** Micro → display units with two decimals (matches the mock's $0.08 style). */
+export function formatAmount(micro: string): string {
+    return (Number(micro) / 1_000_000).toFixed(2);
+}
+
+export function actionMin(legalActions: LegalActionDTO[], action: PlayerActionType): string | null {
+    const match = legalActions.find(a => a.action === action);
+    return match?.min ?? null;
+}
+
+export function primaryAction(legalActions: LegalActionDTO[]): { type: "bet" | "raise"; min: string; max: string } | null {
+    const bet = legalActions.find(a => a.action === PlayerActionType.BET && a.min !== undefined && a.max !== undefined);
+    if (bet !== undefined && bet.min !== undefined && bet.max !== undefined) {
+        return { type: "bet", min: bet.min, max: bet.max };
+    }
+    const raise = legalActions.find(a => a.action === PlayerActionType.RAISE && a.min !== undefined && a.max !== undefined);
+    if (raise !== undefined && raise.min !== undefined && raise.max !== undefined) {
+        return { type: "raise", min: raise.min, max: raise.max };
+    }
+    return null;
+}
+
+/** Preset wager for a pot fraction, clamped to the action's min/max. */
+export function presetForPot(fraction: number, potValue: number, min: number, max: number): string {
+    const raw = potValue * fraction;
+    const clamped = Math.min(Math.max(raw, min), max);
+    return clamped.toFixed(2);
+}
+
+const PRESETS: Array<{ label: string; fraction: number }> = [
+    { label: "½ pot", fraction: 0.5 },
+    { label: "¾ pot", fraction: 0.75 },
+    { label: "Pot", fraction: 1 }
+];
 
 export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     isSubmitting,
     legalActions,
     isPlayerTurn,
-    betAmount,
-    onBetAmountChange,
-    callAmount,
-    onCallAmountChange,
-    raiseAmount,
-    onRaiseAmountChange,
+    wagerAmount,
+    onWagerChange,
+    potValue,
     onBet,
     onCall,
     onRaise,
@@ -44,89 +73,122 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     onMuck,
     onShow,
     onSitIn,
-    onSitInAndWait,
-    onSitOut,
-    autoStatusNote,
+    onSitInAndWait
 }) => {
+    const primary = primaryAction(legalActions);
+    const callMin = actionMin(legalActions, PlayerActionType.CALL);
+    const canCheck = hasAction(legalActions, PlayerActionType.CHECK);
+    const canMuck = hasAction(legalActions, PlayerActionType.MUCK);
+    const canShow = hasAction(legalActions, PlayerActionType.SHOW);
+    const canSitIn = hasAction(legalActions, NonPlayerActionType.SIT_IN);
+    const canSitInAndWait = hasAction(legalActions, NonPlayerActionType.SIT_IN_AND_WAIT);
+    const turnLocked = isSubmitting || !isPlayerTurn;
+
+    const primaryMin = primary !== null ? Number(primary.min) / 1_000_000 : 0;
+    const primaryMax = primary !== null ? Number(primary.max) / 1_000_000 : 0;
+    const wager = parseFloat(wagerAmount) || 0;
+
+    const primaryLabel =
+        primary === null
+            ? "Bet"
+            : `${primary.type === "bet" ? "Bet" : "Raise to"} $${wager > 0 ? wager.toFixed(2) : primaryMin.toFixed(2)}`;
+
     return (
-        <div className={styles.bar}>
-            <input
-                className={styles.input}
-                placeholder="Bet"
-                value={betAmount}
-                onChange={e => onBetAmountChange(e.target.value)}
-            />
-            <button
-                className={styles.btn}
-                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.BET)}
-                onClick={onBet}
-            >
-                Bet
-            </button>
-            <input
-                className={styles.input}
-                placeholder="Call"
-                value={callAmount}
-                onChange={e => onCallAmountChange(e.target.value)}
-            />
-            <button
-                className={styles.btn}
-                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.CALL)}
-                onClick={onCall}
-            >
-                Call
-            </button>
-            <input
-                className={styles.input}
-                placeholder="Raise"
-                value={raiseAmount}
-                onChange={e => onRaiseAmountChange(e.target.value)}
-            />
-            <button
-                className={styles.btn}
-                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.RAISE)}
-                onClick={onRaise}
-            >
-                Raise
-            </button>
-            <button
-                className={styles.btn}
-                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.CHECK)}
-                onClick={onCheck}
-            >
-                Check
-            </button>
-            <button
-                className={`${styles.btn} ${styles.danger}`}
-                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.FOLD)}
-                onClick={onFold}
-            >
-                Fold
-            </button>
-            <button
-                className={styles.btn}
-                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.MUCK)}
-                onClick={onMuck}
-            >
-                Muck
-            </button>
-            <button
-                className={styles.btn}
-                disabled={isSubmitting || !isPlayerTurn || !hasAction(legalActions, PlayerActionType.SHOW)}
-                onClick={onShow}
-            >
-                Show
-            </button>
-            <button className={styles.btn} disabled={isSubmitting} onClick={onSitIn}>
-                Sit In
-            </button>
-            <button className={styles.btn} disabled={isSubmitting} onClick={onSitInAndWait}>
-                Sit In And Wait
-            </button>
-            <button className={styles.btn} disabled={isSubmitting} onClick={onSitOut}>
-                Sit Out
-            </button>
-            {autoStatusNote && <div className={styles.autoNote}>{autoStatusNote}</div>}
+        <div className={`pane ${styles.bar}`}>
+            <div className={styles.turn}>
+                <span className={`section-label ${isPlayerTurn ? styles.turnOn : ""}`}>{isPlayerTurn ? "Your turn" : "Not your turn"}</span>
+                {(canSitIn || canSitInAndWait) && (
+                    <div className={styles.sitRow}>
+                        {canSitIn && (
+                            <button className={styles.sitButton} disabled={isSubmitting} onClick={onSitIn}>
+                                Sit in
+                            </button>
+                        )}
+                        {canSitInAndWait && (
+                            <button className={styles.sitButton} disabled={isSubmitting} onClick={onSitInAndWait}>
+                                Sit in and wait
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {primary !== null && (
+                <div className={styles.wager}>
+                    {PRESETS.map(({ label, fraction }) => {
+                        const value = presetForPot(fraction, potValue, primaryMin, primaryMax);
+                        const selected = wager > 0 && value === wager.toFixed(2);
+                        return (
+                            <button
+                                key={label}
+                                className={`${styles.preset} ${selected ? styles.presetOn : ""}`}
+                                disabled={turnLocked}
+                                onClick={() => onWagerChange(value)}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+                    <input
+                        type="range"
+                        className={styles.slider}
+                        min={primaryMin}
+                        max={primaryMax}
+                        step={primaryMin > 0 ? primaryMin : 0.01}
+                        value={Math.min(Math.max(wager, primaryMin), primaryMax)}
+                        disabled={turnLocked}
+                        onChange={e => onWagerChange(e.target.value)}
+                        aria-label="Wager amount"
+                    />
+                    <label className={styles.amountBox}>
+                        <span className={styles.amountPrefix}>$</span>
+                        <input
+                            type="number"
+                            className={styles.amountInput}
+                            value={wagerAmount}
+                            min={primaryMin}
+                            max={primaryMax}
+                            step="0.01"
+                            disabled={turnLocked}
+                            onChange={e => onWagerChange(e.target.value)}
+                            aria-label="Wager value"
+                        />
+                    </label>
+                </div>
+            )}
+
+            <div className={styles.actions}>
+                <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onFold}>
+                    Fold
+                </button>
+                {canCheck && (
+                    <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onCheck}>
+                        Check
+                    </button>
+                )}
+                {callMin !== null && (
+                    <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onCall}>
+                        Call ${formatAmount(callMin)}
+                    </button>
+                )}
+                {canMuck && (
+                    <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onMuck}>
+                        Muck
+                    </button>
+                )}
+                {canShow && (
+                    <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onShow}>
+                        Show
+                    </button>
+                )}
+                <button
+                    className={`btn-glow shimmer-hover ${styles.primaryBtn}`}
+                    disabled={turnLocked || primary === null}
+                    onClick={primary?.type === "raise" ? onRaise : onBet}
+                >
+                    {primaryLabel}
+                </button>
+            </div>
         </div>
     );
 };

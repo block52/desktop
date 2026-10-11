@@ -1,50 +1,197 @@
+/* Action bar card (mock TABLE screen, desktop): turn label left, wager
+   controls centered, 48px action buttons right. */
 .bar {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 14px 22px;
-    border-top: 1px solid var(--border);
-    background: var(--bg-app);
+    gap: 14px;
+    padding: 14px 18px;
+    flex-shrink: 0;
     flex-wrap: wrap;
 }
 
-.input {
-    font-family: "Barlow Condensed", system-ui, sans-serif;
-    font-size: 14px;
-    border: 1px solid var(--border-strong);
-    background: var(--bg-card);
-    color: var(--text);
-    padding: 7px 10px;
-    width: 90px;
-    border-radius: var(--radius);
+.turn {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 0 0 auto;
 }
 
-.btn {
-    font-family: "Barlow Condensed", system-ui, sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 9px 14px;
-    border: 1px solid var(--border-strong);
+.turnOn {
+    color: hsl(263 90% 80%);
+}
+
+.sitRow {
+    display: flex;
+    gap: 6px;
+}
+
+.sitButton {
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid hsl(245 22% 17%);
     background: transparent;
-    color: var(--text);
+    color: rgb(148, 163, 184);
+    font: 500 12px/1 Inter, system-ui, sans-serif;
     cursor: pointer;
-    border-radius: var(--radius);
+    white-space: nowrap;
+    transition: background 120ms, color 120ms;
 }
 
-.btn:disabled {
-    opacity: 0.5;
+.sitButton:hover:not(:disabled) {
+    background: hsl(245 25% 14%);
+    color: var(--text);
+}
+
+.sitButton:disabled {
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
-.danger {
-    border-color: var(--danger);
-    color: color-mix(in srgb, var(--danger) 70%, white);
+.wager {
+    flex: 1 1 320px;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
-.autoNote {
+.preset {
+    padding: 9px 11px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: hsl(245 22% 14%);
+    color: var(--text);
+    font: 500 12px/1 Inter, system-ui, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms;
+}
+
+.preset:hover:not(:disabled) {
+    background: hsl(245 25% 18%);
+}
+
+.presetOn {
+    background: hsl(263 83% 58% / 0.2);
+    border-color: hsl(263 83% 62% / 0.4);
+}
+
+.preset:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.slider {
+    flex: 1 1 120px;
+    max-width: 220px;
+    min-width: 80px;
+    margin: 0 10px;
+    height: 16px;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: hsl(245 22% 16%);
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background: white;
+    border: 0;
+    box-shadow: 0 2px 6px black;
+}
+
+.slider:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.amountBox {
+    display: inline-flex;
+    align-items: center;
+    min-width: 70px;
+    padding: 0 12px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid hsl(250 28% 22%);
+    background: transparent;
+    transition: border-color 120ms;
+}
+
+.amountBox:focus-within {
+    border-color: hsl(263 83% 62% / 0.5);
+}
+
+.amountPrefix {
+    font: 600 14px/1 Inter, system-ui, sans-serif;
+    color: rgb(148, 163, 184);
+}
+
+.amountInput {
+    width: 64px;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: var(--text);
+    font: 600 14px/1 Inter, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    padding: 0 0 0 2px;
+}
+
+.amountInput:disabled {
+    opacity: 0.4;
+}
+
+.amountInput::-webkit-outer-spin-button,
+.amountInput::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
     margin-left: auto;
-    font-family: Barlow, system-ui, sans-serif;
-    font-size: 10.5px;
-    color: var(--text-muted);
-    font-style: italic;
+}
+
+.btn {
+    height: 48px;
+    padding: 0 22px;
+    border-radius: 12px;
+    font: 600 14px/1 Inter, system-ui, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.primaryBtn {
+    border: 0;
+    height: 48px;
+    padding: 0 22px;
+    border-radius: 12px;
+    font: 600 14px/1 Inter, system-ui, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.primaryBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }

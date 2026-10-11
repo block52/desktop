@@ -1,85 +1,156 @@
-.card {
-    flex: 2;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
+/* Hero / featured card — spec §4 */
+.hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid rgb(40, 83, 65);
+    padding: 22px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
+    min-height: 220px;
+    background: radial-gradient(80% 120% at 85% 50%, rgb(31, 81, 60), rgb(11, 34, 26) 70%);
     font-family: Inter, system-ui, sans-serif;
+}
+
+/* Pure-CSS poker table illustration */
+.tableEllipse {
+    position: absolute;
+    right: -110px;
+    top: 30px;
+    width: 400px;
+    height: 165px;
+    border-radius: 999px;
+    border: 10px solid rgb(15, 15, 26);
+    box-shadow: inset 0 0 0 2px rgba(221, 175, 60, 0.45), 0 20px 40px -10px #000;
+    background: radial-gradient(at 50% 40%, rgb(36, 96, 71), rgb(18, 54, 40) 80%);
+}
+
+.cards {
+    position: absolute;
+    right: 50px;
+    top: 84px;
+    display: flex;
+    gap: 6px;
+}
+
+.cardImg {
+    width: 42px;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 6px 14px -4px #000;
 }
 
 .badges {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
+    position: relative;
 }
 
 .badgeSng {
-    background-color: color-mix(in srgb, var(--accent) 15%, transparent);
-    color: var(--accent);
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    padding: 5px 8px;
     border-radius: 999px;
-    padding: 4px 10px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
+    background: rgba(228, 186, 78, 0.16);
+    color: rgb(241, 208, 126);
+    border: 1px solid rgba(228, 186, 78, 0.3);
 }
 
 .badgeStatus {
-    background-color: var(--border);
-    color: var(--text-muted);
-    border-radius: 999px;
-    padding: 4px 10px;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: hsl(142.1 70.6% 45.3% / 0.14);
+    color: rgb(116, 231, 158);
 }
 
-.name {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0;
-    font-family: monospace;
-}
-
-.meta {
-    display: flex;
-    gap: 24px;
-}
-
-.metaItem {
+.textBlock {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 6px;
+    max-width: 330px;
 }
 
-.metaLabel {
-    font-size: 11px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.metaValue {
-    font-size: 16px;
+.heroTitle {
+    font-size: 24px;
     font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
     color: var(--text);
+}
+
+.heroDescription {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: rgb(196, 212, 204);
+    text-wrap: pretty;
+}
+
+.footer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: auto;
+    flex-wrap: wrap;
 }
 
 .registerButton {
-    margin-top: 8px;
-    align-self: flex-start;
-    background: var(--accent);
-    border: 1px solid var(--accent);
+    border: 0;
+    height: 44px;
+    padding: 0 18px;
     border-radius: 999px;
-    color: var(--accent-text);
-    cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    padding: 10px 20px;
-    transition: opacity 0.15s;
+    line-height: 1;
+    font-family: Inter, system-ui, sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
 }
 
-.registerButton:hover {
-    opacity: 0.85;
+.metaStack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.metaLabel {
+    color: rgb(173, 194, 184);
+}
+
+.metaValue {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text);
+}
+
+.prizeValue {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    color: rgb(240, 205, 117);
+}
+
+/* Mobile: push the table illustration further off-canvas so text stays readable. */
+@media (max-width: 768px) {
+    .tableEllipse {
+        right: -160px;
+        opacity: 0.6;
+    }
+
+    .cards {
+        right: 16px;
+        opacity: 0.7;
+    }
 }

@@ -1,0 +1,76 @@
+.guide {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 860px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.card {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cardTitle {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.stepNumber {
+    font-size: 16px;
+    font-weight: 700;
+    color: hsl(263 90% 78%);
+}
+
+.title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text);
+}
+
+.text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-muted);
+    text-wrap: pretty;
+}
+
+.codeBlock {
+    border: 1px solid hsl(245 22% 17%);
+    border-radius: 10px;
+    background: hsl(240 38% 5.5%);
+    overflow: hidden;
+}
+
+.codeHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-bottom: 1px solid hsl(245 22% 17% / 0.6);
+}
+
+.codeLabel {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    color: rgb(148, 163, 184);
+}
+
+.code {
+    margin: 0;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: hsl(215 20% 82%);
+    white-space: pre-wrap;
+    word-break: break-all;
+}

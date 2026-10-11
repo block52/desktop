@@ -1,0 +1,102 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { GameFormat, isTournamentFormat, type GameStateResponseDTO } from "@block52/poker-vm-sdk";
+import { useNetwork } from "../context/NetworkContext";
+import { getCosmosClient } from "../utils/cosmos/client";
+import { indexerApi, type PlayerHand } from "../utils/indexer";
+
+const PAGE_SIZE = 25;
+
+export interface MyHandsState {
+    hands: PlayerHand[];
+    total: number;
+    isLoading: boolean;
+    error: string;
+    hasMore: boolean;
+    loadMore: () => void;
+    reload: () => void;
+    /** true = chips (Sit & Go / tournament), false = micro-USDC; absent while unknown. */
+    chipTables: Map<string, boolean>;
+}
+
+/** Finished hands a wallet played (newest first), paged, plus each table's unit. */
+export function useMyHands(address: string | null): MyHandsState {
+    const { currentNetwork } = useNetwork();
+    const [hands, setHands] = useState<PlayerHand[]>([]);
+    const [total, setTotal] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [nonce, setNonce] = useState(0);
+    const [loadedCount, setLoadedCount] = useState(0);
+    const [chipTables, setChipTables] = useState<Map<string, boolean>>(new Map());
+    const requestedTables = useRef(new Set<string>());
+
+    // Fresh list on wallet / network change or reload.
+    useEffect(() => {
+        setHands([]);
+        setTotal(0);
+        setError("");
+        setLoadedCount(0);
+        if (address === null) return;
+        const controller = new AbortController();
+        setIsLoading(true);
+        indexerApi
+            .getPlayerHands(address, PAGE_SIZE, 0, controller.signal)
+            .then(res => {
+                setHands(res.data);
+                setTotal(res.pagination.total);
+                setLoadedCount(res.data.length);
+            })
+            .catch(err => {
+                if (!controller.signal.aborted) setError(err instanceof Error ? err.message : "Failed to load hands");
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setIsLoading(false);
+            });
+        return () => controller.abort();
+    }, [address, currentNetwork, nonce]);
+
+    const loadMore = useCallback(() => {
+        if (address === null || isLoading) return;
+        setIsLoading(true);
+        indexerApi
+            .getPlayerHands(address, PAGE_SIZE, loadedCount)
+            .then(res => {
+                setHands(prev => {
+                    const seen = new Set(prev.map(h => `${h.game_id}#${h.hand_number}`));
+                    return [...prev, ...res.data.filter(h => !seen.has(`${h.game_id}#${h.hand_number}`))];
+                });
+                setLoadedCount(c => c + res.data.length);
+                setTotal(res.pagination.total);
+            })
+            .catch(err => setError(err instanceof Error ? err.message : "Failed to load hands"))
+            .finally(() => setIsLoading(false));
+    }, [address, isLoading, loadedCount]);
+
+    useEffect(() => {
+        requestedTables.current = new Set();
+        setChipTables(new Map());
+    }, [currentNetwork]);
+
+    // Resolve each table's unit once (getGame is the spectator read).
+    useEffect(() => {
+        const client = getCosmosClient(currentNetwork);
+        if (!client) return;
+        const missing = [...new Set(hands.map(h => h.game_id))].filter(id => !requestedTables.current.has(id));
+        for (const id of missing) {
+            requestedTables.current.add(id);
+            client
+                .getGame(id)
+                .then(response => {
+                    if (!response.game || response.game === "null") return;
+                    const parsed: GameStateResponseDTO = JSON.parse(response.game);
+                    const isChips = parsed.format === GameFormat.SIT_AND_GO || isTournamentFormat(parsed.format);
+                    setChipTables(prev => new Map(prev).set(id, isChips));
+                })
+                .catch(() => undefined);
+        }
+    }, [hands, currentNetwork]);
+
+    const reload = useCallback(() => setNonce(n => n + 1), []);
+
+    return { hands, total, isLoading, error, hasMore: hands.length < total, loadMore, reload, chipTables };
+}

@@ -1,6 +1,7 @@
 import React from "react";
 import type { PlayerDTO, TexasHoldemRound } from "@block52/poker-vm-sdk";
 import { PlayerSeating, type PlayerSeatingProps } from "./PlayerSeating";
+import PlayingCard from "./PlayingCard";
 import styles from "./TableBoard.module.css";
 
 function capitalize(value: string): string {
@@ -9,7 +10,7 @@ function capitalize(value: string): string {
 
 export interface TableBoardProps extends Omit<PlayerSeatingProps, "players"> {
     players: PlayerDTO[];
-    /** Community cards as display strings, e.g. "K♠" — empty for preflop/not dealt yet. */
+    /** Community cards as SDK codes, e.g. "AS" — empty for preflop/not dealt yet. */
     communityCards: string[];
     pot: string;
     round: TexasHoldemRound;
@@ -17,6 +18,8 @@ export interface TableBoardProps extends Omit<PlayerSeatingProps, "players"> {
     sitAndGoWaiting?: { prizePool: string; seated: number; maxPlayers: number };
     /** When set (and sitAndGoWaiting is not), shows a cash-table waiting message instead of pot/cards. */
     waitingForPlayers?: { seated: number; minPlayers: number; maxPlayers: number };
+    /** Overlay content (e.g. the hand log) rendered over the felt pane. */
+    children?: React.ReactNode;
 }
 
 export const TableBoard: React.FC<TableBoardProps> = ({
@@ -25,11 +28,12 @@ export const TableBoard: React.FC<TableBoardProps> = ({
     round,
     sitAndGoWaiting,
     waitingForPlayers,
+    children,
     ...seatingProps
 }) => {
     return (
-        <div className={styles.outer}>
-            <div className={styles.rail} />
+        <div className={`pane ${styles.outer}`}>
+            <div className={styles.feltBox}>
             <div className={styles.felt} />
 
             {sitAndGoWaiting ? (
@@ -50,22 +54,27 @@ export const TableBoard: React.FC<TableBoardProps> = ({
                 </div>
             ) : (
                 <div className={styles.centerMessage}>
-                    <div className={styles.label}>Pot</div>
-                    <div className={styles.value}>{pot}</div>
-                    {communityCards.length > 0 && (
-                        <div className={styles.communityCards}>
-                            {communityCards.map((card, i) => (
-                                <div key={i} className={styles.card}>
-                                    {card}
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    <div className={styles.potPill}>
+                        <span className={styles.potChip} />
+                        <span className={styles.potValue}>Pot ${pot}</span>
+                    </div>
+                    <div className={styles.communityCards}>
+                        {Array.from({ length: 5 }, (_, i) => {
+                            const code = communityCards[i];
+                            return code !== undefined ? (
+                                <PlayingCard key={i} code={code} className={styles.communityCard} />
+                            ) : (
+                                <div key={i} className={styles.emptyCard} />
+                            );
+                        })}
+                    </div>
                     <div className={styles.roundLabel}>{capitalize(round)}</div>
                 </div>
             )}
+            </div>
 
             <PlayerSeating {...seatingProps} />
+            {children}
         </div>
     );
 };

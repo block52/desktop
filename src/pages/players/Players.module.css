@@ -1,0 +1,357 @@
+/* Players directory + profile — mock PLAYERS / PLAYER PROFILE screens. */
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    color: var(--text);
+    font-family: Inter, system-ui, sans-serif;
+}
+
+.header {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.headerText {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 260px;
+}
+
+.title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: #f8fafc;
+}
+
+.subtitle {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+    color: rgb(148, 163, 184);
+}
+
+.searchRow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex: 1 1 280px;
+    max-width: 460px;
+}
+
+.searchInput {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: hsl(240 38% 5.5%);
+    border: 1px solid hsl(245 22% 17%);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+}
+
+.searchInput:focus {
+    border-color: hsl(263 83% 62% / 0.5);
+}
+
+.pill {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: Inter, system-ui, sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.pill:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.panel {
+    overflow: hidden;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 10px 20px;
+}
+
+.headRow {
+    padding: 12px 20px;
+    border-bottom: 1px solid hsl(245 22% 17%);
+}
+
+.row {
+    min-height: 58px;
+    border-bottom: 1px solid hsl(245 22% 17% / 0.6);
+    cursor: pointer;
+}
+
+.sortButton {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-align: right;
+}
+
+.sortButton:hover {
+    color: var(--text);
+}
+
+.right {
+    text-align: right;
+}
+
+.rank {
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: rgb(148, 163, 184);
+}
+
+.rankGold {
+    color: hsl(43 80% 72%);
+}
+
+.who {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.avatar {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, hsl(263 83% 68%), hsl(220 80% 62%));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: hsl(240 30% 10%);
+}
+
+.avatarLg {
+    width: 72px;
+    height: 72px;
+    font-size: 22px;
+    box-shadow: 0 0 0 4px hsl(263 83% 58% / 0.18);
+}
+
+.whoText {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.addr {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.addrLine {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.tier {
+    font-size: 11.5px;
+    line-height: 1;
+    text-transform: capitalize;
+    color: rgb(148, 163, 184);
+}
+
+.num {
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: rgb(148, 163, 184);
+    white-space: nowrap;
+}
+
+.net {
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.pos {
+    color: hsl(142 70% 55%);
+}
+
+.neg {
+    color: hsl(0 84% 68%);
+}
+
+.state {
+    padding: 40px 20px;
+    text-align: center;
+    font-size: 13px;
+    color: rgb(148, 163, 184);
+}
+
+.stateError {
+    color: hsl(0 84% 68%);
+}
+
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px;
+    font-size: 12px;
+    color: rgb(148, 163, 184);
+}
+
+/* ── Profile ── */
+.back {
+    align-self: flex-start;
+    height: 36px;
+    padding: 0 12px 0 8px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+}
+
+.identity {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.identityText {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.fullAddress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: rgb(148, 163, 184);
+    word-break: break-all;
+}
+
+.vip {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: hsl(43 74% 60% / 0.16);
+    color: hsl(43 80% 72%);
+    border: 1px solid hsl(43 74% 60% / 0.3);
+}
+
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+    gap: 12px;
+}
+
+.tile {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tileValue {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.tileNote {
+    font-size: 11.5px;
+    line-height: 1.3;
+    color: rgb(148, 163, 184);
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.sessionGrid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.mono {
+    font-family: var(--mono);
+    font-size: 12.5px;
+}
+
+.gameId {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 760px) {
+    .grid {
+        grid-template-columns: 24px minmax(0, 1fr) auto auto;
+        padding: 10px 14px;
+    }
+
+    .hideNarrow {
+        display: none;
+    }
+
+    .sessionGrid {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+    }
+}

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { COSMOS_CONSTANTS, PlayerActionType, NonPlayerActionType, TexasHoldemRound, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
+import { COSMOS_CONSTANTS, PlayerActionType, NonPlayerActionType, TexasHoldemRound, GameVariant, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
 import { useGameState } from "../../context/GameStateContext";
+import { useToast } from "../../context/ToastContext";
 import { useNetwork } from "../../context/NetworkContext";
 import { useCosmosWallet } from "../../hooks/useCosmosWallet";
 import { usePlayerLegalActions } from "../../hooks/playerActions/usePlayerLegalActions";
@@ -14,7 +15,6 @@ import { muckCards } from "../../hooks/playerActions/muckCards";
 import { showCards } from "../../hooks/playerActions/showCards";
 import { sitIn } from "../../hooks/playerActions/sitIn";
 import { sitInAndWait } from "../../hooks/playerActions/sitInAndWait";
-import { sitOut } from "../../hooks/playerActions/sitOut";
 import { joinTable } from "../../hooks/playerActions/joinTable";
 import { leaveTable } from "../../hooks/playerActions/leaveTable";
 import { useAutoDeal } from "../../hooks/playerActions/useAutoDeal";
@@ -25,7 +25,9 @@ import { getCosmosAddress } from "../../utils/cosmos/storage";
 import type { PlayerActionResult, JoinTableResult, LeaveTableResult } from "../../types";
 import { TableHeader } from "../../components/table/TableHeader";
 import { TableBoard } from "../../components/table/TableBoard";
-import { TableSidebar } from "../../components/table/TableSidebar";
+import { HandLog } from "../../components/table/HandLog";
+import { JoinTableModal } from "../../components/modal/JoinTableModal";
+import { SitAndGoJoinModal } from "../../components/modal/SitAndGoJoinModal";
 import { PlayerActionButtons } from "../../components/table/PlayerActionButtons";
 import { NoWalletOverlay } from "../../components/table/NoWalletOverlay";
 import { TableErrorPage } from "../../components/table/TableErrorPage";
@@ -35,29 +37,33 @@ function formatMicro(value: string): string {
     return (Number(value) / 1_000_000).toFixed(3);
 }
 
-const Table: React.FC = () => {
+function getVariantLabel(variant: string | undefined): string {
+    if (variant === String(GameVariant.OMAHA)) return "PLO";
+    return "NLH";
+}
+
+const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const tableId = id ?? "";
     const { currentNetwork } = useNetwork();
-    const { gameState, gameFormat, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot } =
+    const { gameState, gameFormat, gameVariant, isLoading, error, validationError, subscribeToTable, unsubscribeFromTable, getLatestSnapshot } =
         useGameState();
+    const { showSuccess, showError, showWarning } = useToast();
     const legalActions = usePlayerLegalActions();
-    const { balance: cosmosBalance, isLoading: isBalanceLoading } = useCosmosWallet();
+    const { balance: cosmosBalance } = useCosmosWallet();
 
-    const [betAmount, setBetAmount] = useState<string>("");
-    const [callAmount, setCallAmount] = useState<string>("");
-    const [raiseAmount, setRaiseAmount] = useState<string>("");
-    const [buyInAmount, setBuyInAmount] = useState<string>("");
-    const [seatNumber, setSeatNumber] = useState<string>("");
-    const [actionStatus, setActionStatus] = useState<string>("");
-    const [actionError, setActionError] = useState<string>("");
+    const [wagerAmount, setWagerAmount] = useState<string>("");
+    /** Seat the player clicked to sit at; non-null while the join modal is open. */
+    const [joinSeat, setJoinSeat] = useState<number | null>(null);
+    /** Table whose Sit & Go registration prompt the viewer closed — it doesn't auto-reopen. */
+    const [sngDismissedTable, setSngDismissedTable] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const [logOpen, setLogOpen] = useState<boolean>(false);
 
     const hasWallet = !!getCosmosAddress();
     const localAddress = getCosmosAddress()?.toLowerCase() ?? null;
     const usdcBalanceAmount = cosmosBalance.find(b => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)?.amount ?? "0";
-    const hasUsdcBalance = BigInt(usdcBalanceAmount) > 0n;
 
     useEffect(() => {
         if (!id || !hasWallet) {
@@ -69,16 +75,22 @@ const Table: React.FC = () => {
         };
     }, [id, hasWallet, subscribeToTable, unsubscribeFromTable]);
 
-    const runAction = async (label: string, action: () => Promise<PlayerActionResult | JoinTableResult | LeaveTableResult>) => {
+    const validationMessage = validationError?.message;
+    useEffect(() => {
+        if (validationMessage !== undefined) {
+            showWarning(`Validation: ${validationMessage}`);
+        }
+    }, [validationMessage, showWarning]);
+
+    const runAction = async (label: string, action: () => Promise<PlayerActionResult | JoinTableResult | LeaveTableResult>): Promise<boolean> => {
         setIsSubmitting(true);
-        setActionStatus(`${label}…`);
-        setActionError("");
         try {
-            const result = await action();
-            setActionStatus(`${label} ok: ${result.hash}`);
+            await action();
+            showSuccess(`${label} confirmed`);
+            return true;
         } catch (err) {
-            setActionError(err instanceof Error ? err.message : String(err));
-            setActionStatus("");
+            showError(err instanceof Error ? err.message : String(err));
+            return false;
         } finally {
             setIsSubmitting(false);
         }
@@ -95,9 +107,9 @@ const Table: React.FC = () => {
         smallBlindAmount,
         bigBlindAmount,
         legalActions.isPlayerTurn,
-        blindType => setActionStatus(`Auto-posting ${blindType} blind…`),
-        (blindType, txHash) => setActionStatus(`Auto-posted ${blindType} blind: ${txHash}`),
-        err => setActionError(err.message)
+        () => undefined,
+        blindType => showSuccess(`Posted ${blindType} blind`),
+        err => showError(err.message)
     );
 
     useAutoDeal(
@@ -105,17 +117,17 @@ const Table: React.FC = () => {
         currentNetwork,
         hasAction(legalActions.legalActions, NonPlayerActionType.DEAL),
         legalActions.isPlayerTurn,
-        () => setActionStatus("Auto-dealing…"),
-        txHash => setActionStatus(`Auto-dealt: ${txHash}`),
-        err => setActionError(err.message)
+        () => undefined,
+        () => showSuccess("Cards dealt"),
+        err => showError(err.message)
     );
 
-    const { isDealingNewHand } = useAutoNewHand(
+    useAutoNewHand(
         tableId,
         currentNetwork,
-        () => setActionStatus("Auto-starting new hand…"),
-        txHash => setActionStatus(`Auto-started new hand: ${txHash}`),
-        err => setActionError(err.message)
+        () => undefined,
+        () => showSuccess("New hand started"),
+        err => showError(err.message)
     );
 
     if (!hasWallet) {
@@ -161,23 +173,42 @@ const Table: React.FC = () => {
               }
             : undefined;
 
+    const isTournamentBlinds = isSitAndGoFormat(gameFormat);
+
+    // Sit & Go has no seat or amount to choose, so registration opens on its own
+    // when an unseated viewer lands on the table. Clicking an open seat also opens it.
+    const takenSeats = new Set(gameState.players.map(p => p.seat));
+    let firstFreeSeat: number | null = null;
+    for (let seat = 1; seat <= gameState.gameOptions.maxPlayers; seat++) {
+        if (!takenSeats.has(seat)) {
+            firstFreeSeat = seat;
+            break;
+        }
+    }
+    const autoPromptSeat = isTournamentBlinds && !isUserSeated && sngDismissedTable !== tableId ? firstFreeSeat : null;
+    const modalSeat = isUserSeated ? null : (joinSeat ?? autoPromptSeat);
+    const closeJoinModal = () => {
+        setJoinSeat(null);
+        setSngDismissedTable(tableId);
+    };
+    const blindText = (value: string) => (isTournamentBlinds ? value : formatMicro(value));
+    const callMicro = legalActions.legalActions.find(a => a.action === PlayerActionType.CALL)?.min;
+    const callDisplay = callMicro !== undefined ? (Number(callMicro) / 1_000_000).toFixed(2) : "0";
+
     const content = (
         <>
             <TableHeader
-                tableLabel={`Table ${tableId}`}
-                smallBlind={formatMicro(gameState.gameOptions.smallBlind)}
-                bigBlind={formatMicro(gameState.gameOptions.bigBlind)}
+                tableLabel={`Table ${tableId.slice(0, 6)}…${tableId.slice(-4)}`}
+                variantLabel={getVariantLabel(gameVariant !== undefined ? String(gameVariant) : undefined)}
+                smallBlind={blindText(gameState.gameOptions.smallBlind)}
+                bigBlind={blindText(gameState.gameOptions.bigBlind)}
                 handNumber={gameState.handNumber}
-                round={gameState.round}
-                playerCount={gameState.players.length}
-                maxPlayers={gameState.gameOptions.maxPlayers}
-                onLeave={() => runAction("Leave", () => leaveTable(tableId, currentNetwork))}
+                onBack={() => navigate("/")}
+                onLeave={isUserSeated ? () => runAction("Leave", () => leaveTable(tableId, currentNetwork)) : undefined}
                 leaveDisabled={isSubmitting}
+                onOpenNav={onOpenNav}
+                onToggleLog={() => setLogOpen(open => !open)}
             />
-            {validationError && <div className={styles.validationError}>Validation: {validationError.message}</div>}
-            {isDealingNewHand && <div className={styles.autoIndicator}>Dealing next hand…</div>}
-            {actionStatus && <div className={styles.autoIndicator}>{actionStatus}</div>}
-            {actionError && <div className={styles.validationError}>{actionError}</div>}
             <div className={styles.boardRow}>
                 <TableBoard
                     players={gameState.players}
@@ -188,56 +219,81 @@ const Table: React.FC = () => {
                     bigBlindPosition={gameState.bigBlindPosition}
                     dealer={gameState.dealer}
                     formatStack={formatMicro}
+                    maxBuyIn={gameState.gameOptions.maxBuyIn}
+                    onVacantSeatClick={isUserSeated ? undefined : setJoinSeat}
                     communityCards={gameState.communityCards}
-                    pot={formatMicro(gameState.totalPot)}
+                    pot={isTournamentBlinds ? gameState.totalPot : formatMicro(gameState.totalPot)}
                     round={gameState.round}
                     sitAndGoWaiting={sitAndGoWaiting}
                     waitingForPlayers={waitingForPlayers}
-                />
-                <TableSidebar legalActions={legalActions.legalActions} isPlayerTurn={legalActions.isPlayerTurn} />
-            </div>
-            <div className={styles.joinRow}>
-                <input placeholder="Buy-in (USDC)" value={buyInAmount} onChange={e => setBuyInAmount(e.target.value)} />
-                <input placeholder="Seat (optional)" value={seatNumber} onChange={e => setSeatNumber(e.target.value)} />
-                <button
-                    disabled={isSubmitting || (!isBalanceLoading && !hasUsdcBalance)}
-                    onClick={() =>
-                        runAction("Join", () =>
-                            joinTable(
-                                tableId,
-                                { amount: buyInAmount, seatNumber: seatNumber ? Number(seatNumber) : undefined },
-                                currentNetwork,
-                                getLatestSnapshot
-                            )
-                        )
-                    }
                 >
-                    Join
-                </button>
+                    {logOpen && (
+                        <HandLog
+                            actions={gameState.previousActions}
+                            handNumber={gameState.handNumber}
+                            localAddress={localAddress}
+                            formatAmount={isTournamentBlinds ? (micro: string) => micro : formatMicro}
+                            onClose={() => setLogOpen(false)}
+                            onReplay={() => navigate("/hand-history")}
+                        />
+                    )}
+                </TableBoard>
             </div>
-            {!isBalanceLoading && !hasUsdcBalance && <div className={styles.validationError}>Fund your wallet before joining — USDC balance is 0.</div>}
-            {!waitingForPlayers && !sitAndGoWaiting && (
+            {modalSeat !== null && (() => {
+                const confirmJoin = async (amount: string) => {
+                    const joined = await runAction("Join", () =>
+                        joinTable(tableId, { amount, seatNumber: modalSeat }, currentNetwork, getLatestSnapshot)
+                    );
+                    if (joined) {
+                        closeJoinModal();
+                    }
+                };
+                const { gameOptions } = gameState;
+                return isTournamentBlinds ? (
+                    <SitAndGoJoinModal
+                        seatNumber={modalSeat}
+                        buyIn={gameOptions.minBuyIn}
+                        entryFee={gameOptions.entryFee}
+                        startingStack={gameOptions.startingStack}
+                        blindLevelMinutes={gameOptions.blindLevelDuration}
+                        smallBlind={gameOptions.smallBlind}
+                        bigBlind={gameOptions.bigBlind}
+                        seated={gameState.players.length}
+                        maxPlayers={gameOptions.maxPlayers}
+                        balance={usdcBalanceAmount}
+                        isSubmitting={isSubmitting}
+                        onConfirm={confirmJoin}
+                        onClose={closeJoinModal}
+                    />
+                ) : (
+                    <JoinTableModal
+                        seatNumber={modalSeat}
+                        minBuyIn={gameOptions.minBuyIn}
+                        maxBuyIn={gameOptions.maxBuyIn}
+                        balance={usdcBalanceAmount}
+                        isSubmitting={isSubmitting}
+                        onClose={closeJoinModal}
+                        onConfirm={confirmJoin}
+                    />
+                );
+            })()}
+            {isUserSeated && !waitingForPlayers && !sitAndGoWaiting && (
                 <PlayerActionButtons
                     isSubmitting={isSubmitting}
                     legalActions={legalActions.legalActions}
                     isPlayerTurn={legalActions.isPlayerTurn}
-                    betAmount={betAmount}
-                    onBetAmountChange={setBetAmount}
-                    callAmount={callAmount}
-                    onCallAmountChange={setCallAmount}
-                    raiseAmount={raiseAmount}
-                    onRaiseAmountChange={setRaiseAmount}
-                    onBet={() => runAction("Bet", () => betHand(tableId, parseUsdcToMicro(betAmount), currentNetwork))}
-                    onCall={() => runAction("Call", () => callHand(tableId, parseUsdcToMicro(callAmount), currentNetwork))}
-                    onRaise={() => runAction("Raise", () => raiseHand(tableId, parseUsdcToMicro(raiseAmount), currentNetwork))}
+                    wagerAmount={wagerAmount}
+                    onWagerChange={setWagerAmount}
+                    potValue={isTournamentBlinds ? Number(gameState.totalPot) : Number(gameState.totalPot) / 1_000_000}
+                    onBet={() => runAction("Bet", () => betHand(tableId, parseUsdcToMicro(wagerAmount), currentNetwork))}
+                    onCall={() => runAction("Call", () => callHand(tableId, parseUsdcToMicro(callDisplay), currentNetwork))}
+                    onRaise={() => runAction("Raise", () => raiseHand(tableId, parseUsdcToMicro(wagerAmount), currentNetwork))}
                     onCheck={() => runAction("Check", () => checkHand(tableId, currentNetwork))}
                     onFold={() => runAction("Fold", () => foldHand(tableId, currentNetwork))}
                     onMuck={() => runAction("Muck", () => muckCards(tableId, currentNetwork))}
                     onShow={() => runAction("Show", () => showCards(tableId, currentNetwork))}
                     onSitIn={() => runAction("Sit in", () => sitIn(tableId, currentNetwork))}
                     onSitInAndWait={() => runAction("Sit in and wait", () => sitInAndWait(tableId, currentNetwork))}
-                    onSitOut={() => runAction("Sit out", () => sitOut(tableId, currentNetwork))}
-                    autoStatusNote="Auto: blinds/deal/new-hand fire automatically"
                 />
             )}
         </>

@@ -1,43 +1,35 @@
+/* Live now stat card — spec §5 */
 .card {
-    flex: 1;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: 14px;
     font-family: Inter, system-ui, sans-serif;
 }
 
-.heading {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
 .row {
     display: flex;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 24px;
+    flex-wrap: wrap;
 }
 
 .stat {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
 }
 
 .value {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
+    line-height: 1;
     color: var(--text);
-    font-variant-numeric: tabular-nums;
 }
 
 .label {
-    font-size: 11px;
-    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1;
+    color: rgb(148, 163, 184);
 }

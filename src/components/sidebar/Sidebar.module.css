@@ -1,156 +1,415 @@
+/* Sidebar pane — spec §1 sidebar variant (gradient + shadow differ from .pane,
+   so the values are replicated here; CSS modules don't compose with global classes). */
 .sidebar {
-    width: 240px;
+    width: 232px;
     flex-shrink: 0;
+    height: calc(100vh - 20px);
+    position: sticky;
+    top: 10px;
+    z-index: 20;
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    padding: 20px 14px;
-    background-color: var(--bg-app);
-    border-right: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    height: 100vh;
+    padding: 16px 12px;
+    gap: 4px;
+    background: linear-gradient(180deg, hsl(240 28% 10%) 0%, hsl(252 32% 8%) 100%);
+    border: 1px solid hsl(245 22% 17%);
+    border-radius: 16px;
+    box-shadow:
+        0 0 0 0.5px hsl(263 60% 35% / 0.22),
+        inset 0 1px 0 hsl(263 50% 35% / 0.18),
+        inset 0 -1px 0 hsl(240 30% 4% / 0.5),
+        0 12px 32px -12px hsl(263 60% 6% / 0.6),
+        0 40px 80px -32px hsl(263 60% 4% / 0.9);
     overflow-y: auto;
     font-family: Inter, system-ui, sans-serif;
 }
 
-/* ── Logo ── */
-.logo {
+/* ── Brand block (spec §2) ── */
+.brand {
     display: flex;
     align-items: center;
+    gap: 10px;
+    padding: 4px 8px 18px;
     text-decoration: none;
-    padding: 0 6px;
+    cursor: pointer;
 }
 
-.logoImage {
-    height: 26px;
-    width: auto;
-    object-fit: contain;
+.brandMark {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    flex-shrink: 0;
+    display: block;
+    box-shadow: 0 1px 2px hsl(263 60% 6% / 0.5);
 }
 
-/* Brand mark colors are fixed — the logo keeps its own identity colors
-   rather than following the generic UI accent. */
-.logoText {
-    font-size: 18px;
-    font-weight: 800;
-    color: #c084fc;
-    letter-spacing: -0.03em;
-}
-
-.logoAccent {
-    color: #818cf8;
-}
-
-.logoDiamond {
-    color: var(--text);
-    font-size: 10px;
-    margin-left: 2px;
-    vertical-align: super;
-}
-
-/* ── Groups ── */
-.group {
+.brandText {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
 }
 
-.groupLabel {
-    font-size: 10px;
+.brandName {
+    font-size: 15px;
     font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    padding: 0 10px 6px;
+    line-height: 1;
+    color: rgb(248, 250, 252);
 }
 
-.navItem {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-decoration: none;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: color 0.15s, background-color 0.15s, border-color 0.15s;
-    background: transparent;
-    text-align: left;
-    width: 100%;
+.brandSub {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1;
+    color: rgb(148, 163, 184);
 }
 
-.navItem:hover {
-    color: var(--text);
-    background-color: var(--border);
+/* ── Section labels (padding per spec §2; typography from global .section-label) ── */
+.groupLabel {
+    padding: 6px 10px;
 }
 
-.navItemActive {
-    color: var(--text);
-    background-color: color-mix(in srgb, var(--accent) 14%, transparent);
-    border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+.groupLabelNetwork {
+    padding: 16px 10px 6px;
 }
 
+/* Disabled nav items replicate .nav-item base styles (module scope) without hover/active. */
 .navItemDisabled {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     padding: 8px 10px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-muted);
-    opacity: 0.4;
-    border: 1px solid transparent;
     border-radius: 10px;
+    border: 0;
+    font-size: 13.5px;
+    font-weight: 500;
+    font-family: Inter, system-ui, sans-serif;
+    color: hsl(215 20% 65%);
     background: transparent;
+    opacity: 0.4;
     cursor: not-allowed;
     text-align: left;
     width: 100%;
 }
 
-/* ── Network selector (ported, widened to fill the sidebar row) ── */
-.networkSelectorWrap {
-    padding: 0 10px;
+/* ── Footer ── */
+.spacer {
+    flex: 1;
 }
 
-/* ── Footer ── */
-.footer {
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    border-top: 1px solid var(--border);
-    padding-top: 14px;
+/* Network switcher: the status chip is the trigger, popover opens upward. */
+.switcherWrap {
+    position: relative;
+    margin-top: 8px;
 }
 
 .statusChip {
+    width: 100%;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid hsl(245 22% 17%);
+    background: hsl(240 26% 11%);
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 0 10px;
-    font-size: 11px;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
+    gap: 10px;
+    cursor: pointer;
+    font-family: Inter, system-ui, sans-serif;
+    text-align: left;
+    transition: background 120ms, border-color 120ms;
 }
 
-.statusText {
+.statusChip:hover {
+    background: hsl(245 25% 14%);
+    border-color: hsl(250 28% 22%);
+}
+
+.statusDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: hsl(142.1 70.6% 45.3%);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+    flex-shrink: 0;
+}
+
+.statusStack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.statusName {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    color: #f8fafc;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.statusDot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background-color: #4ade80;
-    flex-shrink: 0;
-    animation: pulse 2.5s ease-in-out infinite;
+.statusBlock {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1;
+    color: rgb(148, 163, 184);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.35; }
+.statusChevron {
+    margin-left: auto;
+    color: rgb(148, 163, 184);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* ── Switcher popover (opens upward from the chip) ── */
+.popover {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    background: hsl(240 26% 11%);
+    border: 1px solid hsl(245 22% 17%);
+    border-radius: 12px;
+    padding: 4px;
+    max-height: 280px;
+    overflow-y: auto;
+    box-shadow:
+        inset 0 1px 0 hsl(263 50% 35% / 0.14),
+        0 12px 32px -12px hsl(263 60% 6% / 0.6),
+        0 32px 64px -32px hsl(263 60% 4% / 0.9);
+}
+
+.popoverSection {
+    display: block;
+    padding: 8px 10px 4px;
+}
+
+.popoverItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: hsl(215 20% 65%);
+    font-family: Inter, system-ui, sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: background 120ms, color 120ms;
+}
+
+.popoverItem:hover {
+    background: hsl(245 25% 14%);
+    color: hsl(210 40% 98%);
+}
+
+.popoverItemSelected {
+    color: hsl(210 40% 98%);
+}
+
+.popoverItemText {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.popoverItemName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.popoverItemEndpoint {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: rgb(148, 163, 184);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.popoverItemCheck {
+    color: hsl(263 90% 78%);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Drawer extras (mobile only — hidden on desktop) */
+.backdrop {
+    display: none;
+}
+
+/* Hidden until the drawer opens. Visual styling lives here (not in the
+   ≤768px query) because the drawer also opens at desktop width on the
+   full-width table screen. */
+.drawerClose {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 14px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid hsl(245 22% 17%);
+    background: transparent;
+    color: rgb(148, 163, 184);
+    cursor: pointer;
+    transition: background 120ms, color 120ms;
+}
+
+.drawerClose:hover {
+    background: hsl(245 25% 14%);
+    color: var(--text);
+}
+
+.sidebarOpen .drawerClose {
+    display: flex;
+}
+
+.navLabel {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── ≤1100px: icons-only rail ── */
+@media (max-width: 1100px) {
+    .sidebar {
+        width: 64px;
+        padding: 16px 8px;
+    }
+
+    .brand {
+        justify-content: center;
+        padding: 4px 0 18px;
+    }
+
+    .brandText,
+    .groupLabel,
+    .groupLabelNetwork,
+    .navLabel,
+    .statusStack,
+    .statusChevron {
+        display: none;
+    }
+
+    .sidebar :global(.nav-item) {
+        justify-content: center;
+        padding: 8px 0;
+    }
+
+    .navItemDisabled {
+        justify-content: center;
+        padding: 8px 0;
+    }
+
+    .statusChip {
+        justify-content: center;
+        padding: 10px 0;
+    }
+
+    /* Rail is ~48px wide inside — let the popover overflow to a usable width. */
+    .popover {
+        right: auto;
+        width: 220px;
+    }
+}
+
+/* ── ≤768px: sidebar hides; opens as an overlay drawer ── */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        bottom: 10px;
+        height: auto;
+        width: 232px;
+        padding: 16px 12px;
+        transform: translateX(calc(-100% - 20px));
+        transition: transform 200ms ease;
+        z-index: 60;
+        overflow-y: auto;
+    }
+
+    .sidebarOpen {
+        transform: translateX(0);
+    }
+
+    .backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(3px);
+        z-index: 55;
+    }
+
+    .drawerClose {
+        display: flex;
+    }
+
+    /* Undo rail collapsing inside the drawer. */
+    .brand {
+        justify-content: flex-start;
+        padding: 4px 8px 18px;
+    }
+
+    .brandText {
+        display: flex;
+    }
+
+    .groupLabel,
+    .groupLabelNetwork {
+        display: block;
+    }
+
+    .navLabel {
+        display: inline;
+    }
+
+    .sidebar :global(.nav-item) {
+        justify-content: flex-start;
+        padding: 8px 10px;
+    }
+
+    .navItemDisabled {
+        justify-content: flex-start;
+        padding: 8px 10px;
+    }
+
+    .statusChip {
+        justify-content: flex-start;
+        padding: 10px;
+    }
+
+    .statusStack {
+        display: flex;
+    }
+
+    .statusChevron {
+        display: flex;
+    }
+
+    .popover {
+        right: 0;
+        width: auto;
+    }
 }

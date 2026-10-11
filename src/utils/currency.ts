@@ -48,3 +48,18 @@ export function parseUsdcToMicro(value: string): bigint {
     // on anything that could round.
     return BigInt(`${whole || "0"}${fraction.padEnd(COSMOS_CONSTANTS.USDC_DECIMALS, "0")}`);
 }
+
+/** Micro-USDC → exact decimal text ("1500000" → "1.5"), no float math. Inverse of parseUsdcToMicro. */
+export function microToDecimal(micro: bigint): string {
+    const whole = micro / 1_000_000n;
+    const fraction = (micro % 1_000_000n).toString().padStart(6, "0").replace(/0+$/, "");
+    return fraction === "" ? whole.toString() : `${whole}.${fraction}`;
+}
+
+/** Signed micro-USDC integer (indexer money fields) as "$1,234.56" / "-$12.00". */
+export function formatMicroUsd(micro: number): string {
+    const abs = BigInt(Math.trunc(Math.abs(micro)));
+    const whole = (abs / 1_000_000n).toLocaleString();
+    const cents = ((abs % 1_000_000n) / 10_000n).toString().padStart(2, "0");
+    return `${micro < 0 ? "-" : ""}$${whole}.${cents}`;
+}

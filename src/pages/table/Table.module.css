@@ -2,8 +2,9 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    background: var(--bg-app);
+    flex: 1;
+    width: 100%;
+    gap: 10px;
     color: var(--text);
     font-family: Inter, system-ui, sans-serif;
     /* Hard backstop for the horizontal-bleed bug: nothing inside this page
@@ -16,34 +17,13 @@
 
 .boardRow {
     display: flex;
+    gap: 10px;
     flex: 1;
     min-height: 0;
 }
 
-.joinRow {
-    display: flex;
-    gap: 8px;
-    padding: 8px 22px;
-}
-
-.connecting {
-    padding: 24px;
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.validationError {
-    padding: 8px 18px;
-    font-size: 12px;
-    color: color-mix(in srgb, var(--danger) 70%, white);
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
-}
-
-.autoIndicator {
-    padding: 8px 18px;
-    font-size: 12px;
-    color: var(--accent);
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
+@media (max-width: 768px) {
+    .boardRow {
+        overflow-x: auto;
+    }
 }

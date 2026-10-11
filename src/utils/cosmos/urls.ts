@@ -7,7 +7,7 @@ export type { NetworkEndpoints };
  * Centralized Cosmos network URL configuration
  * 
  * Provides consistent access to RPC and REST endpoints across the application.
- * Uses the network selected in the NetworkSelector dropdown.
+ * Uses the network selected in the sidebar network switcher.
  */
 
 export interface CosmosUrls {
