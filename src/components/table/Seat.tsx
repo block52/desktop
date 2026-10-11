@@ -126,7 +126,8 @@ const AVATAR_HALF_PX = 28;
 /** Breathing room kept between a seat's content and the edge of the pane. */
 const PANE_EDGE_GAP_PX = 8;
 /** How far the floating win / place pill overhangs the top of the seat box (it is out of flow). */
-const RESULT_PILL_OVERHANG_PX = 34;
+/* Includes the 14px a winning hole card lifts above the box. */
+const RESULT_PILL_OVERHANG_PX = 52;
 
 interface SeatExtents {
     /** Content height from the box's top edge to the seat's coordinate (the avatar's centre). */
@@ -286,7 +287,7 @@ export const Seat: React.FC<SeatProps> = ({
                 </div>
             )}
             {currentBet && (
-                <div className={styles.betBlock}>
+                <div className={`${styles.betBlock} ${isUpper ? `${styles.betSide} ${left < 50 ? styles.betLeft : styles.betRight}` : ""}`}>
                     {betValue !== undefined && <ChipPile amount={betValue} />}
                     <div className={styles.bet}>{currentBet}</div>
                 </div>
