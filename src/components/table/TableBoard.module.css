@@ -134,3 +134,13 @@
     text-transform: uppercase;
     color: rgb(148, 163, 184);
 }
+
+.communityWin {
+    translate: 0 -8px;
+    box-shadow: 0 0 0 2px hsl(43 90% 62%), 0 10px 20px -4px hsl(43 90% 50% / 0.6);
+    transition: translate 0.4s ease-out;
+}
+
+.communityMuted {
+    opacity: 0.45;
+}

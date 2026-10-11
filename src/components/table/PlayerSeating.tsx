@@ -15,6 +15,10 @@ export interface PlayerSeatingProps {
     bigBlindPosition?: number;
     dealer?: number;
     formatStack: (stack: string) => string;
+    /** Pot winners keyed by server seat, with the amount already formatted for display. */
+    winnersBySeat?: Map<number, { amount: string; description?: string }>;
+    /** Codes of the cards in the winning hands. */
+    winningCards?: string[];
     /** Converts a raw amount to the whole-dollar/chip value used to draw chip piles. */
     chipValue: (amount: string) => number;
     /** Max buy-in in the same micro units as player stacks; drives the hero's stack bar. Omit/0 to hide it. */
@@ -34,6 +38,8 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     dealer,
     formatStack,
     chipValue,
+    winnersBySeat,
+    winningCards,
     maxBuyIn,
     onVacantSeatClick,
 }) => {
@@ -91,6 +97,8 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 betValue={player.sumOfBets !== "0" ? chipValue(player.sumOfBets) : undefined}
                 holeCards={player.holeCards ?? undefined}
                 avatar={player.avatar}
+                winner={winnersBySeat?.get(serverSeat)}
+                winningCards={winningCards}
             />
         );
     }

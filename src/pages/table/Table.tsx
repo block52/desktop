@@ -212,6 +212,10 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const potText = (raw: bigint) => (isTournamentBlinds ? formatChips(raw.toString()) : `$${formatMicro(raw.toString())}`);
     // Sit & Go amounts are tournament chips; cash amounts are micro-USDC.
     const chipValue = (amount: string) => (isTournamentBlinds ? Number(amount) : Number(amount) / 1_000_000);
+    const winnersBySeat = new Map(
+        gameState.winners.map(w => [w.seat, { amount: formatAmount(w.amount), description: w.description }] as const)
+    );
+    const winningCards = gameState.winners.flatMap(w => w.cards ?? []).map(code => code.toUpperCase());
     const blindText = (value: string) => formatAmount(value);
     const callMicro = legalActions.legalActions.find(a => a.action === PlayerActionType.CALL)?.min;
     const callRaw = callMicro !== undefined ? BigInt(callMicro) : 0n;
@@ -244,6 +248,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     dealer={gameState.dealer}
                     formatStack={formatAmount}
                     chipValue={chipValue}
+                    winnersBySeat={winnersBySeat}
+                    winningCards={winningCards}
                     maxBuyIn={gameState.gameOptions.maxBuyIn}
                     onVacantSeatClick={isUserSeated ? undefined : setJoinSeat}
                     communityCards={gameState.communityCards}

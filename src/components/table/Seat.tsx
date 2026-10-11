@@ -27,6 +27,10 @@ export interface SeatProps {
     currentBet?: string;
     /** Hole cards (SDK codes) — rendered face-up when present. */
     holeCards?: string[];
+    /** Set when this seat won the pot: shows the win badge and highlights the seat. */
+    winner?: { amount: string; description?: string };
+    /** Codes of the cards in the winning hands; matching hole cards lift, the rest dim. */
+    winningCards?: string[];
     /** Current-round bet as a whole-dollar/chip value; draws the chip pile above the bet pill. */
     betValue?: number;
     /** Raw `player.avatar` from table state (NFT ref or image URL). */
@@ -51,6 +55,15 @@ function AvatarFace({ avatar, initials }: { avatar?: string; initials: string })
             referrerPolicy="no-referrer"
             onError={() => setAttempt({ avatar, index: index + 1 })}
         />
+    );
+}
+
+function WinBadge({ winner }: { winner: NonNullable<SeatProps["winner"]> }) {
+    return (
+        <div className={styles.winBadge} role="status">
+            <span className={styles.winAmount}>+{winner.amount}</span>
+            {winner.description !== undefined && <span className={styles.winHand}>{winner.description}</span>}
+        </div>
     );
 }
 
@@ -79,6 +92,8 @@ export const Seat: React.FC<SeatProps> = ({
     stackFraction,
     currentBet,
     holeCards,
+    winner,
+    winningCards,
     betValue,
     avatar,
     onSelect,
@@ -107,6 +122,10 @@ export const Seat: React.FC<SeatProps> = ({
     }
 
     const hasCards = holeCards !== undefined && holeCards.length > 0;
+    const cardStateClass = (code: string): string => {
+        if (winner === undefined || winningCards === undefined || winningCards.length === 0) return "";
+        return winningCards.includes(code.toUpperCase()) ? styles.cardWin : styles.cardMuted;
+    };
 
     if (isHero) {
         return (
@@ -114,11 +133,12 @@ export const Seat: React.FC<SeatProps> = ({
                 {hasCards && (
                     <div className={styles.heroCards}>
                         {holeCards.map((code, i) => (
-                            <PlayingCard key={i} code={code} className={styles.heroCard} />
+                            <PlayingCard key={i} code={code} className={`${styles.heroCard} ${cardStateClass(code)}`} />
                         ))}
                     </div>
                 )}
-                <div className={`${styles.heroPlate} ${hasCards ? styles.heroPlateWithCards : ""} ${isActive ? styles.heroPlateActive : ""}`}>
+                {winner !== undefined && <WinBadge winner={winner} />}
+                <div className={`${styles.heroPlate} ${hasCards ? styles.heroPlateWithCards : ""} ${isActive ? styles.heroPlateActive : ""} ${winner !== undefined ? styles.winGlow : ""}`}>
                     <div className={styles.heroNameRow}>
                         <span className={styles.heroName}>You</span>
                         <BlindTag isSmallBlind={isSmallBlind} isBigBlind={isBigBlind} />
@@ -144,7 +164,8 @@ export const Seat: React.FC<SeatProps> = ({
     const initials = (name ?? "?").replace(/[^a-zA-Z0-9]/g, "").slice(0, 2).toUpperCase() || "?";
 
     return (
-        <div className={`${styles.seat} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : ""}`} style={style}>
+        <div className={`${styles.seat} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : ""} ${winner !== undefined ? styles.winner : ""}`} style={style}>
+            {winner !== undefined && <WinBadge winner={winner} />}
             <div className={styles.avatar}>
                 <AvatarFace avatar={avatar} initials={initials} />
                 {isDealer && <span className={styles.dealer}>D</span>}
@@ -160,7 +181,7 @@ export const Seat: React.FC<SeatProps> = ({
                 <div className={styles.cards}>
                     {/* Hidden cards arrive as "X" placeholders and are drawn as card backs; revealed cards show their face. */}
                     {holeCards.map((code, i) => (
-                        <PlayingCard key={i} code={code} faceDown={parseCard(code) === null} className={styles.holeCard} />
+                        <PlayingCard key={i} code={code} faceDown={parseCard(code) === null} className={`${styles.holeCard} ${cardStateClass(code)}`} />
                     ))}
                 </div>
             )}

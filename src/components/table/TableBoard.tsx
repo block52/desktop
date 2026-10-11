@@ -42,6 +42,7 @@ export const TableBoard: React.FC<TableBoardProps> = ({
     children,
     ...seatingProps
 }) => {
+    const winningCards = seatingProps.winningCards ?? [];
     const potDisplay = (
         <div className={styles.potStack}>
             {hasPot && <ChipPile amount={potValue} />}
@@ -82,7 +83,13 @@ export const TableBoard: React.FC<TableBoardProps> = ({
                         {Array.from({ length: 5 }, (_, i) => {
                             const code = communityCards[i];
                             return code !== undefined ? (
-                                <PlayingCard key={i} code={code} className={styles.communityCard} />
+                                <PlayingCard
+                                    key={i}
+                                    code={code}
+                                    className={`${styles.communityCard} ${
+                                        winningCards.length === 0 ? "" : winningCards.includes(code.toUpperCase()) ? styles.communityWin : styles.communityMuted
+                                    }`}
+                                />
                             ) : (
                                 <div key={i} className={styles.emptyCard} />
                             );
