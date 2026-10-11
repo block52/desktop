@@ -106,14 +106,15 @@
 
 .tokenRow {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
 .tokenButton,
 .tokenButtonSelected {
-    flex: 1;
-    padding: 10px;
-    font-size: 13px;
+    flex: 1 1 auto;
+    padding: 9px 10px;
+    font-size: 12.5px;
     font-weight: 600;
     font-family: Inter, system-ui, sans-serif;
     cursor: pointer;
@@ -192,4 +193,58 @@
 
 .cancelButton:hover {
     background-color: hsl(245 25% 14%);
+}
+
+.infoBox {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background-color: hsl(240 38% 5.5%);
+    border: 1px solid hsl(245 22% 17%);
+    border-radius: 12px;
+}
+
+.infoLabel {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.infoRange {
+    color: hsl(142 70% 60%);
+    font-size: 15px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.infoSub {
+    color: hsl(215 20% 45%);
+    font-size: 11.5px;
+}
+
+.feeBox {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background-color: hsl(240 38% 5.5%);
+    border: 1px solid hsl(245 22% 17%);
+    border-radius: 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.feeRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.feeValue {
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
