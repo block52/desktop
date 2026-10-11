@@ -99,4 +99,14 @@ describe("AvailableCard", () => {
         fireEvent.click(screen.getByRole("button", { name: "Manage" }));
         expect(props.onManageWeb3).toHaveBeenCalledTimes(1);
     });
+
+    it("shows the wallet address as a QR code in the card", () => {
+        const { container } = render(
+            <ToastProvider>
+                <AvailableCard {...BASE_PROPS} />
+            </ToastProvider>
+        );
+        expect(container.querySelector("svg[viewBox]")).not.toBeNull();
+        expect(screen.getByText("b52abc123def")).toBeTruthy();
+    });
 });

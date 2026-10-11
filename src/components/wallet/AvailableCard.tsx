@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import usdcUrl from "../../assets/lobby/usdc.svg";
-import ReceiveModal from "../modal/ReceiveModal";
 import CopyButton from "../copyButton/CopyButton";
 import type { WalletTab } from "./DepositWithdrawPanel";
 import styles from "./AvailableCard.module.css";
@@ -38,7 +37,6 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
     onRefresh,
     isRefreshing
 }) => {
-    const [receiveOpen, setReceiveOpen] = useState(false);
     const shortAddress = `${address.slice(0, 3)}…${address.slice(-4)}`;
     const web3Short = web3Address ? `${web3Address.slice(0, 6)}…${web3Address.slice(-4)}` : "";
 
@@ -115,9 +113,20 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
                 <button className={`btn-ghost ${styles.pill}`} onClick={onSend}>
                     Send
                 </button>
-                <button className={`btn-ghost ${styles.pill}`} onClick={() => setReceiveOpen(true)}>
-                    Receive
-                </button>
+            </div>
+
+            <div className={styles.receive}>
+                <div className={styles.qr}>
+                    <QRCodeSVG value={address} size={132} level="M" marginSize={2} />
+                </div>
+                <div className={styles.receiveText}>
+                    <span className="section-label">Receive</span>
+                    <span className={styles.receiveHint}>Scan from another Block52 wallet, or copy the address, to send b52USDC here.</span>
+                    <span className={styles.receiveAddress}>
+                        <code>{address}</code>
+                        <CopyButton text={address} message="Address copied" title="Copy full address" />
+                    </span>
+                </div>
             </div>
 
             {isWeb3Connected && web3Address && (
@@ -128,7 +137,6 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
                     </button>
                 </div>
             )}
-            {receiveOpen && <ReceiveModal address={address} onClose={() => setReceiveOpen(false)} />}
         </div>
     );
 };

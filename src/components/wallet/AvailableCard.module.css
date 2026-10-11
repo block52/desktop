@@ -132,3 +132,49 @@
         transform: rotate(360deg);
     }
 }
+
+/* Receive: the wallet's address as a QR code, filling the card's spare room. */
+.receive {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid hsl(245 22% 17%);
+}
+
+.qr {
+    flex-shrink: 0;
+    padding: 8px;
+    border-radius: 12px;
+    background: #fff;
+    line-height: 0;
+}
+
+.receiveText {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.receiveHint {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.receiveAddress {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.receiveAddress code {
+    min-width: 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    word-break: break-all;
+}
