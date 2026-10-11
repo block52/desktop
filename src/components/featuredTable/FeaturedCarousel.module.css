@@ -1,0 +1,61 @@
+.carousel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.carousel > :first-child {
+    flex: 1;
+}
+
+.controls {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: hsl(240 28% 8% / 0.7);
+    border: 1px solid hsl(245 22% 17%);
+    backdrop-filter: blur(4px);
+}
+
+.arrow {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text);
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.arrow:hover {
+    background: hsl(245 25% 18%);
+}
+
+.dots {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: hsl(215 20% 40%);
+    cursor: pointer;
+}
+
+.dotOn {
+    background: hsl(263 83% 68%);
+}

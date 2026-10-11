@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import DepositModal from "../../components/modal/DepositModal";
 import { useCosmosWallet } from "../../hooks/useCosmosWallet";
 import TableList from "../../components/tableList/TableList";
-import FeaturedTable from "../../components/featuredTable/FeaturedTable";
+import FeaturedCarousel from "../../components/featuredTable/FeaturedCarousel";
 import LastSession from "../../components/lastSession/LastSession";
 import LiveStats from "../../components/liveStats/LiveStats";
 import { useFindGames } from "../../hooks/useFindGames";
@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className={styles.heroRow}>
-        <FeaturedTable game={featuredGame} />
+        <FeaturedCarousel game={featuredGame} />
         <div className={styles.statColumn}>
           <LastSession />
           <LiveStats
