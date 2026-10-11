@@ -13,19 +13,18 @@ import {
 } from "../../utils/cryptoPayment";
 import CopyButton from "../copyButton/CopyButton";
 import dialog from "./TableDialog.module.css";
-import styles from "./CryptoDepositModal.module.css";
+import styles from "./CryptoDepositPanel.module.css";
 
 const POLL_MS = 10000;
 
-interface CryptoDepositModalProps {
+interface CryptoDepositPanelProps {
     /** The Block52 address the USDC is minted to. */
     cosmosAddress: string;
-    onClose: () => void;
     /** The payment finished: refresh balances. */
     onCompleted: () => void;
 }
 
-export const CryptoDepositModal: React.FC<CryptoDepositModalProps> = ({ cosmosAddress, onClose, onCompleted }) => {
+export const CryptoDepositPanel: React.FC<CryptoDepositPanelProps> = ({ cosmosAddress, onCompleted }) => {
     const [currencyCode, setCurrencyCode] = useState(DEPOSIT_CURRENCIES[0].code);
     const [amount, setAmount] = useState("");
     const [payment, setPayment] = useState<CreatedPayment | null>(null);
@@ -35,6 +34,12 @@ export const CryptoDepositModal: React.FC<CryptoDepositModalProps> = ({ cosmosAd
 
     const amountNumber = Number(amount);
     const amountValid = Number.isFinite(amountNumber) && amountNumber >= MIN_CRYPTO_DEPOSIT_USD;
+
+    const reset = () => {
+        setPayment(null);
+        setStatus(null);
+        setError("");
+    };
 
     const create = async () => {
         setIsCreating(true);
@@ -79,9 +84,8 @@ export const CryptoDepositModal: React.FC<CryptoDepositModalProps> = ({ cosmosAd
     const currency = payment !== null ? findDepositCurrency(payment.payCurrency) : undefined;
 
     return (
-        <div className={dialog.overlay} onClick={onClose} role="presentation">
-            <div className={dialog.modal} role="dialog" aria-modal="true" aria-label="Deposit with crypto" onClick={e => e.stopPropagation()}>
-                <h2 className={dialog.title}>Deposit with crypto</h2>
+        <div className={styles.panel}>
+            <div className={styles.inner}>
 
                 {payment === null ? (
                     <>
@@ -117,9 +121,6 @@ export const CryptoDepositModal: React.FC<CryptoDepositModalProps> = ({ cosmosAd
                         </label>
                         {error !== "" && <p className={dialog.error}>{error}</p>}
                         <div className={dialog.actions}>
-                            <button type="button" className={`btn-ghost ${dialog.action}`} onClick={onClose}>
-                                Cancel
-                            </button>
                             <button type="button" className={`btn-glow ${dialog.action}`} onClick={() => void create()} disabled={!amountValid || isCreating}>
                                 {isCreating ? "Creating…" : "Create payment"}
                             </button>
@@ -150,8 +151,8 @@ export const CryptoDepositModal: React.FC<CryptoDepositModalProps> = ({ cosmosAd
                             <p className={dialog.body}>You receive ${status.outcomeAmount.toFixed(2)} USDC.</p>
                         )}
                         <div className={dialog.actions}>
-                            <button type="button" className={`btn-ghost ${dialog.action}`} onClick={onClose}>
-                                {isTerminal ? "Done" : "Close (keeps running)"}
+                            <button type="button" className={`btn-ghost ${dialog.action}`} onClick={reset}>
+                                {isTerminal ? "New deposit" : "Start over"}
                             </button>
                         </div>
                     </>
@@ -161,4 +162,4 @@ export const CryptoDepositModal: React.FC<CryptoDepositModalProps> = ({ cosmosAd
     );
 };
 
-export default CryptoDepositModal;
+export default CryptoDepositPanel;

@@ -216,7 +216,7 @@ const Wallet: React.FC = () => {
                                 ? "Show one of your NFTs on your seat at the tables."
                                 : `Registered: ${onChainAvatar.contractAddress.slice(0, 8)}…${onChainAvatar.contractAddress.slice(-4)} #${onChainAvatar.tokenId}`}
                         </p>
-                        <button type="button" className={`btn-ghost ${styles.primaryAction}`} onClick={() => setShowAvatarPicker(true)}>
+                        <button type="button" className={`btn-ghost ${styles.ghostAction}`} onClick={() => setShowAvatarPicker(true)}>
                             {onChainAvatar === null ? "Choose NFT avatar" : "Change NFT avatar"}
                         </button>
                     </div>

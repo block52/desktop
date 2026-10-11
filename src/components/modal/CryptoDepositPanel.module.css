@@ -1,3 +1,14 @@
+.panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.inner {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
 .currencies {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
