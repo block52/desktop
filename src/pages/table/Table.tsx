@@ -35,6 +35,7 @@ import { TopUpModal } from "../../components/modal/TopUpModal";
 import { topUpTable, type TopUpResult } from "../../hooks/playerActions/topUp";
 import { maxTopUpMicro } from "../../utils/topUpLimits";
 import { ConnectionBanner } from "../../components/table/ConnectionBanner";
+import { StepButtons, type BlockingStep } from "../../components/table/StepButtons";
 import { TournamentStrip } from "../../components/table/TournamentStrip";
 import { primaryAction } from "../../components/table/PlayerActionButtons";
 import { LeaveTableModal } from "../../components/modal/LeaveTableModal";
@@ -167,6 +168,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         blindType => setAutoActivity(blindType === "small" ? "Posting small blind…" : "Posting big blind…"),
         blindType => {
             setAutoActivity(null);
+            // Accepted by the chain; keep the button working until the table's next frame shows it.
+            setAwaitingFrame({ label: blindType === "small" ? "Post small blind" : "Post big blind", actionCount: gameState?.previousActions.length ?? 0 });
             showSuccess(`Posted ${blindType} blind`);
         },
         err => {
@@ -184,6 +187,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         () => setAutoActivity("Dealing cards…"),
         () => {
             setAutoActivity(null);
+            setAwaitingFrame({ label: "Deal", actionCount: gameState?.previousActions.length ?? 0 });
             showSuccess("Cards dealt");
         },
         err => {
@@ -455,6 +459,39 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     };
     const showResult = isTournamentBlinds && myResult !== undefined && !isResultDismissed;
 
+    // ---- Blind and deal steps (driven automatically; the buttons show them and allow a manual press) ----
+    const smallBlindDue = hasAction(legalActions.legalActions, PlayerActionType.SMALL_BLIND);
+    const bigBlindDue = hasAction(legalActions.legalActions, PlayerActionType.BIG_BLIND);
+    const dealDue = hasAction(legalActions.legalActions, NonPlayerActionType.DEAL);
+    const stepDue = smallBlindDue || bigBlindDue || dealDue;
+    // In flight (by hand or automatically) or accepted and waiting for the table to move on.
+    const stepLabel = pendingAction ?? awaitingFrame?.label ?? null;
+    const blockingStep: BlockingStep =
+        autoActivity === "Posting small blind…" || stepLabel === "Post small blind"
+            ? "small-blind"
+            : autoActivity === "Posting big blind…" || stepLabel === "Post big blind"
+              ? "big-blind"
+              : autoActivity === "Dealing cards…" || stepLabel === "Deal"
+                ? "deal"
+                : null;
+    const stepButtons =
+        isUserSeated && stepDue ? (
+            <StepButtons
+                showSmallBlind={smallBlindDue}
+                showBigBlind={bigBlindDue}
+                smallAmount={formatAmount(gameState.gameOptions.smallBlind)}
+                bigAmount={formatAmount(gameState.gameOptions.bigBlind)}
+                currencySymbol={isTournamentBlinds ? "" : "$"}
+                canDeal={dealDue}
+                handNumber={gameState.handNumber}
+                blockingStep={blockingStep}
+                disabled={isSubmitting || isFeedStale}
+                onPostSmall={() => runAction("Post small blind", () => postSmallBlind(tableId, smallBlindAmount, currentNetwork))}
+                onPostBig={() => runAction("Post big blind", () => postBigBlind(tableId, bigBlindAmount, currentNetwork))}
+                onDeal={() => runAction("Deal", () => dealCardsWithEntropy(tableId, currentNetwork, ""))}
+            />
+        ) : undefined;
+
     const content = (
         <>
             <ConnectionBanner connection={connection} onRetry={retryConnection} />
@@ -509,6 +546,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     turnRemainingSec={turn.timeRemaining}
                     turnKey={turn.turnKey}
                     resultsByAddress={resultsByAddress}
+                    heroFooter={stepButtons}
                     winnersBySeat={winnersBySeat}
                     winningCards={winningCards}
                     maxBuyIn={gameState.gameOptions.maxBuyIn}
@@ -657,26 +695,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                             : undefined
                     }
                     handLabel={isFolded ? null : describeHandStrength(myPlayer?.holeCards ?? undefined, gameState.communityCards)}
-                    blinds={{
-                        showSmall: hasAction(legalActions.legalActions, PlayerActionType.SMALL_BLIND),
-                        showBig: hasAction(legalActions.legalActions, PlayerActionType.BIG_BLIND),
-                        smallAmount: formatAmount(gameState.gameOptions.smallBlind),
-                        bigAmount: formatAmount(gameState.gameOptions.bigBlind),
-                        onPostSmall: () => runAction("Post small blind", () => postSmallBlind(tableId, smallBlindAmount, currentNetwork)),
-                        onPostBig: () => runAction("Post big blind", () => postBigBlind(tableId, bigBlindAmount, currentNetwork))
-                    }}
-                    handNumber={gameState.handNumber}
-                    canDeal={hasAction(legalActions.legalActions, NonPlayerActionType.DEAL)}
-                    onDeal={() => runAction("Deal", () => dealCardsWithEntropy(tableId, currentNetwork, ""))}
-                    blockingStep={
-                        autoActivity === "Posting small blind…" || pendingAction === "Post small blind"
-                            ? "small-blind"
-                            : autoActivity === "Posting big blind…" || pendingAction === "Post big blind"
-                              ? "big-blind"
-                              : autoActivity === "Dealing cards…" || pendingAction === "Deal"
-                                ? "deal"
-                                : null
-                    }
+                    stepActive={stepDue}
                     pendingAction={pendingAction ?? awaitingFrame?.label ?? null}
                     activity={autoActivity}
                     bigBlind={gameState.gameOptions.bigBlind}

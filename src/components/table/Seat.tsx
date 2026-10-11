@@ -52,6 +52,8 @@ export interface SeatProps {
     betValue?: number;
     /** Raw `player.avatar` from table state (NFT ref or image URL). */
     avatar?: string;
+    /** Hero seat only: shown just under the panel without taking part in its layout (the blind / deal steps). */
+    footer?: React.ReactNode;
     /** Vacant seats only: makes the seat clickable (e.g. to open the join modal). */
     onSelect?: () => void;
 }
@@ -127,6 +129,8 @@ function BlindTag({ isSmallBlind, isBigBlind }: Pick<SeatProps, "isSmallBlind" |
 const AVATAR_HALF_PX = 28;
 /** Breathing room kept between a seat's content and the edge of the pane. */
 const PANE_EDGE_GAP_PX = 4;
+/** Room kept under the hero panel for the blind / deal step buttons. */
+const HERO_FOOTER_RESERVE_PX = 64;
 /** How far the floating win / place pill overhangs the top of the seat box (it is out of flow). */
 /* The pill overhangs by ~22px; a winning hole card lifts 14px, so this covers both. */
 const RESULT_PILL_OVERHANG_PX = 26;
@@ -150,7 +154,9 @@ function useSeatExtents(): [(el: HTMLElement | null) => void, SeatExtents] {
             const avatar = el.querySelector<HTMLElement>("[data-seat-avatar]");
             // The hero panel has no avatar and sits 30% of its height above its coordinate.
             const above = avatar !== null ? avatar.offsetTop + avatar.offsetHeight / 2 : el.dataset.seatHero !== undefined ? el.offsetHeight * 0.3 : AVATAR_HALF_PX;
-            setExtents({ above, below: el.offsetHeight - above });
+            // The hero's step buttons hang below its panel: keep room for them so they never leave the pane.
+            const footerReserve = el.dataset.seatHero !== undefined ? HERO_FOOTER_RESERVE_PX : 0;
+            setExtents({ above, below: el.offsetHeight - above + footerReserve });
         };
         measure();
         const next = new ResizeObserver(measure);
@@ -188,6 +194,7 @@ export const Seat: React.FC<SeatProps> = ({
     winningCards,
     betValue,
     avatar,
+    footer,
     onSelect,
 }) => {
     // Upper-half seats hang their badge and cards above the avatar, lower-half seats below it. The
@@ -262,6 +269,7 @@ export const Seat: React.FC<SeatProps> = ({
                 </div>
                 <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} turnRemainingSec={turnRemainingSec} turnKey={turnKey} status={statusLabel} winner={winner} />
                 {!hasCards && betBlock("")}
+                {footer !== undefined && <div className={styles.heroFooter}>{footer}</div>}
             </div>
         );
     }

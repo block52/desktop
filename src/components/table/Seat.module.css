@@ -593,3 +593,13 @@
 .upper .winBadge {
     top: -22px;
 }
+
+/* Hangs under the hero panel; out of flow so the panel never shifts when it appears. */
+.heroFooter {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    z-index: 6;
+    margin-top: 10px;
+    transform: translateX(-50%);
+}

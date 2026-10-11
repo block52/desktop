@@ -17,6 +17,8 @@ export interface PlayerSeatingProps {
     formatStack: (stack: string) => string;
     /** Final tournament placements keyed by lowercased player address (payout already formatted). */
     resultsByAddress?: Map<string, { place: number; payout?: string }>;
+    /** Rendered under the local player's own seat (blind / deal steps). */
+    heroFooter?: React.ReactNode;
     /** Seconds a seat has to act; drives the turn countdown on the seat to act. */
     turnTimeoutSec?: number;
     /** Whole seconds left on the current turn clock, and a key that changes each turn (restarts the bar). */
@@ -59,6 +61,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     dealer,
     formatStack,
     chipValue,
+    heroFooter,
     turnTimeoutSec,
     turnRemainingSec,
     turnKey,
@@ -123,6 +126,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 betValue={player.sumOfBets !== "0" ? chipValue(player.sumOfBets) : undefined}
                 holeCards={player.holeCards ?? undefined}
                 avatar={player.avatar}
+                footer={isHero ? heroFooter : undefined}
                 lastAction={
                     player.lastAction !== undefined
                         ? {

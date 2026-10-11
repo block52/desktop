@@ -13,23 +13,8 @@ export interface PlayerActionButtonsProps {
     onWagerChange: (value: string) => void;
     /** Pot in the same display units, for the ½/¾/Pot presets. */
     potValue: number;
-    /** Blind posting: the buttons the web app shows while a blind is due (auto-posting drives them too). */
-    blinds?: {
-        showSmall: boolean;
-        showBig: boolean;
-        /** Amounts already formatted for display. */
-        smallAmount: string;
-        bigAmount: string;
-        onPostSmall: () => void;
-        onPostBig: () => void;
-    };
-    /** Hand number shown on the dealing state ("DEALING HAND #7…"). */
-    handNumber?: number;
-    /** The DEAL action is available: shows a Deal button. */
-    canDeal?: boolean;
-    onDeal?: () => void;
-    /** Which blind / deal step is in flight (manually or automatically), for its POSTING… / DEALING… state. */
-    blockingStep?: "small-blind" | "big-blind" | "deal" | null;
+    /** A blind or the deal is due: the step buttons under your seat take over, so the bar holds back its actions. */
+    stepActive?: boolean;
     /** Big blind in raw units; floors an opening pot-fraction bet. */
     bigBlind?: string;
     /** What the game is doing for you automatically right now ("Posting small blind…"); shown in the status chip. */
@@ -107,12 +92,8 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     wagerAmount,
     onWagerChange,
     potValue,
-    blinds,
-    handNumber,
-    canDeal = false,
-    onDeal,
-    blockingStep = null,
     bigBlind,
+    stepActive = false,
     activity = null,
     pendingAction = null,
     handLabel = null,
@@ -271,61 +252,7 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                 </div>
             )}
 
-            {(blinds !== undefined && (blinds.showSmall || blinds.showBig)) || (canDeal && onDeal !== undefined) ? (
-                <div className={`${styles.actions} ${styles.centerActions}`}>
-                    {blinds !== undefined && blinds.showSmall && (
-                        <button
-                            type="button"
-                            className={styles.stepButton}
-                            disabled={isSubmitting || blockingStep !== null}
-                            onClick={blinds.onPostSmall}
-                        >
-                            {blockingStep === "small-blind" ? (
-                                <>
-                                    <span className={styles.spinner} />
-                                    POSTING…
-                                </>
-                            ) : (
-                                <>Post small blind <b>{currencySymbol}{blinds.smallAmount}</b></>
-                            )}
-                        </button>
-                    )}
-                    {blinds !== undefined && blinds.showBig && (
-                        <button
-                            type="button"
-                            className={styles.stepButton}
-                            disabled={isSubmitting || blockingStep !== null}
-                            onClick={blinds.onPostBig}
-                        >
-                            {blockingStep === "big-blind" ? (
-                                <>
-                                    <span className={styles.spinner} />
-                                    POSTING…
-                                </>
-                            ) : (
-                                <>Post big blind <b>{currencySymbol}{blinds.bigAmount}</b></>
-                            )}
-                        </button>
-                    )}
-                    {canDeal && onDeal !== undefined && (
-                        <button
-                            type="button"
-                            className={styles.stepButton}
-                            disabled={isSubmitting || blockingStep !== null}
-                            onClick={onDeal}
-                        >
-                            {blockingStep === "deal" ? (
-                                <>
-                                    <span className={styles.spinner} />
-                                    {handNumber !== undefined ? `DEALING HAND #${handNumber}…` : "DEALING…"}
-                                </>
-                            ) : (
-                                <>DEAL</>
-                            )}
-                        </button>
-                    )}
-                </div>
-            ) : (
+            {stepActive ? null : (
             <div className={styles.actions}>
                 <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onFold}>
                     {pendingAction === "Fold" && <span className={styles.spinner} />}
