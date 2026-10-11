@@ -120,3 +120,49 @@
     background: hsl(0 62.8% 38%);
     color: #fff;
 }
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fieldLabel {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.input {
+    width: 100%;
+    box-sizing: border-box;
+    background: hsl(240 38% 5.5%);
+    border: 1px solid hsl(245 22% 17%);
+    border-radius: 10px;
+    color: var(--text);
+    font: 500 15px Inter, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    padding: 10px 12px;
+    outline: none;
+}
+
+.input:focus {
+    border-color: hsl(263 83% 58% / 0.7);
+    box-shadow: 0 0 0 3px hsl(263 83% 58% / 0.16);
+}
+
+.presets {
+    display: flex;
+    gap: 8px;
+}
+
+.preset {
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font: 600 12px Inter, system-ui, sans-serif;
+}
+
+.preset:disabled {
+    opacity: 0.4;
+}

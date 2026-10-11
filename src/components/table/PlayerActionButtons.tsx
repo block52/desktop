@@ -12,6 +12,10 @@ export interface PlayerActionButtonsProps {
     onWagerChange: (value: string) => void;
     /** Pot in the same display units, for the ½/¾/Pot presets. */
     potValue: number;
+    /** Cash games: opens the add-chips dialog. Omitted on tournaments and when not seated. */
+    onTopUp?: () => void;
+    /** Whether the chain currently allows a top-up (not while in the hand). */
+    canTopUp?: boolean;
     /** Cash games: the "sit out next hand / next big blind" boxes. Omitted when sitting out isn't allowed. */
     sitOut?: {
         nextHandChecked: boolean;
@@ -80,6 +84,8 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     wagerAmount,
     onWagerChange,
     potValue,
+    onTopUp,
+    canTopUp = false,
     sitOut,
     showPreCheck = false,
     preCheckQueued = false,
@@ -119,6 +125,17 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
         <div className={`pane ${styles.bar}`}>
             <div className={styles.turn}>
                 <span className={`section-label ${isPlayerTurn ? styles.turnOn : ""}`}>{isPlayerTurn ? "Your turn" : "Not your turn"}</span>
+                {onTopUp !== undefined && (
+                    <button
+                        type="button"
+                        className={styles.sitButton}
+                        disabled={!canTopUp || isSubmitting}
+                        onClick={onTopUp}
+                        title={canTopUp ? "Add chips to your stack" : "You can add chips between hands, not while you are in the current hand."}
+                    >
+                        Add chips
+                    </button>
+                )}
                 {sitOut !== undefined && (
                     <div className={styles.sitOutBoxes}>
                         <label className={styles.sitOutBox}>

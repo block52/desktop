@@ -31,6 +31,9 @@ import { SitAndGoJoinModal } from "../../components/modal/SitAndGoJoinModal";
 import { PlayerActionButtons } from "../../components/table/PlayerActionButtons";
 import { NoWalletOverlay } from "../../components/table/NoWalletOverlay";
 import { TableErrorPage } from "../../components/table/TableErrorPage";
+import { TopUpModal } from "../../components/modal/TopUpModal";
+import { topUpTable, type TopUpResult } from "../../hooks/playerActions/topUp";
+import { maxTopUpMicro } from "../../utils/topUpLimits";
 import { LeaveTableModal } from "../../components/modal/LeaveTableModal";
 import { SitAndGoResultModal } from "../../components/modal/SitAndGoResultModal";
 import { claimWinnings } from "../../hooks/playerActions/claimWinnings";
@@ -76,6 +79,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [logOpen, setLogOpen] = useState<boolean>(false);
     const [leaveOpen, setLeaveOpen] = useState<boolean>(false);
+    const [topUpOpen, setTopUpOpen] = useState<boolean>(false);
     /** Tables whose Sit & Go result dialog the player closed (remembered per table and wallet). */
     const [resultDismissed, setResultDismissed] = useState<Record<string, boolean>>({});
     const settings = useGameSettings();
@@ -114,7 +118,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         }
     }, [validationMessage, showWarning]);
 
-    const runAction = async (label: string, action: () => Promise<PlayerActionResult | JoinTableResult | LeaveTableResult>): Promise<boolean> => {
+    const runAction = async (label: string, action: () => Promise<PlayerActionResult | JoinTableResult | LeaveTableResult | TopUpResult>): Promise<boolean> => {
         setIsSubmitting(true);
         try {
             await action();
@@ -355,6 +359,14 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         ? `$${(Number(gameState.gameOptions.minBuyIn) / 1_000_000).toFixed(2)}`
         : `$${((myPlayer !== undefined ? Number(myPlayer.stack) : 0) / 1_000_000).toFixed(2)}`;
 
+    // Top-up is a cash-game, between-hands action: visible while seated, enabled when the chain offers TOP_UP.
+    const topUpVisible = isUserSeated && !isTournamentBlinds;
+    const canTopUp = topUpVisible && hasAction(legalActions.legalActions, NonPlayerActionType.TOP_UP);
+    const maxTopUp =
+        myPlayer !== undefined
+            ? maxTopUpMicro(BigInt(myPlayer.stack), BigInt(gameState.gameOptions.maxBuyIn), BigInt(usdcBalanceAmount))
+            : 0n;
+
     const myResult = localAddress !== null ? gameState.results.find(r => r.playerId.toLowerCase() === localAddress) : undefined;
     const resultKey = `viewed_sng_result_${tableId}_${localAddress ?? ""}`;
     const isResultDismissed = resultDismissed[resultKey] ?? (() => {
@@ -447,6 +459,18 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     }}
                 />
             )}
+            {topUpOpen && canTopUp && myPlayer !== undefined && (
+                <TopUpModal
+                    stack={BigInt(myPlayer.stack)}
+                    maxAddable={maxTopUp}
+                    isSubmitting={isSubmitting}
+                    onClose={() => setTopUpOpen(false)}
+                    onConfirm={async amount => {
+                        const added = await runAction("Top up", () => topUpTable(tableId, currentNetwork, amount));
+                        if (added) setTopUpOpen(false);
+                    }}
+                />
+            )}
             {showResult && myResult !== undefined && (
                 <SitAndGoResultModal
                     place={myResult.place}
@@ -519,6 +543,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                               }
                             : undefined
                     }
+                    onTopUp={topUpVisible ? () => setTopUpOpen(true) : undefined}
+                    canTopUp={canTopUp}
                     showPreCheck={showPreCheck}
                     preCheckQueued={preCheckQueued}
                     onPreCheckChange={setPreCheckQueued}
