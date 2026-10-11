@@ -269,55 +269,55 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
             )}
 
             {(blinds !== undefined && (blinds.showSmall || blinds.showBig)) || (canDeal && onDeal !== undefined) ? (
-                <div className={styles.actions}>
+                <div className={`${styles.actions} ${styles.centerActions}`}>
                     {blinds !== undefined && blinds.showSmall && (
                         <button
                             type="button"
-                            className={`btn-glow ${styles.primaryBtn}`}
+                            className={styles.stepButton}
                             disabled={isSubmitting || blockingStep !== null}
                             onClick={blinds.onPostSmall}
                         >
                             {blockingStep === "small-blind" ? (
                                 <>
                                     <span className={styles.spinner} />
-                                    Posting…
+                                    POSTING…
                                 </>
                             ) : (
-                                <>Post small blind {currencySymbol}{blinds.smallAmount}</>
+                                <>Post small blind <b>{currencySymbol}{blinds.smallAmount}</b></>
                             )}
                         </button>
                     )}
                     {blinds !== undefined && blinds.showBig && (
                         <button
                             type="button"
-                            className={`btn-glow ${styles.primaryBtn}`}
+                            className={styles.stepButton}
                             disabled={isSubmitting || blockingStep !== null}
                             onClick={blinds.onPostBig}
                         >
                             {blockingStep === "big-blind" ? (
                                 <>
                                     <span className={styles.spinner} />
-                                    Posting…
+                                    POSTING…
                                 </>
                             ) : (
-                                <>Post big blind {currencySymbol}{blinds.bigAmount}</>
+                                <>Post big blind <b>{currencySymbol}{blinds.bigAmount}</b></>
                             )}
                         </button>
                     )}
                     {canDeal && onDeal !== undefined && (
                         <button
                             type="button"
-                            className={`btn-glow ${styles.primaryBtn}`}
+                            className={styles.stepButton}
                             disabled={isSubmitting || blockingStep !== null}
                             onClick={onDeal}
                         >
                             {blockingStep === "deal" ? (
                                 <>
                                     <span className={styles.spinner} />
-                                    Dealing…
+                                    DEALING…
                                 </>
                             ) : (
-                                <>Deal</>
+                                <>DEAL</>
                             )}
                         </button>
                     )}

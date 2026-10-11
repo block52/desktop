@@ -234,7 +234,7 @@
 }
 
 .heroCard {
-    width: clamp(56px, 13cqh, 92px);
+    width: clamp(44px, 9cqh, 68px);
     border-radius: 6px;
     box-shadow: 0 8px 18px -6px black;
 }

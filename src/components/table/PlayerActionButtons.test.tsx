@@ -126,16 +126,16 @@ describe("PlayerActionButtons", () => {
         expect(screen.queryByRole("button", { name: /^Fold/ })).toBeNull();
 
         rerender(<PlayerActionButtons {...BASE_PROPS} blinds={blinds} blockingStep="small-blind" />);
-        expect(screen.getByRole("button", { name: "Posting…" })).toHaveProperty("disabled", true);
+        expect(screen.getByRole("button", { name: "POSTING…" })).toHaveProperty("disabled", true);
     });
 
     it("shows a Deal button when dealing is available", () => {
         const onDeal = vi.fn();
         const { rerender } = render(<PlayerActionButtons {...BASE_PROPS} canDeal onDeal={onDeal} />);
-        fireEvent.click(screen.getByRole("button", { name: "Deal" }));
+        fireEvent.click(screen.getByRole("button", { name: "DEAL" }));
         expect(onDeal).toHaveBeenCalledTimes(1);
 
         rerender(<PlayerActionButtons {...BASE_PROPS} canDeal onDeal={onDeal} blockingStep="deal" />);
-        expect(screen.getByRole("button", { name: "Dealing…" })).toHaveProperty("disabled", true);
+        expect(screen.getByRole("button", { name: "DEALING…" })).toHaveProperty("disabled", true);
     });
 });
