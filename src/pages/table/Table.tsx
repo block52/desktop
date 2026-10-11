@@ -28,6 +28,7 @@ import { TableBoard } from "../../components/table/TableBoard";
 import { HandLog } from "../../components/table/HandLog";
 import { JoinTableModal } from "../../components/modal/JoinTableModal";
 import { SitAndGoJoinModal } from "../../components/modal/SitAndGoJoinModal";
+import { useHandSeed } from "../../hooks/useHandSeed";
 import { PlayerActionButtons } from "../../components/table/PlayerActionButtons";
 import { NoWalletOverlay } from "../../components/table/NoWalletOverlay";
 import { TableErrorPage } from "../../components/table/TableErrorPage";
@@ -246,6 +247,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const hasMuckAction = hasAction(legalActions.legalActions, PlayerActionType.MUCK);
     const hasShowAction = hasAction(legalActions.legalActions, PlayerActionType.SHOW);
     const isUsersTurn = legalActions.isPlayerTurn;
+
+    const handSeed = useHandSeed(tableId, gameState?.handNumber ?? null);
 
     // ---- Sitting in (cash): what the panel offers, and the automatic sit-in for a fresh joiner ----
     const seatDisplay = getPlayerActionDisplay({
@@ -569,6 +572,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                 smallBlind={blindText(gameState.gameOptions.smallBlind)}
                 bigBlind={blindText(gameState.gameOptions.bigBlind)}
                 handNumber={gameState.handNumber}
+                shuffleSeed={handSeed}
                 isCreatedByYou={gameCreator !== undefined && localAddress !== null && gameCreator.toLowerCase() === localAddress}
                 onBack={() => navigate("/")}
                 onLeave={canLeave ? () => setLeaveOpen(true) : undefined}

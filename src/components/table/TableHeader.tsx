@@ -21,6 +21,8 @@ export interface TableHeaderProps {
     /** The wallet this table plays from: shown even when you are not seated, so you can see if you can afford a seat. */
     wallet?: { address: string; balance: string; isRefreshing: boolean; onRefresh: () => void; isShort?: boolean };
     handNumber: number;
+    /** Deck seed the chain recorded for this hand; null until it is on record. */
+    shuffleSeed?: string | null;
     /** True when the connected wallet created this table. */
     isCreatedByYou?: boolean;
     onBack: () => void;
@@ -60,6 +62,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     buyInLabel,
     wallet,
     handNumber,
+    shuffleSeed = null,
     isCreatedByYou = false,
     onBack,
     onLeave,
@@ -160,9 +163,16 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 </span>
             )}
             {isCreatedByYou && <span className={`${styles.creatorPill} ${styles.wide}`}>Created by you</span>}
-            <span className={`${styles.verifiedPill} ${styles.wide}`}>
+            <span
+                className={`${styles.verifiedPill} ${shuffleSeed === null ? styles.pendingPill : ""} ${styles.wide}`}
+                title={
+                    shuffleSeed === null
+                        ? "The chain has not recorded this hand's deck seed yet."
+                        : `Hand #${handNumber}'s deck seed is recorded on-chain: ${shuffleSeed}. The deck is dealt from it, so the shuffle can be audited after the hand.`
+                }
+            >
                 <span className={styles.verifiedDot} />
-                Shuffle verified
+                {shuffleSeed === null ? "Seed pending" : "Seed on-chain"}
             </span>
             {blockHeight !== null && (
                 <span className={`${styles.blockHeight} ${styles.wide}`}>#{Number(blockHeight).toLocaleString()}</span>
@@ -268,6 +278,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                             )}
                             {blockHeight !== null && <div className={styles.moreInfo}>Block #{Number(blockHeight).toLocaleString()}</div>}
                             {isCreatedByYou && <div className={styles.moreInfo}>Created by you</div>}
+                            <div className={styles.moreInfo}>{shuffleSeed === null ? "Deck seed pending" : `Deck seed recorded on-chain · ${shuffleSeed.slice(0, 8)}…`}</div>
                         </div>
                         <div className={styles.moreSection}>
                             <button type="button" role="menuitem" className={styles.moreItem} onClick={() => { setMoreOpen(false); onToggleLog(); }}>

@@ -89,6 +89,11 @@
     white-space: nowrap;
 }
 
+.pendingPill {
+    background: hsl(245 22% 14%);
+    color: rgb(148, 163, 184);
+}
+
 .verifiedDot {
     width: 6px;
     height: 6px;
