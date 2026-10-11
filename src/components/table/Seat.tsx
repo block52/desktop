@@ -36,6 +36,8 @@ export interface SeatProps {
     statusLabel?: SeatStatusLabel;
     /** Set when this seat won the pot: shows the win badge and highlights the seat. */
     winner?: { amount: string; description?: string };
+    /** Final tournament placement for this seat's player; shows the place pill above the seat. */
+    result?: { place: number; payout?: string };
     /** Codes of the cards in the winning hands; matching hole cards lift, the rest dim. */
     winningCards?: string[];
     /** Current-round bet as a whole-dollar/chip value; draws the chip pile above the bet pill. */
@@ -65,11 +67,22 @@ function AvatarFace({ avatar, initials }: { avatar?: string; initials: string })
     );
 }
 
-function WinBadge({ winner }: { winner: NonNullable<SeatProps["winner"]> }) {
+const PLACE_SUFFIX: Record<number, string> = { 1: "1st", 2: "2nd", 3: "3rd" };
+
+/** Floating pill above a seat: the tournament place (with prize) when known, else the amount just won. */
+function WinBadge({ winner, result }: { winner?: SeatProps["winner"]; result?: SeatProps["result"] }) {
+    if (result !== undefined) {
+        return (
+            <div className={`${styles.winBadge} ${styles.placeBadge}`} role="status">
+                <span className={styles.winAmount}>{PLACE_SUFFIX[result.place] ?? `${result.place}th`} place</span>
+                {result.payout !== undefined && <span className={styles.winHand}>Won {result.payout}</span>}
+            </div>
+        );
+    }
+    if (winner === undefined) return null;
     return (
         <div className={styles.winBadge} role="status">
             <span className={styles.winAmount}>+{winner.amount}</span>
-            {winner.description !== undefined && <span className={styles.winHand}>{winner.description}</span>}
         </div>
     );
 }
@@ -103,6 +116,7 @@ export const Seat: React.FC<SeatProps> = ({
     turnTimeoutSec,
     statusLabel,
     winner,
+    result,
     winningCards,
     betValue,
     avatar,
@@ -147,7 +161,7 @@ export const Seat: React.FC<SeatProps> = ({
                         ))}
                     </div>
                 )}
-                {winner !== undefined && <WinBadge winner={winner} />}
+                <WinBadge winner={winner} result={result} />
                 <div className={`${styles.heroPlate} ${hasCards ? styles.heroPlateWithCards : ""} ${isActive ? styles.heroPlateActive : ""} ${winner !== undefined ? styles.winGlow : ""}`}>
                     <div className={styles.heroNameRow}>
                         <span className={styles.heroName}>You</span>
@@ -161,7 +175,7 @@ export const Seat: React.FC<SeatProps> = ({
                         </div>
                     )}
                 </div>
-                <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} />
+                <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} winner={winner} />
                 {currentBet && (
                 <div className={styles.betBlock}>
                     {betValue !== undefined && <ChipPile amount={betValue} />}
@@ -176,7 +190,7 @@ export const Seat: React.FC<SeatProps> = ({
 
     return (
         <div className={`${styles.seat} ${isActive ? styles.active : ""} ${isFolded ? styles.folded : ""} ${winner !== undefined ? styles.winner : ""}`} style={style}>
-            {winner !== undefined && <WinBadge winner={winner} />}
+            <WinBadge winner={winner} result={result} />
             <div className={styles.avatar}>
                 <AvatarFace avatar={avatar} initials={initials} />
                 {isDealer && <span className={styles.dealer}>D</span>}
@@ -188,7 +202,7 @@ export const Seat: React.FC<SeatProps> = ({
                 </div>
                 <div className={`${styles.stack} ${isFolded ? styles.stackMuted : ""}`}>{isFolded ? "Folded" : stack}</div>
             </div>
-            <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} />
+            <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} winner={winner} />
             {hasCards && !isFolded && (
                 <div className={styles.cards}>
                     {/* Hidden cards arrive as "X" placeholders and are drawn as card backs; revealed cards show their face. */}

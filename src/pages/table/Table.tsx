@@ -215,6 +215,12 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const winnersBySeat = new Map(
         gameState.winners.map(w => [w.seat, { amount: formatAmount(w.amount), description: w.description }] as const)
     );
+    const resultsByAddress = new Map(
+        gameState.results.map(r => [
+            r.playerId.toLowerCase(),
+            { place: r.place, payout: r.payout !== "0" ? `$${(Number(r.payout) / 1_000_000).toFixed(2)}` : undefined }
+        ] as const)
+    );
     const winningCards = gameState.winners.flatMap(w => w.cards ?? []).map(code => code.toUpperCase());
     const blindText = (value: string) => formatAmount(value);
     const callMicro = legalActions.legalActions.find(a => a.action === PlayerActionType.CALL)?.min;
@@ -249,6 +255,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     formatStack={formatAmount}
                     chipValue={chipValue}
                     turnTimeoutSec={gameState.gameOptions.timeout}
+                    resultsByAddress={resultsByAddress}
                     winnersBySeat={winnersBySeat}
                     winningCards={winningCards}
                     maxBuyIn={gameState.gameOptions.maxBuyIn}

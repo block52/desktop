@@ -113,3 +113,28 @@
         animation: none;
     }
 }
+
+.win {
+    flex-direction: column;
+    gap: 0;
+    height: auto;
+    min-height: 34px;
+    padding: 4px 14px;
+    background: linear-gradient(180deg, hsl(142 62% 42%), hsl(142 62% 32%));
+    border-color: hsl(142 70% 55%);
+    animation: bannerDrop 0.35s ease-out both;
+}
+
+.winTitle {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.winHandName {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.95;
+}

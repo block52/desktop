@@ -16,6 +16,8 @@ export interface PlayerSeatingProps {
     bigBlindPosition?: number;
     dealer?: number;
     formatStack: (stack: string) => string;
+    /** Final tournament placements keyed by lowercased player address (payout already formatted). */
+    resultsByAddress?: Map<string, { place: number; payout?: string }>;
     /** Seconds a seat has to act; drives the turn countdown on the seat to act. */
     turnTimeoutSec?: number;
     /** Pot winners keyed by server seat, with the amount already formatted for display. */
@@ -48,6 +50,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     formatStack,
     chipValue,
     turnTimeoutSec,
+    resultsByAddress,
     winnersBySeat,
     winningCards,
     maxBuyIn,
@@ -121,6 +124,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 }
                 turnTimeoutSec={turnTimeoutSec}
                 statusLabel={SEAT_STATUS_LABELS[player.status]}
+                result={resultsByAddress?.get(player.address.toLowerCase())}
                 winner={winnersBySeat?.get(serverSeat)}
                 winningCards={winningCards}
             />

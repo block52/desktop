@@ -429,3 +429,7 @@
         animation: none;
     }
 }
+
+.placeBadge {
+    background: linear-gradient(135deg, hsl(48 100% 60%), hsl(43 95% 50%));
+}

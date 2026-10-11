@@ -19,6 +19,8 @@ export interface SeatBannerProps {
     /** Seconds the seat has to act. */
     turnTimeoutSec?: number;
     status?: SeatStatusLabel;
+    /** The seat won the pot: shows the "WINS" banner with the hand's name. */
+    winner?: { description?: string };
 }
 
 const ANNOUNCED_MS = 2500;
@@ -53,7 +55,7 @@ const ACTION_TONES: Record<string, Tone> = {
  * The strip under a seat's nameplate: the action just taken (for a few seconds), else the
  * turn countdown while the seat is to act, else the seat's standing status (fold / all in / sitting out).
  */
-export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, turnTimeoutSec, status }) => {
+export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, turnTimeoutSec, status, winner }) => {
     // The action already on the seat when it mounted is history, not news.
     const [initialIndex] = React.useState(lastAction?.index);
     const [expiredIndex, setExpiredIndex] = React.useState<number | undefined>(undefined);
@@ -64,6 +66,15 @@ export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, tu
         const timer = setTimeout(() => setExpiredIndex(announcedIndex), ANNOUNCED_MS);
         return () => clearTimeout(timer);
     }, [announcedIndex, initialIndex]);
+
+    if (winner !== undefined) {
+        return (
+            <div className={`${styles.banner} ${styles.win}`} role="status">
+                <span className={styles.winTitle}>WINS</span>
+                {winner.description !== undefined && <span className={styles.winHandName}>{winner.description}</span>}
+            </div>
+        );
+    }
 
     const label = lastAction !== undefined ? ACTION_LABELS[lastAction.action] : undefined;
     const isAnnounced =
