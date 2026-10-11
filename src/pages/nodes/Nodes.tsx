@@ -9,6 +9,7 @@ import { getCosmosClient } from "../../utils/cosmos/client";
 import { getCosmosMnemonic } from "../../utils/cosmos/storage";
 import NodeStats from "../../components/nodes/NodeStats";
 import RunNodeGuide, { buildSeeds } from "../../components/nodes/RunNodeGuide";
+import NodeDetailsModal from "../../components/nodes/NodeDetailsModal";
 import BondValidatorForm, { type BondPayload } from "../../components/nodes/BondValidatorForm";
 import styles from "./Nodes.module.css";
 
@@ -47,6 +48,7 @@ const Nodes: React.FC = () => {
     const { showSuccess, showError } = useToast();
 
     const [tab, setTab] = useState<NodesTab>("nodes");
+    const [detailsNetwork, setDetailsNetwork] = useState<NetworkEndpoints | null>(null);
 
     const allNetworks = useMemo(
         () => [...availableNetworks, ...discoveredNetworks],
@@ -224,6 +226,9 @@ const Nodes: React.FC = () => {
                 </span>
                 <span className={styles.endpointCell}>{network.rest}</span>
                 <div className={styles.rowActions}>
+                    <button className={`btn-ghost ${styles.switchButton}`} onClick={() => setDetailsNetwork(network)}>
+                        Details
+                    </button>
                     {network.name === currentNetwork.name ? (
                         <span className={styles.activeBadge}>Active</span>
                     ) : (
@@ -380,6 +385,8 @@ const Nodes: React.FC = () => {
                     resultHash={bondHash}
                 />
             )}
+
+            {detailsNetwork !== null && <NodeDetailsModal network={detailsNetwork} onClose={() => setDetailsNetwork(null)} />}
         </div>
     );
 };
