@@ -96,11 +96,20 @@ describe("PlayerActionButtons", () => {
         expect(screen.getByRole("button", { name: "Bet $0.40" })).toHaveProperty("disabled", true);
     });
 
-    it("fires the preset handlers with clamped amounts", () => {
+    it("sizes a raise preset on the pot after calling, clamped to the legal range", () => {
         const onWagerChange = vi.fn();
-        render(<PlayerActionButtons {...BASE_PROPS} onWagerChange={onWagerChange} potValue={0.4} />);
-        fireEvent.click(screen.getByRole("button", { name: "¾ pot" }));
-        expect(onWagerChange).toHaveBeenCalledWith("0.30");
+        // Pot $2.00, call $0.20: ½ pot = 0.20 + 0.5 × (0.20 + 2.00) = $1.30.
+        render(<PlayerActionButtons {...BASE_PROPS} onWagerChange={onWagerChange} potValue={2} />);
+        fireEvent.click(screen.getByRole("button", { name: "½ pot" }));
+        expect(onWagerChange).toHaveBeenCalledWith("1.30");
+    });
+
+    it("offers a quarter pot and an all-in that fills the maximum", () => {
+        const onWagerChange = vi.fn();
+        render(<PlayerActionButtons {...BASE_PROPS} onWagerChange={onWagerChange} potValue={2} />);
+        expect(screen.getByRole("button", { name: "¼ pot" })).toBeTruthy();
+        fireEvent.click(screen.getByRole("button", { name: "All-in" }));
+        expect(onWagerChange).toHaveBeenCalledWith("5.00");
     });
 
     it("hides wager controls when no bet or raise is legal", () => {

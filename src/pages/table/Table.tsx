@@ -84,6 +84,10 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     /** Which action is in flight ("Call", "Bet", ...), so its button can show a spinner. */
     const [pendingAction, setPendingAction] = useState<string | null>(null);
+    /** An action that was accepted but whose result has not reached the table yet. */
+    const [awaitingFrame, setAwaitingFrame] = useState<{ label: string; actionCount: number } | null>(null);
+    /** What the game is doing for the player automatically ("Posting small blind…"). */
+    const [autoActivity, setAutoActivity] = useState<string | null>(null);
     const [logOpen, setLogOpen] = useState<boolean>(false);
     const [leaveOpen, setLeaveOpen] = useState<boolean>(false);
     const [topUpOpen, setTopUpOpen] = useState<boolean>(false);
@@ -132,6 +136,9 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         setPendingAction(label);
         try {
             await action();
+            // Accepted by the chain, but the table only moves on when its next frame arrives: keep the
+            // spinner until then (or the safety timeout below), so the click never looks like it did nothing.
+            setAwaitingFrame({ label, actionCount: gameState?.previousActions.length ?? 0 });
             showSuccess(`${label} confirmed`);
             return true;
         } catch (err) {
@@ -154,9 +161,15 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         smallBlindAmount,
         bigBlindAmount,
         legalActions.isPlayerTurn,
-        () => undefined,
-        blindType => showSuccess(`Posted ${blindType} blind`),
-        err => showError(err.message),
+        blindType => setAutoActivity(blindType === "small" ? "Posting small blind…" : "Posting big blind…"),
+        blindType => {
+            setAutoActivity(null);
+            showSuccess(`Posted ${blindType} blind`);
+        },
+        err => {
+            setAutoActivity(null);
+            showError(err.message);
+        },
         settings.autoPostBlinds
     );
 
@@ -165,20 +178,44 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         currentNetwork,
         hasAction(legalActions.legalActions, NonPlayerActionType.DEAL),
         legalActions.isPlayerTurn,
-        () => undefined,
-        () => showSuccess("Cards dealt"),
-        err => showError(err.message),
+        () => setAutoActivity("Dealing cards…"),
+        () => {
+            setAutoActivity(null);
+            showSuccess("Cards dealt");
+        },
+        err => {
+            setAutoActivity(null);
+            showError(err.message);
+        },
         settings.autoDeal
     );
 
     useAutoNewHand(
         tableId,
         currentNetwork,
-        () => undefined,
-        () => showSuccess("New hand started"),
-        err => showError(err.message),
+        () => setAutoActivity("Starting next hand…"),
+        () => {
+            setAutoActivity(null);
+            showSuccess("New hand started");
+        },
+        err => {
+            setAutoActivity(null);
+            showError(err.message);
+        },
         settings.autoNewHand
     );
+
+    // Clear the "waiting for the table" spinner once a new action lands, or after a safety timeout.
+    const actionCountNow = gameState?.previousActions.length;
+    useEffect(() => {
+        if (awaitingFrame === null) return;
+        if (actionCountNow !== undefined && actionCountNow !== awaitingFrame.actionCount) {
+            setAwaitingFrame(null);
+            return;
+        }
+        const timer = setTimeout(() => setAwaitingFrame(null), 8000);
+        return () => clearTimeout(timer);
+    }, [awaitingFrame, actionCountNow]);
 
     const hasFoldAction = hasAction(legalActions.legalActions, PlayerActionType.FOLD);
     const hasCheckAction = hasAction(legalActions.legalActions, PlayerActionType.CHECK);
@@ -483,12 +520,36 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     sitAndGoWaiting={sitAndGoWaiting}
                     waitingForPlayers={waitingForPlayers}
                 >
+                    <button
+                        type="button"
+                        className={styles.historyTab}
+                        onClick={() => setLogOpen(open => !open)}
+                        aria-expanded={logOpen}
+                        aria-label="Hand history"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m15 18-6-6 6-6" />
+                        </svg>
+                        <span>History</span>
+                    </button>
+                    {topUpVisible && (
+                        <button
+                            type="button"
+                            className={styles.topUpButton}
+                            disabled={!canTopUp || isSubmitting}
+                            onClick={() => setTopUpOpen(true)}
+                            title={canTopUp ? "Add chips to your stack" : "You can add chips between hands, not while you are in the current hand."}
+                        >
+                            <span aria-hidden="true">💰</span> Top-up chips
+                        </button>
+                    )}
                     {logOpen && (
                         <HandLog
                             actions={gameState.previousActions}
                             handNumber={gameState.handNumber}
                             localAddress={localAddress}
                             formatAmount={formatAmount}
+                            currencySymbol={isTournamentBlinds ? "" : "$"}
                             onClose={() => setLogOpen(false)}
                             onReplay={() => navigate("/hand-history")}
                         />
@@ -593,9 +654,9 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                             : undefined
                     }
                     handLabel={isFolded ? null : describeHandStrength(myPlayer?.holeCards ?? undefined, gameState.communityCards)}
-                    onTopUp={topUpVisible ? () => setTopUpOpen(true) : undefined}
-                    canTopUp={canTopUp}
-                    pendingAction={pendingAction}
+                    pendingAction={pendingAction ?? awaitingFrame?.label ?? null}
+                    activity={autoActivity}
+                    bigBlind={gameState.gameOptions.bigBlind}
                     showPreCheck={showPreCheck}
                     preCheckQueued={preCheckQueued}
                     onPreCheckChange={setPreCheckQueued}

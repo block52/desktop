@@ -1,6 +1,7 @@
 import React from "react";
 import { NonPlayerActionType, PlayerActionType, hasAction } from "@block52/poker-vm-sdk";
 import type { LegalActionDTO } from "@block52/poker-vm-sdk";
+import { potBetAmount } from "../../utils/potBet";
 import styles from "./PlayerActionButtons.module.css";
 
 export interface PlayerActionButtonsProps {
@@ -12,14 +13,14 @@ export interface PlayerActionButtonsProps {
     onWagerChange: (value: string) => void;
     /** Pot in the same display units, for the ½/¾/Pot presets. */
     potValue: number;
+    /** Big blind in raw units; floors an opening pot-fraction bet. */
+    bigBlind?: string;
+    /** What the game is doing for you automatically right now ("Posting small blind…"); shown in the status chip. */
+    activity?: string | null;
     /** Label of the action currently being sent ("Call", "Bet", ...); that button shows a spinner. */
     pendingAction?: string | null;
     /** Plain-language strength of the player's hand ("Pair of Aces"); null when unknown or folded. */
     handLabel?: string | null;
-    /** Cash games: opens the add-chips dialog. Omitted on tournaments and when not seated. */
-    onTopUp?: () => void;
-    /** Whether the chain currently allows a top-up (not while in the hand). */
-    canTopUp?: boolean;
     /** Cash games: the "sit out next hand / next big blind" boxes. Omitted when sitting out isn't allowed. */
     sitOut?: {
         nextHandChecked: boolean;
@@ -76,6 +77,7 @@ export function presetForPot(fraction: number, potValue: number, min: number, ma
 }
 
 const PRESETS: Array<{ label: string; fraction: number }> = [
+    { label: "¼ pot", fraction: 0.25 },
     { label: "½ pot", fraction: 0.5 },
     { label: "¾ pot", fraction: 0.75 },
     { label: "Pot", fraction: 1 }
@@ -88,10 +90,10 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     wagerAmount,
     onWagerChange,
     potValue,
+    bigBlind,
+    activity = null,
     pendingAction = null,
     handLabel = null,
-    onTopUp,
-    canTopUp = false,
     sitOut,
     showPreCheck = false,
     preCheckQueued = false,
@@ -125,15 +127,17 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     const primaryLabel =
         primary === null
             ? "Bet"
-            : `${primary.type === "bet" ? "Bet" : "Raise to"} ${currencySymbol}${wager > 0 ? wager.toFixed(decimals) : primaryMin.toFixed(decimals)}`;
+            : wager > 0 && primaryMax > 0 && wager >= primaryMax
+              ? `All-in ${currencySymbol}${primaryMax.toFixed(decimals)}`
+              : `${primary.type === "bet" ? "Bet" : "Raise to"} ${currencySymbol}${wager > 0 ? wager.toFixed(decimals) : primaryMin.toFixed(decimals)}`;
 
     return (
         <div className={`pane ${styles.bar}`}>
             <div className={styles.turn}>
                 <div className={styles.statusRow}>
-                    <span className={`${styles.statusChip} ${isPlayerTurn ? styles.statusOn : ""}`}>
-                        <span className={styles.statusDot} />
-                        {isPlayerTurn ? "Your turn" : "Not your turn"}
+                    <span className={`${styles.statusChip} ${isPlayerTurn || activity !== null ? styles.statusOn : ""}`}>
+                        {activity !== null ? <span className={styles.spinner} /> : <span className={styles.statusDot} />}
+                        {activity !== null ? activity : isPlayerTurn ? "Your turn" : "Not your turn"}
                     </span>
                     {handLabel !== null && <span className={styles.handLabel}>{handLabel}</span>}
                 </div>
@@ -194,8 +198,11 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
             {primary !== null && (
                 <div className={styles.wager}>
                     {PRESETS.map(({ label, fraction }) => {
-                        const value = presetForPot(fraction, potValue, primaryMin, primaryMax, decimals);
-                        const selected = wager > 0 && value === wager.toFixed(2);
+                        const callUnits = callMin !== null ? Number(callMin) / microPerUnit : 0;
+                        const bigBlindUnits = bigBlind !== undefined ? Number(bigBlind) / microPerUnit : 0;
+                        const sized = potBetAmount(fraction, potValue, callUnits, bigBlindUnits);
+                        const value = Math.min(Math.max(sized, primaryMin), primaryMax).toFixed(decimals);
+                        const selected = wager > 0 && value === wager.toFixed(decimals);
                         return (
                             <button
                                 key={label}
@@ -207,6 +214,13 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                             </button>
                         );
                     })}
+                    <button
+                        className={`${styles.preset} ${styles.allIn} ${wager > 0 && wager >= primaryMax ? styles.presetOn : ""}`}
+                        disabled={turnLocked}
+                        onClick={() => onWagerChange(primaryMax.toFixed(decimals))}
+                    >
+                        All-in
+                    </button>
                     <input
                         type="range"
                         className={styles.slider}
@@ -236,17 +250,6 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
             )}
 
             <div className={styles.actions}>
-                {onTopUp !== undefined && (
-                    <button
-                        type="button"
-                        className={`btn-ghost ${styles.addChips}`}
-                        disabled={!canTopUp || isSubmitting}
-                        onClick={onTopUp}
-                        title={canTopUp ? "Add chips to your stack" : "You can add chips between hands, not while you are in the current hand."}
-                    >
-                        + Add chips
-                    </button>
-                )}
                 <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onFold}>
                     {pendingAction === "Fold" && <span className={styles.spinner} />}
                     Fold
@@ -266,13 +269,13 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                 {canMuck && (
                     <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onMuck}>
                         {pendingAction === "Muck" && <span className={styles.spinner} />}
-                        Muck
+                        Muck cards
                     </button>
                 )}
                 {canShow && (
                     <button className={`btn-ghost ${styles.btn}`} disabled={turnLocked} onClick={onShow}>
                         {pendingAction === "Show" && <span className={styles.spinner} />}
-                        Show
+                        Show cards
                     </button>
                 )}
                 <button

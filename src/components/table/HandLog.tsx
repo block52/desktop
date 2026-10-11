@@ -9,6 +9,8 @@ export interface HandLogProps {
     localAddress: string | null;
     /** Same formatter the seats use for stacks/pot. */
     formatAmount: (micro: string) => string;
+    /** "$" for cash, "" for tournament chips. */
+    currencySymbol?: string;
     onClose: () => void;
     onReplay: () => void;
 }
@@ -34,17 +36,17 @@ export const ACTION_VERBS: Record<string, string> = {
     timeout: "timed out",
 };
 
-function describeAction(action: ActionDTO, formatAmount: (micro: string) => string): string {
+function describeAction(action: ActionDTO, formatAmount: (micro: string) => string, currencySymbol: string): string {
     const verb = ACTION_VERBS[action.action] ?? action.action.replace(/-/g, " ");
     const hasAmount = action.amount !== "" && action.amount !== "0";
-    return hasAmount ? `${verb} $${formatAmount(action.amount)}` : verb;
+    return hasAmount ? `${verb} ${currencySymbol}${formatAmount(action.amount)}` : verb;
 }
 
 function roundLabel(round: string): string {
     return round.charAt(0).toUpperCase() + round.slice(1);
 }
 
-export const HandLog: React.FC<HandLogProps> = ({ actions, handNumber, localAddress, formatAmount, onClose, onReplay }) => {
+export const HandLog: React.FC<HandLogProps> = ({ actions, handNumber, localAddress, formatAmount, currencySymbol = "$", onClose, onReplay }) => {
     const listRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -72,7 +74,7 @@ export const HandLog: React.FC<HandLogProps> = ({ actions, handNumber, localAddr
                                 <span className={styles.round}>{roundLabel(action.round)}</span>
                                 <span className={styles.what}>
                                     <b>{localAddress !== null && action.playerId.toLowerCase() === localAddress ? "You" : `Seat ${action.seat}`}</b>{" "}
-                                    {describeAction(action, formatAmount)}
+                                    {describeAction(action, formatAmount, currencySymbol)}
                                 </span>
                             </div>
                         ))
