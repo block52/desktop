@@ -251,36 +251,6 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                             {game.creator !== undefined && !isMine(game) && (
                                                 <span>· by {shortId(game.creator)}</span>
                                             )}
-                                            {isMine(game) && game.currentPlayers === 0 && (
-                                                <button
-                                                    type="button"
-                                                    className={styles.ownerAction}
-                                                    onClick={e => {
-                                                        e.stopPropagation();
-                                                        setCloseTarget({ game, mode: "delete" });
-                                                    }}
-                                                >
-                                                    Delete
-                                                </button>
-                                            )}
-                                            {isMine(game) && game.currentPlayers > 0 && (
-                                                <button
-                                                    type="button"
-                                                    className={styles.ownerAction}
-                                                    disabled={!isCashFormat(game.gameFormat)}
-                                                    title={
-                                                        isCashFormat(game.gameFormat)
-                                                            ? "Remove everyone and refund their stacks"
-                                                            : "Tournaments can't be closed while players are seated"
-                                                    }
-                                                    onClick={e => {
-                                                        e.stopPropagation();
-                                                        setCloseTarget({ game, mode: "force-close" });
-                                                    }}
-                                                >
-                                                    Close table
-                                                </button>
-                                            )}
                                             {isMine(game) && (
                                                 <span>
                                                     ·
@@ -314,6 +284,33 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                 <span className={styles.buyInCell}>{formatBuyIn(game)}</span>
 
                                 <div className={styles.actionCell}>
+                                    {isMine(game) && (
+                                        <button
+                                            type="button"
+                                            className={`btn-ghost ${styles.ownerAction}`}
+                                            disabled={game.currentPlayers > 0 && !isCashFormat(game.gameFormat)}
+                                            title={
+                                                game.currentPlayers === 0
+                                                    ? "Delete this table"
+                                                    : isCashFormat(game.gameFormat)
+                                                      ? "Close table and refund everyone"
+                                                      : "Tournaments can't be closed while players are seated"
+                                            }
+                                            aria-label={game.currentPlayers === 0 ? "Delete table" : "Close table"}
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                setCloseTarget({ game, mode: game.currentPlayers === 0 ? "delete" : "force-close" });
+                                            }}
+                                        >
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <path d="M3 6h18" />
+                                                <path d="M8 6V4h8v2" />
+                                                <path d="M19 6l-1 14H6L5 6" />
+                                                <path d="M10 11v6" />
+                                                <path d="M14 11v6" />
+                                            </svg>
+                                        </button>
+                                    )}
                                     <button
                                         className={`btn-ghost ${styles.actionButton}`}
                                         onClick={e => {
