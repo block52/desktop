@@ -148,8 +148,8 @@ function useSeatExtents(): [(el: HTMLElement | null) => void, SeatExtents] {
         if (el === null) return;
         const measure = () => {
             const avatar = el.querySelector<HTMLElement>("[data-seat-avatar]");
-            // The hero panel has no avatar and sits 42% of its height above its coordinate.
-            const above = avatar !== null ? avatar.offsetTop + avatar.offsetHeight / 2 : el.dataset.seatHero !== undefined ? el.offsetHeight * 0.42 : AVATAR_HALF_PX;
+            // The hero panel has no avatar and sits 30% of its height above its coordinate.
+            const above = avatar !== null ? avatar.offsetTop + avatar.offsetHeight / 2 : el.dataset.seatHero !== undefined ? el.offsetHeight * 0.3 : AVATAR_HALF_PX;
             setExtents({ above, below: el.offsetHeight - above });
         };
         measure();
