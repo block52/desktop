@@ -122,7 +122,7 @@ function BlindTag({ isSmallBlind, isBigBlind }: Pick<SeatProps, "isSmallBlind" |
 }
 
 /** Space above an upper seat's avatar for its cards, badge and action strip. */
-const UPPER_SEAT_CLEARANCE_PX = 140;
+const UPPER_SEAT_CLEARANCE_PX = 195;
 /** Space below a lower seat's avatar for its badge, cards and bet chips. */
 const LOWER_SEAT_CLEARANCE_PX = 175;
 
