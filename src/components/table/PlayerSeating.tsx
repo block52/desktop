@@ -19,6 +19,9 @@ export interface PlayerSeatingProps {
     resultsByAddress?: Map<string, { place: number; payout?: string }>;
     /** Seconds a seat has to act; drives the turn countdown on the seat to act. */
     turnTimeoutSec?: number;
+    /** Whole seconds left on the current turn clock, and a key that changes each turn (restarts the bar). */
+    turnRemainingSec?: number;
+    turnKey?: string;
     /** Pot winners keyed by server seat, with the amount already formatted for display. */
     winnersBySeat?: Map<number, { amount: string; description?: string }>;
     /** Codes of the cards in the winning hands. */
@@ -57,6 +60,8 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
     formatStack,
     chipValue,
     turnTimeoutSec,
+    turnRemainingSec,
+    turnKey,
     resultsByAddress,
     winnersBySeat,
     winningCards,
@@ -131,6 +136,8 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                         : undefined
                 }
                 turnTimeoutSec={turnTimeoutSec}
+                turnRemainingSec={turnRemainingSec}
+                turnKey={turnKey}
                 statusLabel={SEAT_STATUS_LABELS[player.status]}
                 result={resultsByAddress?.get(player.address.toLowerCase())}
                 hasWinner={winnersBySeat !== undefined && winnersBySeat.size > 0}

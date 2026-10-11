@@ -12,6 +12,10 @@ export interface PlayerActionButtonsProps {
     onWagerChange: (value: string) => void;
     /** Pot in the same display units, for the ½/¾/Pot presets. */
     potValue: number;
+    /** Offer the pre-selected "Check" box (before your turn, check is free). */
+    showPreCheck?: boolean;
+    preCheckQueued?: boolean;
+    onPreCheckChange?: (queued: boolean) => void;
     /** Raw units per displayed unit: 1_000_000 for cash (micro-USDC), 1 for tournament chips. */
     microPerUnit?: number;
     /** Prefix for amounts: "$" for cash, "" for tournament chips. */
@@ -69,6 +73,9 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
     wagerAmount,
     onWagerChange,
     potValue,
+    showPreCheck = false,
+    preCheckQueued = false,
+    onPreCheckChange,
     microPerUnit = 1_000_000,
     currencySymbol = "$",
     onBet,
@@ -119,6 +126,20 @@ export const PlayerActionButtons: React.FC<PlayerActionButtonsProps> = ({
                     </div>
                 )}
             </div>
+
+            {showPreCheck && onPreCheckChange !== undefined && (
+                <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={preCheckQueued}
+                    className={`btn-ghost ${styles.preCheck} ${preCheckQueued ? styles.preCheckOn : ""}`}
+                    title="Checks for you when your turn comes if it is still free. If someone bets first this clears and it is your decision."
+                    onClick={() => onPreCheckChange(!preCheckQueued)}
+                >
+                    <span className={styles.preCheckBox}>{preCheckQueued ? "✓" : ""}</span>
+                    Check when it&apos;s my turn
+                </button>
+            )}
 
             {primary !== null && (
                 <div className={styles.wager}>

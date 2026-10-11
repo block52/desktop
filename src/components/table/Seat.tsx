@@ -34,6 +34,8 @@ export interface SeatProps {
     lastAction?: SeatBannerAction;
     /** Seconds this seat has to act; drives the turn countdown while it is to act. */
     turnTimeoutSec?: number;
+    turnRemainingSec?: number;
+    turnKey?: string;
     /** Standing status shown under the nameplate when nothing else is. */
     statusLabel?: SeatStatusLabel;
     /** Someone has won this hand: every non-winning seat dims. */
@@ -177,6 +179,8 @@ export const Seat: React.FC<SeatProps> = ({
     isIdle,
     lastAction,
     turnTimeoutSec,
+    turnRemainingSec,
+    turnKey,
     statusLabel,
     winner,
     result,
@@ -255,7 +259,7 @@ export const Seat: React.FC<SeatProps> = ({
                         </div>
                     )}
                 </div>
-                <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} winner={winner} />
+                <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} turnRemainingSec={turnRemainingSec} turnKey={turnKey} status={statusLabel} winner={winner} />
                 {!hasCards && betBlock("")}
             </div>
         );
@@ -280,7 +284,7 @@ export const Seat: React.FC<SeatProps> = ({
                 </div>
                 <div className={`${styles.stack} ${isFolded ? styles.stackMuted : ""}`}>{isFolded ? "Folded" : stack}</div>
             </div>
-            <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} status={statusLabel} winner={winner} flipped={isUpper} />
+            <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} turnRemainingSec={turnRemainingSec} turnKey={turnKey} status={statusLabel} winner={winner} flipped={isUpper} />
             {hasCards && !isFolded && (
                 <div className={styles.cards}>
                     {/* Hidden cards arrive as "X" placeholders and are drawn as card backs; revealed cards show their face. */}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNetwork } from "../../context/NetworkContext";
 import { getCosmosClient } from "../../utils/cosmos/client";
 import { TABLE_THEMES, type TableTheme } from "../../config/tableTheme";
+import type { GameSettingKey, GameSettings } from "../../hooks/useGameSettings";
 import styles from "./TableHeader.module.css";
 
 export interface TableHeaderProps {
@@ -23,7 +24,19 @@ export interface TableHeaderProps {
     /** Current table theme; with onCycleTheme shows the theme button. */
     theme?: TableTheme;
     onCycleTheme?: () => void;
+    /** Play preferences; with onToggleSetting shows the settings menu. */
+    settings?: GameSettings;
+    onToggleSetting?: (key: GameSettingKey) => void;
 }
+
+const SETTING_ROWS: ReadonlyArray<{ key: GameSettingKey; label: string; hint: string }> = [
+    { key: "autoFold", label: "Auto fold on timeout", hint: "Fold (or check when it is free) when your clock runs out." },
+    { key: "autoMuck", label: "Auto muck", hint: "Muck losing cards at showdown without asking." },
+    { key: "preSelectCheck", label: "Pre-select check", hint: "Offer a Check box before your turn when checking is free." },
+    { key: "autoPostBlinds", label: "Auto post blinds", hint: "Post your blind as soon as it is due." },
+    { key: "autoDeal", label: "Auto deal", hint: "Deal the hand when it is your turn to." },
+    { key: "autoNewHand", label: "Auto new hand", hint: "Start the next hand automatically." }
+];
 
 export const TableHeader: React.FC<TableHeaderProps> = ({
     tableLabel,
@@ -38,8 +51,11 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     onOpenNav,
     onToggleLog,
     theme,
-    onCycleTheme
+    onCycleTheme,
+    settings,
+    onToggleSetting
 }) => {
+    const [settingsOpen, setSettingsOpen] = useState(false);
     const { currentNetwork } = useNetwork();
     const [blockHeight, setBlockHeight] = useState<string | null>(null);
 
@@ -108,6 +124,50 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                     <path d="M12 7v5l4 2" />
                 </svg>
             </button>
+            {settings !== undefined && onToggleSetting !== undefined && (
+                <div className={styles.settingsWrap}>
+                    <button
+                        type="button"
+                        className={`btn-ghost ${styles.menuButton}`}
+                        onClick={() => setSettingsOpen(open => !open)}
+                        aria-label="Table settings"
+                        aria-expanded={settingsOpen}
+                        title="Table settings"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 6h10" />
+                            <path d="M18 6h2" />
+                            <circle cx="16" cy="6" r="2" />
+                            <path d="M4 12h2" />
+                            <path d="M10 12h10" />
+                            <circle cx="8" cy="12" r="2" />
+                            <path d="M4 18h10" />
+                            <path d="M18 18h2" />
+                            <circle cx="16" cy="18" r="2" />
+                        </svg>
+                    </button>
+                    {settingsOpen && (
+                        <div className={`pane ${styles.settingsMenu}`} role="menu">
+                            {SETTING_ROWS.map(row => (
+                                <button
+                                    key={row.key}
+                                    type="button"
+                                    role="menuitemcheckbox"
+                                    aria-checked={settings[row.key]}
+                                    className={styles.settingRow}
+                                    onClick={() => onToggleSetting(row.key)}
+                                >
+                                    <span className={styles.settingText}>
+                                        <span className={styles.settingLabel}>{row.label}</span>
+                                        <span className={styles.settingHint}>{row.hint}</span>
+                                    </span>
+                                    <span className={`${styles.switch} ${settings[row.key] ? styles.switchOn : ""}`} aria-hidden="true" />
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
             {theme !== undefined && onCycleTheme !== undefined && (
                 <button
                     type="button"

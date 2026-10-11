@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { COSMOS_CONSTANTS, PlayerActionType, NonPlayerActionType, TexasHoldemRound, GameVariant, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
+import { COSMOS_CONSTANTS, PlayerActionType, NonPlayerActionType, TexasHoldemRound, GameVariant, PlayerStatus, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
 import { useGameState } from "../../context/GameStateContext";
 import { useToast } from "../../context/ToastContext";
 import { useNetwork } from "../../context/NetworkContext";
@@ -31,6 +31,10 @@ import { SitAndGoJoinModal } from "../../components/modal/SitAndGoJoinModal";
 import { PlayerActionButtons } from "../../components/table/PlayerActionButtons";
 import { NoWalletOverlay } from "../../components/table/NoWalletOverlay";
 import { TableErrorPage } from "../../components/table/TableErrorPage";
+import { useGameSettings } from "../../hooks/useGameSettings";
+import { useTurnTimer } from "../../hooks/useTurnTimer";
+import { useAutoFold, useAutoMuck, useAutoShowCards, usePreCheck } from "../../hooks/playerActions/useAutoActions";
+import { isCheckFreeForPlayer } from "../../utils/checkFree";
 import { loadTableTheme, nextTableTheme, saveTableTheme, type TableTheme } from "../../config/tableTheme";
 import styles from "./Table.module.css";
 
@@ -66,6 +70,10 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const [sngDismissedTable, setSngDismissedTable] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [logOpen, setLogOpen] = useState<boolean>(false);
+    const settings = useGameSettings();
+    const turn = useTurnTimer(gameState);
+    /** Pre-selected "Check": ephemeral per-round intent, not a saved setting. */
+    const [preCheckQueued, setPreCheckQueued] = useState<boolean>(false);
     const [tableTheme, setTableTheme] = useState<TableTheme>(loadTableTheme);
     const cycleTheme = () => {
         const next = nextTableTheme(tableTheme);
@@ -121,7 +129,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         legalActions.isPlayerTurn,
         () => undefined,
         blindType => showSuccess(`Posted ${blindType} blind`),
-        err => showError(err.message)
+        err => showError(err.message),
+        settings.autoPostBlinds
     );
 
     useAutoDeal(
@@ -131,7 +140,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         legalActions.isPlayerTurn,
         () => undefined,
         () => showSuccess("Cards dealt"),
-        err => showError(err.message)
+        err => showError(err.message),
+        settings.autoDeal
     );
 
     useAutoNewHand(
@@ -139,8 +149,67 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         currentNetwork,
         () => undefined,
         () => showSuccess("New hand started"),
-        err => showError(err.message)
+        err => showError(err.message),
+        settings.autoNewHand
     );
+
+    const hasFoldAction = hasAction(legalActions.legalActions, PlayerActionType.FOLD);
+    const hasCheckAction = hasAction(legalActions.legalActions, PlayerActionType.CHECK);
+    const hasMuckAction = hasAction(legalActions.legalActions, PlayerActionType.MUCK);
+    const hasShowAction = hasAction(legalActions.legalActions, PlayerActionType.SHOW);
+    const isUsersTurn = legalActions.isPlayerTurn;
+
+    // Fold (or check when free) when the turn clock runs out; show cards the same way at showdown.
+    useAutoFold({
+        enabled: settings.autoFold,
+        hasFoldAction,
+        hasCheckAction,
+        isUsersTurn,
+        timeRemaining: turn.timeRemaining,
+        isBusy: isSubmitting,
+        fold: () => foldHand(tableId, currentNetwork),
+        check: () => checkHand(tableId, currentNetwork),
+        onSubmitted: action => showWarning(action === "check" ? "Time ran out — checked for you" : "Time ran out — folded for you"),
+        onError: err => showError(err.message)
+    });
+    useAutoShowCards({
+        hasShowAction,
+        isUsersTurn,
+        timeRemaining: turn.timeRemaining,
+        isBusy: isSubmitting,
+        show: () => showCards(tableId, currentNetwork),
+        onError: err => showError(err.message)
+    });
+    useAutoMuck({
+        enabled: settings.autoMuck,
+        hasMuckAction,
+        isUsersTurn,
+        isBusy: isSubmitting,
+        muck: () => muckCards(tableId, currentNetwork),
+        onError: err => showError(err.message)
+    });
+
+    // "Checking is free for me right now" — offered before the turn, only while seated in the hand.
+    const myPlayer = gameState?.players.find(p => p.address.toLowerCase() === localAddress);
+    const isCheckFree =
+        gameState !== undefined &&
+        myPlayer !== undefined &&
+        isCheckFreeForPlayer(gameState.players, myPlayer.address, gameState.round, gameState.previousActions);
+    const showPreCheck = settings.preSelectCheck && !isUsersTurn && myPlayer?.status === PlayerStatus.ACTIVE && isCheckFree;
+    // A bet landing (or leaving the hand) before the turn arrives withdraws the intent; on the turn itself it is consumed.
+    const preCheckStillValid = showPreCheck || isUsersTurn;
+    if (preCheckQueued && !preCheckStillValid) {
+        setPreCheckQueued(false);
+    }
+    usePreCheck({
+        queued: preCheckQueued,
+        hasCheckAction,
+        isUsersTurn,
+        isBusy: isSubmitting,
+        check: () => checkHand(tableId, currentNetwork),
+        onResolved: () => setPreCheckQueued(false),
+        onError: err => showError(err.message)
+    });
 
     if (!hasWallet) {
         return (
@@ -251,6 +320,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                 onToggleLog={() => setLogOpen(open => !open)}
                 theme={tableTheme}
                 onCycleTheme={cycleTheme}
+                settings={settings}
+                onToggleSetting={settings.toggle}
             />
             <div className={styles.boardRow}>
                 <TableBoard
@@ -263,7 +334,9 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     dealer={gameState.dealer}
                     formatStack={formatAmount}
                     chipValue={chipValue}
-                    turnTimeoutSec={gameState.gameOptions.timeout}
+                    turnTimeoutSec={turn.timeoutSeconds}
+                    turnRemainingSec={turn.timeRemaining}
+                    turnKey={turn.turnKey}
                     resultsByAddress={resultsByAddress}
                     winnersBySeat={winnersBySeat}
                     winningCards={winningCards}
@@ -337,6 +410,9 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     wagerAmount={wagerAmount}
                     onWagerChange={setWagerAmount}
                     potValue={chipValue(gameState.totalPot)}
+                    showPreCheck={showPreCheck}
+                    preCheckQueued={preCheckQueued}
+                    onPreCheckChange={setPreCheckQueued}
                     microPerUnit={isTournamentBlinds ? 1 : 1_000_000}
                     currencySymbol={isTournamentBlinds ? "" : "$"}
                     onBet={() => runAction("Bet", () => betHand(tableId, toRaw(wagerAmount), currentNetwork))}

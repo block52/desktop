@@ -18,6 +18,10 @@ export interface SeatBannerProps {
     isActive?: boolean;
     /** Seconds the seat has to act. */
     turnTimeoutSec?: number;
+    /** Seconds actually left on the clock now; the bar starts from this. Defaults to the full timeout. */
+    turnRemainingSec?: number;
+    /** Changes each turn so the bar restarts. */
+    turnKey?: string;
     status?: SeatStatusLabel;
     /** The seat won the pot: shows the "WINS" banner with the hand's name. */
     winner?: { description?: string };
@@ -57,7 +61,7 @@ const ACTION_TONES: Record<string, Tone> = {
  * The strip under a seat's nameplate: the action just taken (for a few seconds), else the
  * turn countdown while the seat is to act, else the seat's standing status (fold / all in / sitting out).
  */
-export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, turnTimeoutSec, status, winner, flipped }) => {
+export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, turnTimeoutSec, turnRemainingSec, turnKey, status, winner, flipped }) => {
     // The action already on the seat when it mounted is history, not news.
     const [initialIndex] = React.useState(lastAction?.index);
     const [expiredIndex, setExpiredIndex] = React.useState<number | undefined>(undefined);
@@ -97,8 +101,18 @@ export const SeatBanner: React.FC<SeatBannerProps> = ({ lastAction, isActive, tu
         return (
             <div className={`${styles.banner} ${styles.timer}${flip}`} role="timer" aria-label="Time to act">
                 <div className={styles.timerTrack}>
-                    <div className={styles.timerFill} style={{ animationDuration: `${turnTimeoutSec}s` }} />
+                    <div
+                        key={turnKey}
+                        className={styles.timerFill}
+                        style={
+                            {
+                                animationDuration: `${Math.max(turnRemainingSec ?? turnTimeoutSec, 0)}s`,
+                                "--timer-start": Math.min((turnRemainingSec ?? turnTimeoutSec) / turnTimeoutSec, 1)
+                            } as React.CSSProperties
+                        }
+                    />
                 </div>
+                {turnRemainingSec !== undefined && <span className={styles.timerSeconds}>{turnRemainingSec}s</span>}
             </div>
         );
     }
