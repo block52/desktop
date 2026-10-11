@@ -50,7 +50,7 @@
 .gridHeader,
 .row {
     display: grid;
-    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.4fr) 156px;
+    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.4fr) 150px;
     gap: 12px;
     align-items: center;
 }
@@ -339,31 +339,66 @@
     gap: 4px;
 }
 
-/* Creator-only delete / close: an icon button beside the row's main action. */
-.ownerAction {
-    width: 34px;
-    height: 34px;
+/* Creator-only options: a quiet kebab at the row's far right, menu opens beneath it. */
+.moreButton {
+    width: 30px;
+    height: 30px;
     padding: 0;
-    border-radius: 999px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: rgb(100, 116, 139);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: rgb(148, 163, 184);
     flex-shrink: 0;
+    cursor: pointer;
 }
 
-.ownerAction:hover:not(:disabled) {
+.moreButton:hover {
+    background: hsl(245 25% 16%);
+    color: var(--text);
+}
+
+.menuBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+}
+
+.menu {
+    position: fixed;
+    min-width: 200px;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid hsl(245 22% 17%);
+    background: hsl(240 26% 10%);
+    box-shadow: 0 18px 40px -12px black;
+}
+
+.menuItemDanger {
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
     color: hsl(0 80% 72%);
-    border-color: hsl(0 60% 40% / 0.6);
+    font: 500 13px Inter, system-ui, sans-serif;
+    text-align: left;
+    cursor: pointer;
 }
 
-.ownerAction:disabled {
-    opacity: 0.4;
+.menuItemDanger:hover:not(:disabled) {
+    background: hsl(0 60% 40% / 0.16);
+}
+
+.menuItemDanger:disabled {
+    color: rgb(100, 116, 139);
     cursor: not-allowed;
 }
 
 /* Keeps every row's main action in the same place whether or not the delete icon is shown. */
 .ownerSpacer {
-    width: 34px;
+    width: 30px;
     flex-shrink: 0;
 }

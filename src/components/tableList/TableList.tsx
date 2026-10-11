@@ -70,6 +70,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
     const { showSuccess, showError } = useToast();
     const [closeTarget, setCloseTarget] = useState<{ game: GameWithFormat; mode: "delete" | "force-close" } | null>(null);
     const [isClosing, setIsClosing] = useState(false);
+    const [ownerMenu, setOwnerMenu] = useState<{ game: GameWithFormat; top: number; right: number } | null>(null);
 
     const confirmClose = async () => {
         if (closeTarget === null) return;
@@ -293,34 +294,27 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                     >
                                         {actionLabel}
                                     </button>
-                                    {isMine(game) && (
+                                    {isMine(game) ? (
                                         <button
                                             type="button"
-                                            className={`btn-ghost ${styles.ownerAction}`}
-                                            disabled={game.currentPlayers > 0 && !isCashFormat(game.gameFormat)}
-                                            title={
-                                                game.currentPlayers === 0
-                                                    ? "Delete this table"
-                                                    : isCashFormat(game.gameFormat)
-                                                      ? "Close table and refund everyone"
-                                                      : "Tournaments can't be closed while players are seated"
-                                            }
-                                            aria-label={game.currentPlayers === 0 ? "Delete table" : "Close table"}
+                                            className={styles.moreButton}
+                                            aria-label="Table options"
+                                            aria-haspopup="menu"
                                             onClick={e => {
                                                 e.stopPropagation();
-                                                setCloseTarget({ game, mode: game.currentPlayers === 0 ? "delete" : "force-close" });
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                setOwnerMenu({ game, top: rect.bottom + 4, right: window.innerWidth - rect.right });
                                             }}
                                         >
-                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                                <path d="M3 6h18" />
-                                                <path d="M8 6V4h8v2" />
-                                                <path d="M19 6l-1 14H6L5 6" />
-                                                <path d="M10 11v6" />
-                                                <path d="M14 11v6" />
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                <circle cx="12" cy="5" r="1.8" />
+                                                <circle cx="12" cy="12" r="1.8" />
+                                                <circle cx="12" cy="19" r="1.8" />
                                             </svg>
                                         </button>
+                                    ) : (
+                                        <span className={styles.ownerSpacer} aria-hidden="true" />
                                     )}
-                                    {!isMine(game) && <span className={styles.ownerSpacer} aria-hidden="true" />}
                                 </div>
                             </div>
                         );
@@ -333,6 +327,45 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                     onPageSizeChange={setPageSize}
                 />
             </div>
+
+            {ownerMenu !== null && (
+                <div className={styles.menuBackdrop} onClick={() => setOwnerMenu(null)} role="presentation">
+                    <div
+                        className={styles.menu}
+                        style={{ top: ownerMenu.top, right: ownerMenu.right }}
+                        role="menu"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {ownerMenu.game.currentPlayers === 0 ? (
+                            <button
+                                type="button"
+                                role="menuitem"
+                                className={styles.menuItemDanger}
+                                onClick={() => {
+                                    setCloseTarget({ game: ownerMenu.game, mode: "delete" });
+                                    setOwnerMenu(null);
+                                }}
+                            >
+                                Delete table
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                role="menuitem"
+                                className={styles.menuItemDanger}
+                                disabled={!isCashFormat(ownerMenu.game.gameFormat)}
+                                title={isCashFormat(ownerMenu.game.gameFormat) ? undefined : "Tournaments can't be closed while players are seated"}
+                                onClick={() => {
+                                    setCloseTarget({ game: ownerMenu.game, mode: "force-close" });
+                                    setOwnerMenu(null);
+                                }}
+                            >
+                                Close table &amp; refund players
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {closeTarget !== null && (
                 <CloseTableModal
