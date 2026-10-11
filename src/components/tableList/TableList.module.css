@@ -361,3 +361,9 @@
     opacity: 0.4;
     cursor: not-allowed;
 }
+
+/* Keeps every row's main action in the same place whether or not the delete icon is shown. */
+.ownerSpacer {
+    width: 34px;
+    flex-shrink: 0;
+}

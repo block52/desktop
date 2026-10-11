@@ -284,6 +284,15 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                 <span className={styles.buyInCell}>{formatBuyIn(game)}</span>
 
                                 <div className={styles.actionCell}>
+                                    <button
+                                        className={`btn-ghost ${styles.actionButton}`}
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            navigate(`/table/${game.gameId}`);
+                                        }}
+                                    >
+                                        {actionLabel}
+                                    </button>
                                     {isMine(game) && (
                                         <button
                                             type="button"
@@ -311,15 +320,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                             </svg>
                                         </button>
                                     )}
-                                    <button
-                                        className={`btn-ghost ${styles.actionButton}`}
-                                        onClick={e => {
-                                            e.stopPropagation();
-                                            navigate(`/table/${game.gameId}`);
-                                        }}
-                                    >
-                                        {actionLabel}
-                                    </button>
+                                    {!isMine(game) && <span className={styles.ownerSpacer} aria-hidden="true" />}
                                 </div>
                             </div>
                         );
