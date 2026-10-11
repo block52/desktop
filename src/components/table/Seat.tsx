@@ -124,10 +124,10 @@ function BlindTag({ isSmallBlind, isBigBlind }: Pick<SeatProps, "isSmallBlind" |
 /** Half the avatar's height: where the seat's coordinate sits when the box has no avatar element. */
 const AVATAR_HALF_PX = 28;
 /** Breathing room kept between a seat's content and the edge of the pane. */
-const PANE_EDGE_GAP_PX = 8;
+const PANE_EDGE_GAP_PX = 4;
 /** How far the floating win / place pill overhangs the top of the seat box (it is out of flow). */
-/* Includes the 14px a winning hole card lifts above the box. */
-const RESULT_PILL_OVERHANG_PX = 52;
+/* The pill overhangs by ~22px; a winning hole card lifts 14px, so this covers both. */
+const RESULT_PILL_OVERHANG_PX = 26;
 
 interface SeatExtents {
     /** Content height from the box's top edge to the seat's coordinate (the avatar's centre). */
@@ -259,6 +259,13 @@ export const Seat: React.FC<SeatProps> = ({
     }
 
     const initials = seatNumber !== undefined ? String(seatNumber) : "?";
+    const betBlock = (extraClass: string) =>
+        currentBet !== undefined && currentBet !== "" ? (
+            <div className={`${styles.betBlock} ${extraClass}`}>
+                {betValue !== undefined && <ChipPile amount={betValue} />}
+                <div className={styles.bet}>{currentBet}</div>
+            </div>
+        ) : null;
     // Seats in the upper half hang their badge and cards above the avatar, away from the table centre.
     const isUpper = top < 50;
 
@@ -284,14 +291,11 @@ export const Seat: React.FC<SeatProps> = ({
                     {holeCards.map((code, i) => (
                         <PlayingCard key={i} code={code} faceDown={parseCard(code) === null} className={`${styles.holeCard} ${cardStateClass(code)}`} />
                     ))}
+                    {/* Upper seats keep the bet beside the cards, off the felt. */}
+                    {isUpper && betBlock(`${styles.betBeside} ${left < 50 ? styles.betLeft : styles.betRight}`)}
                 </div>
             )}
-            {currentBet && (
-                <div className={`${styles.betBlock} ${isUpper ? `${styles.betSide} ${left < 50 ? styles.betLeft : styles.betRight}` : ""}`}>
-                    {betValue !== undefined && <ChipPile amount={betValue} />}
-                    <div className={styles.bet}>{currentBet}</div>
-                </div>
-            )}
+            {!(isUpper && hasCards && !isFolded) && betBlock(isUpper ? `${styles.betSide} ${left < 50 ? styles.betLeft : styles.betRight}` : "")}
         </div>
     );
 };
