@@ -118,6 +118,26 @@
     width: clamp(44px, min(10cqw, 18cqh), 88px);
     border-radius: 6px;
     box-shadow: 0 8px 18px -6px black;
+    /* Web app's card drop: each new card falls into its slot, the flop's three staggered 200ms. */
+    animation: cardDrop 600ms ease-out backwards;
+    animation-delay: var(--deal-delay, 0ms);
+}
+
+@keyframes cardDrop {
+    from {
+        transform: translateY(-100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .communityCard {
+        animation: none;
+    }
 }
 
 .emptyCard {

@@ -1,3 +1,4 @@
+import React from "react";
 import styles from "./PlayingCard.module.css";
 
 // Card faces and the back are the web app's art (ui/src/assets/cards), keyed by file name: "AS", "TD", "b52CardBack".
@@ -54,16 +55,18 @@ interface PlayingCardProps {
     code: string;
     faceDown?: boolean;
     className?: string;
+    style?: React.CSSProperties;
 }
 
 const SUIT_NAMES: Record<Suit, string> = { S: "spades", H: "hearts", D: "diamonds", C: "clubs" };
 
-const PlayingCard: React.FC<PlayingCardProps> = ({ code, faceDown = false, className }) => {
+const PlayingCard: React.FC<PlayingCardProps> = ({ code, faceDown = false, className, style }) => {
     if (faceDown) {
         return (
             <img
                 src={cardImageUrl("b52CardBack")}
                 className={`${styles.card} ${className ?? ""}`}
+                style={style}
                 data-testid="card-back"
                 alt="Face-down card"
                 draggable={false}
@@ -79,6 +82,7 @@ const PlayingCard: React.FC<PlayingCardProps> = ({ code, faceDown = false, class
         <img
             src={cardImageUrl(file)}
             className={`${styles.card} ${className ?? ""}`}
+            style={style}
             alt={`${parsed.rank} of ${SUIT_NAMES[parsed.suit]}`}
             draggable={false}
         />

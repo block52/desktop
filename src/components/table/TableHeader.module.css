@@ -35,8 +35,8 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    min-width: 0;
-    flex: 1;
+    min-width: 120px;
+    flex: 1 1 160px;
 }
 
 .tableName {
@@ -112,10 +112,21 @@
     white-space: nowrap;
 }
 
-@media (max-width: 900px) {
-    .creatorPill,
-    .verifiedPill,
+/* Secondary pills drop out progressively so the table name never gets squeezed. */
+@media (max-width: 1500px) {
     .blockHeight {
+        display: none;
+    }
+}
+
+@media (max-width: 1300px) {
+    .creatorPill {
+        display: none;
+    }
+}
+
+@media (max-width: 1150px) {
+    .verifiedPill {
         display: none;
     }
 }
@@ -258,7 +269,7 @@
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1150px) {
     .walletAddress {
         display: none;
     }

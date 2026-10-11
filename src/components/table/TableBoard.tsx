@@ -89,8 +89,9 @@ export const TableBoard: React.FC<TableBoardProps> = ({
                             const code = communityCards[i];
                             return code !== undefined ? (
                                 <PlayingCard
-                                    key={i}
+                                    key={`${i}-${code}`}
                                     code={code}
+                                    style={{ "--deal-delay": `${i < 3 ? i * 200 : 0}ms` } as React.CSSProperties}
                                     className={`${styles.communityCard} ${
                                         winningCards.length === 0 ? "" : winningCards.includes(code.toUpperCase()) ? styles.communityWin : styles.communityMuted
                                     }`}
