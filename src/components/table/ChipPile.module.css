@@ -7,7 +7,7 @@
 
 .column {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     align-items: center;
 }
 
@@ -15,7 +15,7 @@
     display: block;
     width: 22px;
     height: 22px;
-    margin-top: -16px;
+    margin-top: -15px;
 }
 
 .column .chip:first-child {
