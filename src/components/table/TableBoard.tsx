@@ -12,7 +12,12 @@ export interface TableBoardProps extends Omit<PlayerSeatingProps, "players"> {
     players: PlayerDTO[];
     /** Community cards as SDK codes, e.g. "AS" — empty for preflop/not dealt yet. */
     communityCards: string[];
+    /** Formatted total pot (main pot + current round bets). */
     pot: string;
+    /** Whether the total pot has chips in it; an empty pot is hidden while waiting for players. */
+    hasPot: boolean;
+    /** Formatted main pot, set only when it differs from the total pot (post-flop side bets). */
+    mainPot?: string;
     round: TexasHoldemRound;
     /** When set, replaces the normal pot/cards display with a Sit & Go fill-progress message. */
     sitAndGoWaiting?: { prizePool: string; seated: number; maxPlayers: number };
@@ -25,12 +30,24 @@ export interface TableBoardProps extends Omit<PlayerSeatingProps, "players"> {
 export const TableBoard: React.FC<TableBoardProps> = ({
     communityCards,
     pot,
+    hasPot,
+    mainPot,
     round,
     sitAndGoWaiting,
     waitingForPlayers,
     children,
     ...seatingProps
 }) => {
+    const potDisplay = (
+        <div className={styles.potStack}>
+            <div className={styles.potPill}>
+                <span className={styles.potChip} />
+                <span className={styles.potValue}>Total pot ${pot}</span>
+            </div>
+            {mainPot !== undefined && <div className={styles.mainPot}>Main pot ${mainPot}</div>}
+        </div>
+    );
+
     return (
         <div className={`pane ${styles.outer}`}>
             <div className={styles.feltBox}>
@@ -51,13 +68,11 @@ export const TableBoard: React.FC<TableBoardProps> = ({
                         {waitingForPlayers.seated} / {waitingForPlayers.maxPlayers} seated
                     </div>
                     <div className={styles.sub}>Hand starts automatically once {waitingForPlayers.minPlayers}+ players are ready</div>
+                    {hasPot && potDisplay}
                 </div>
             ) : (
                 <div className={styles.centerMessage}>
-                    <div className={styles.potPill}>
-                        <span className={styles.potChip} />
-                        <span className={styles.potValue}>Pot ${pot}</span>
-                    </div>
+                    {potDisplay}
                     <div className={styles.communityCards}>
                         {Array.from({ length: 5 }, (_, i) => {
                             const code = communityCards[i];

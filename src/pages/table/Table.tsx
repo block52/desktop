@@ -191,6 +191,11 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         setJoinSeat(null);
         setSngDismissedTable(tableId);
     };
+    const totalPotMicro = BigInt(gameState.totalPot);
+    const mainPotMicro = gameState.pots.length > 0 ? BigInt(gameState.pots[0]) : 0n;
+    const isPreflopRound = gameState.round === TexasHoldemRound.ANTE || gameState.round === TexasHoldemRound.PREFLOP;
+    const showMainPot = !isPreflopRound && mainPotMicro > 0n && mainPotMicro !== totalPotMicro;
+    const potText = (micro: bigint) => (isTournamentBlinds ? micro.toString() : formatMicro(micro.toString()));
     const blindText = (value: string) => (isTournamentBlinds ? value : formatMicro(value));
     const callMicro = legalActions.legalActions.find(a => a.action === PlayerActionType.CALL)?.min;
     const callDisplay = callMicro !== undefined ? (Number(callMicro) / 1_000_000).toFixed(2) : "0";
@@ -223,7 +228,9 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     maxBuyIn={gameState.gameOptions.maxBuyIn}
                     onVacantSeatClick={isUserSeated ? undefined : setJoinSeat}
                     communityCards={gameState.communityCards}
-                    pot={isTournamentBlinds ? gameState.totalPot : formatMicro(gameState.totalPot)}
+                    pot={potText(totalPotMicro)}
+                    hasPot={totalPotMicro > 0n}
+                    mainPot={showMainPot ? potText(mainPotMicro) : undefined}
                     round={gameState.round}
                     sitAndGoWaiting={sitAndGoWaiting}
                     waitingForPlayers={waitingForPlayers}
