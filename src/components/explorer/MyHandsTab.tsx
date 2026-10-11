@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useMyHands } from "../../hooks/useMyHands";
+import { useMyHandsPage } from "../../hooks/useMyHandsPage";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import { describeHandOutcome } from "../../utils/handOutcome";
+import Pagination, { PAGE_SIZES } from "../pagination/Pagination";
+import { pageInfo } from "../../utils/paginate";
 import styles from "./ExplorerTabs.module.css";
 
 function shortId(id: string): string {
@@ -13,7 +15,9 @@ const TONE_CLASS = { won: styles.won, lost: styles.lost, neutral: "" } as const;
 
 const MyHandsTab: React.FC = () => {
     const address = getCosmosAddress();
-    const { hands, total, isLoading, error, hasMore, loadMore, reload, chipTables } = useMyHands(address);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
+    const { hands, total, isLoading, error, reload, chipTables } = useMyHandsPage(address, page, pageSize);
 
     if (address === null) {
         return (
@@ -69,18 +73,16 @@ const MyHandsTab: React.FC = () => {
                     );
                 })}
 
-                {hands.length > 0 && (
-                    <div className={styles.footer}>
-                        <span className={styles.secondary}>
-                            Showing {hands.length.toLocaleString()} of {total.toLocaleString()}
-                        </span>
-                        {hasMore && (
-                            <button type="button" className={`btn-ghost ${styles.pill}`} onClick={loadMore} disabled={isLoading}>
-                                {isLoading ? "Loading…" : "Load more"}
-                            </button>
-                        )}
-                    </div>
-                )}
+                <Pagination
+                    slice={pageInfo(total, page, pageSize)}
+                    pageSize={pageSize}
+                    disabled={isLoading}
+                    onPageChange={setPage}
+                    onPageSizeChange={size => {
+                        setPageSize(size);
+                        setPage(1);
+                    }}
+                />
             </div>
         </>
     );

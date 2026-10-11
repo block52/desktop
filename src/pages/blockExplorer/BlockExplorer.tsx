@@ -15,6 +15,8 @@ import AccountsColumn, { type AccountSortField } from "../../components/explorer
 import AddressLookupTab from "../../components/explorer/AddressLookupTab";
 import MyHandsTab from "../../components/explorer/MyHandsTab";
 import PlayersTab from "../../components/explorer/PlayersTab";
+import Pagination, { PAGE_SIZES } from "../../components/pagination/Pagination";
+import { pageInfo, paginate } from "../../utils/paginate";
 import styles from "./BlockExplorer.module.css";
 
 /* getTx is untyped in the SDK (returns response.data of /cosmos/tx/v1beta1/txs/{hash});
@@ -53,8 +55,6 @@ interface BlockLookup {
     txCount: number;
 }
 
-const BLOCKS_FETCH_COUNT = 20;
-const ACCOUNTS_LIMIT = 15;
 
 function truncateHash(hash: string): string {
     return `${hash.slice(0, 10)}…${hash.slice(-6)}`;
@@ -80,6 +80,13 @@ const BlockExplorer: React.FC = () => {
     const validatorsCount = useValidatorCount();
 
     const [blocks, setBlocks] = useState<BlockResponse[]>([]);
+    const [chainHeight, setChainHeight] = useState(0);
+    const [blocksPage, setBlocksPage] = useState(1);
+    const [blocksPageSize, setBlocksPageSize] = useState<number>(PAGE_SIZES[0]);
+    const [txsPage, setTxsPage] = useState(1);
+    const [txsPageSize, setTxsPageSize] = useState<number>(PAGE_SIZES[0]);
+    const [accountsPage, setAccountsPage] = useState(1);
+    const [accountsPageSize, setAccountsPageSize] = useState<number>(PAGE_SIZES[0]);
     const [blocksError, setBlocksError] = useState("");
     const [selectedHeight, setSelectedHeight] = useState<string | null>(null);
     // height → real tx hashes of that block (block data carries raw base64 txs).
@@ -92,7 +99,7 @@ const BlockExplorer: React.FC = () => {
     const [txNotFound, setTxNotFound] = useState(false);
     const [txSearching, setTxSearching] = useState(false);
     const [blockResult, setBlockResult] = useState<BlockLookup | null>(null);
-    const { txs: recentTxs, isLoading: recentTxsLoading, error: recentTxsError } = useRecentTxs();
+    const { txs: recentTxs, total: recentTxsTotal, isLoading: recentTxsLoading, error: recentTxsError } = useRecentTxs(txsPage, txsPageSize);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -101,8 +108,17 @@ const BlockExplorer: React.FC = () => {
             try {
                 const client = getCosmosClient(currentNetwork);
                 if (!client) return;
-                const latest = await client.getLatestBlocks(BLOCKS_FETCH_COUNT);
+                // Page N is the N-th run of blocks counting back from the chain tip.
+                const height = await client.getHeight();
+                const newest = height - (blocksPage - 1) * blocksPageSize;
+                if (newest < 1) {
+                    if (!cancelled) setBlocks([]);
+                    return;
+                }
+                const count = Math.min(blocksPageSize, newest);
+                const latest = await client.getBlocks(newest - count + 1, count);
                 if (cancelled) return;
+                setChainHeight(height);
                 setBlocks([...latest].sort((a, b) => Number(b.block.header.height) - Number(a.block.header.height)));
                 setBlocksError("");
             } catch (err) {
@@ -118,7 +134,7 @@ const BlockExplorer: React.FC = () => {
             cancelled = true;
             clearInterval(interval);
         };
-    }, [currentNetwork]);
+    }, [currentNetwork, blocksPage, blocksPageSize]);
 
     useEffect(() => {
         if (selectedHeight === null || blockTxHashes[selectedHeight] !== undefined) return;
@@ -202,11 +218,11 @@ const BlockExplorer: React.FC = () => {
 
     const { accounts, total: accountsTotal, isLoading: accountsLoading, error: accountsError } = useAccountsList();
     const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
-    const [showAllAccounts, setShowAllAccounts] = useState(false);
     const [accountSort, setAccountSort] = useState<AccountSortField>("balance");
     const [accountOrder, setAccountOrder] = useState<"asc" | "desc">("desc");
 
     const toggleAccountSort = (field: AccountSortField) => {
+        setAccountsPage(1);
         if (accountSort === field) {
             setAccountOrder(o => (o === "asc" ? "desc" : "asc"));
         } else {
@@ -227,6 +243,7 @@ const BlockExplorer: React.FC = () => {
             return direction * (Date.parse(a.lastActive) - Date.parse(b.lastActive));
         });
     }, [accounts, accountSort, accountOrder]);
+    const accountsSlice = paginate(sortedAccounts, accountsPage, accountsPageSize);
     const { txs: accountTxs, isLoading: accountTxsLoading, error: accountTxsError } = useAccountTransactions(selectedAccount);
 
     const openTx = (hash: string) => {
@@ -468,6 +485,15 @@ const BlockExplorer: React.FC = () => {
                                 </React.Fragment>
                             );
                         })}
+                        <Pagination
+                            slice={pageInfo(chainHeight, blocksPage, blocksPageSize)}
+                            pageSize={blocksPageSize}
+                            onPageChange={setBlocksPage}
+                            onPageSizeChange={size => {
+                                setBlocksPageSize(size);
+                                setBlocksPage(1);
+                            }}
+                        />
                     </div>
                 </div>
                     <div className={styles.column}>
@@ -501,6 +527,16 @@ const BlockExplorer: React.FC = () => {
                                     <span className={styles.blockAge}>#{Number(tx.height).toLocaleString()}</span>
                                 </div>
                             ))}
+                            <Pagination
+                                slice={pageInfo(recentTxsTotal, txsPage, txsPageSize)}
+                                pageSize={txsPageSize}
+                                disabled={recentTxsLoading}
+                                onPageChange={setTxsPage}
+                                onPageSizeChange={size => {
+                                    setTxsPageSize(size);
+                                    setTxsPage(1);
+                                }}
+                            />
                         </div>
                     </div>
                 </div>
@@ -512,7 +548,7 @@ const BlockExplorer: React.FC = () => {
                         sortBy={accountSort}
                         sortOrder={accountOrder}
                         onSort={toggleAccountSort}
-                        accounts={showAllAccounts ? sortedAccounts : sortedAccounts.slice(0, ACCOUNTS_LIMIT)}
+                        accounts={accountsSlice.items}
                         total={accountsTotal}
                         isLoading={accountsLoading}
                         error={accountsError}
@@ -521,9 +557,20 @@ const BlockExplorer: React.FC = () => {
                         selectedTxs={accountTxs}
                         txsLoading={accountTxsLoading}
                         txsError={accountTxsError}
-                        hasMore={accountsTotal > ACCOUNTS_LIMIT}
-                        expanded={showAllAccounts}
-                        onToggleShowAll={() => setShowAllAccounts(v => !v)}
+                        hasMore={false}
+                        expanded={false}
+                        onToggleShowAll={() => undefined}
+                        footer={
+                            <Pagination
+                                slice={accountsSlice}
+                                pageSize={accountsPageSize}
+                                onPageChange={setAccountsPage}
+                                onPageSizeChange={size => {
+                                    setAccountsPageSize(size);
+                                    setAccountsPage(1);
+                                }}
+                            />
+                        }
                         onTxClick={openTx}
                     />
                 </div>

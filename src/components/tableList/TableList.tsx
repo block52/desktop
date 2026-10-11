@@ -5,7 +5,7 @@ import { useFindGames } from "../../hooks/useFindGames";
 import type { GameWithFormat } from "../../hooks/useFindGames";
 import { sortGamesNewestFirst } from "../../utils/convertUtils";
 import { paginate } from "../../utils/paginate";
-import Pagination, { PAGE_SIZES } from "./Pagination";
+import Pagination, { PAGE_SIZES } from "../pagination/Pagination";
 import CreateTableModal from "../modal/CreateTableModal";
 import CopyButton from "../copyButton/CopyButton";
 import { getCosmosAddress } from "../../utils/cosmos/storage";

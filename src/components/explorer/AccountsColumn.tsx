@@ -20,6 +20,8 @@ interface AccountsColumnProps {
     txsError: string;
     onTxClick: (hash: string) => void;
     hasMore: boolean;
+    /** Replaces the show-all toggle (e.g. a pagination bar). */
+    footer?: React.ReactNode;
     expanded: boolean;
     onToggleShowAll: () => void;
 }
@@ -81,6 +83,7 @@ const AccountsColumn: React.FC<AccountsColumnProps> = ({
     txsError,
     onTxClick,
     hasMore,
+    footer,
     expanded,
     onToggleShowAll
 }) => {
@@ -228,7 +231,8 @@ const AccountsColumn: React.FC<AccountsColumnProps> = ({
                         </div>
                     );
                 })}
-                {hasMore && (
+                {footer}
+                {footer === undefined && hasMore && (
                     <button className={styles.showAllButton} onClick={onToggleShowAll}>
                         {expanded ? "Show less" : `Show all ${total.toLocaleString()}`}
                     </button>

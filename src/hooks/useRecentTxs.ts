@@ -9,7 +9,6 @@ export interface RecentTx {
     success: boolean;
 }
 
-const LIMIT = 12;
 const POLL_MS = 10000;
 
 interface RawEvent {
@@ -50,10 +49,11 @@ export function normalizeRecentTx(raw: RawTx): RecentTx | null {
 }
 
 /** Newest chain transactions (CometBFT tx_search, newest first). */
-export function useRecentTxs(): { txs: RecentTx[]; isLoading: boolean; error: string } {
+export function useRecentTxs(page = 1, pageSize = 15): { txs: RecentTx[]; total: number; isLoading: boolean; error: string } {
     const { currentNetwork } = useNetwork();
     const [txs, setTxs] = useState<RecentTx[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [total, setTotal] = useState(0);
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -62,13 +62,14 @@ export function useRecentTxs(): { txs: RecentTx[]; isLoading: boolean; error: st
         const load = async () => {
             try {
                 const rpc = currentNetwork.rpc.replace(/\/+$/, "");
-                const url = `${rpc}/tx_search?query=${encodeURIComponent("\"tx.height>0\"")}&per_page=${LIMIT}&order_by=${encodeURIComponent("\"desc\"")}`;
+                const url = `${rpc}/tx_search?query=${encodeURIComponent("\"tx.height>0\"")}&page=${page}&per_page=${pageSize}&order_by=${encodeURIComponent("\"desc\"")}`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = (await response.json()) as { result?: { txs?: RawTx[] } };
+                const data = (await response.json()) as { result?: { txs?: RawTx[]; total_count?: string } };
                 if (cancelled) return;
                 const list = (data.result?.txs ?? []).map(normalizeRecentTx).filter((t): t is RecentTx => t !== null);
                 setTxs(list);
+                setTotal(Number(data.result?.total_count ?? list.length));
                 setError("");
             } catch (err) {
                 if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load transactions");
@@ -82,7 +83,7 @@ export function useRecentTxs(): { txs: RecentTx[]; isLoading: boolean; error: st
             cancelled = true;
             clearInterval(interval);
         };
-    }, [currentNetwork]);
+    }, [currentNetwork, page, pageSize]);
 
-    return { txs, isLoading, error };
+    return { txs, total, isLoading, error };
 }

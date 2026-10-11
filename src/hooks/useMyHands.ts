@@ -18,6 +18,38 @@ export interface MyHandsState {
     chipTables: Map<string, boolean>;
 }
 
+/** Each table's unit (true = chips, false = micro-USDC), resolved once per table via the spectator read. */
+export function useChipTables(hands: PlayerHand[]): Map<string, boolean> {
+    const { currentNetwork } = useNetwork();
+    const [chipTables, setChipTables] = useState<Map<string, boolean>>(new Map());
+    const requestedTables = useRef(new Set<string>());
+
+    useEffect(() => {
+        requestedTables.current = new Set();
+        setChipTables(new Map());
+    }, [currentNetwork]);
+
+    useEffect(() => {
+        const client = getCosmosClient(currentNetwork);
+        if (!client) return;
+        const missing = [...new Set(hands.map(h => h.game_id))].filter(id => !requestedTables.current.has(id));
+        for (const id of missing) {
+            requestedTables.current.add(id);
+            client
+                .getGame(id)
+                .then(response => {
+                    if (!response.game || response.game === "null") return;
+                    const parsed: GameStateResponseDTO = JSON.parse(response.game);
+                    const isChips = parsed.format === GameFormat.SIT_AND_GO || isTournamentFormat(parsed.format);
+                    setChipTables(prev => new Map(prev).set(id, isChips));
+                })
+                .catch(() => undefined);
+        }
+    }, [hands, currentNetwork]);
+
+    return chipTables;
+}
+
 /** Finished hands a wallet played (newest first), paged, plus each table's unit. */
 export function useMyHands(address: string | null): MyHandsState {
     const { currentNetwork } = useNetwork();
@@ -27,8 +59,6 @@ export function useMyHands(address: string | null): MyHandsState {
     const [error, setError] = useState("");
     const [nonce, setNonce] = useState(0);
     const [loadedCount, setLoadedCount] = useState(0);
-    const [chipTables, setChipTables] = useState<Map<string, boolean>>(new Map());
-    const requestedTables = useRef(new Set<string>());
 
     // Fresh list on wallet / network change or reload.
     useEffect(() => {
@@ -72,29 +102,7 @@ export function useMyHands(address: string | null): MyHandsState {
             .finally(() => setIsLoading(false));
     }, [address, isLoading, loadedCount]);
 
-    useEffect(() => {
-        requestedTables.current = new Set();
-        setChipTables(new Map());
-    }, [currentNetwork]);
-
-    // Resolve each table's unit once (getGame is the spectator read).
-    useEffect(() => {
-        const client = getCosmosClient(currentNetwork);
-        if (!client) return;
-        const missing = [...new Set(hands.map(h => h.game_id))].filter(id => !requestedTables.current.has(id));
-        for (const id of missing) {
-            requestedTables.current.add(id);
-            client
-                .getGame(id)
-                .then(response => {
-                    if (!response.game || response.game === "null") return;
-                    const parsed: GameStateResponseDTO = JSON.parse(response.game);
-                    const isChips = parsed.format === GameFormat.SIT_AND_GO || isTournamentFormat(parsed.format);
-                    setChipTables(prev => new Map(prev).set(id, isChips));
-                })
-                .catch(() => undefined);
-        }
-    }, [hands, currentNetwork]);
+    const chipTables = useChipTables(hands);
 
     const reload = useCallback(() => setNonce(n => n + 1), []);
 

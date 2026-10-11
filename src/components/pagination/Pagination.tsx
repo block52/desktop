@@ -1,17 +1,19 @@
 import React from "react";
-import { pageButtons, type PageSlice } from "../../utils/paginate";
+import { pageButtons, type PageInfo } from "../../utils/paginate";
 import styles from "./Pagination.module.css";
 
 export const PAGE_SIZES = [15, 30, 50] as const;
 
 interface PaginationProps {
-    slice: Pick<PageSlice<unknown>, "page" | "pageCount" | "total" | "first" | "last">;
+    slice: PageInfo;
+    /** Disable the controls while a page is loading. */
+    disabled?: boolean;
     pageSize: number;
     onPageChange: (page: number) => void;
     onPageSizeChange: (size: number) => void;
 }
 
-export const Pagination: React.FC<PaginationProps> = ({ slice, pageSize, onPageChange, onPageSizeChange }) => {
+export const Pagination: React.FC<PaginationProps> = ({ slice, pageSize, onPageChange, onPageSizeChange, disabled = false }) => {
     const { page, pageCount, total, first, last } = slice;
     if (total === 0) return null;
 
@@ -43,7 +45,7 @@ export const Pagination: React.FC<PaginationProps> = ({ slice, pageSize, onPageC
                         type="button"
                         className={`btn-ghost ${styles.pageButton}`}
                         onClick={() => onPageChange(page - 1)}
-                        disabled={page <= 1}
+                        disabled={disabled || page <= 1}
                         aria-label="Previous page"
                     >
                         ‹
@@ -69,7 +71,7 @@ export const Pagination: React.FC<PaginationProps> = ({ slice, pageSize, onPageC
                         type="button"
                         className={`btn-ghost ${styles.pageButton}`}
                         onClick={() => onPageChange(page + 1)}
-                        disabled={page >= pageCount}
+                        disabled={disabled || page >= pageCount}
                         aria-label="Next page"
                     >
                         ›

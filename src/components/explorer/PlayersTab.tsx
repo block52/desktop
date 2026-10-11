@@ -3,9 +3,9 @@ import { usePlayersDirectory } from "../../hooks/usePlayersDirectory";
 import { formatMicroUsd } from "../../utils/currency";
 import type { PlayerSortField } from "../../utils/indexer";
 import CopyButton from "../copyButton/CopyButton";
+import Pagination, { PAGE_SIZES } from "../pagination/Pagination";
+import { pageInfo } from "../../utils/paginate";
 import styles from "./ExplorerTabs.module.css";
-
-const PAGE_SIZE = 20;
 
 function truncate(address: string): string {
     return `${address.slice(0, 12)}…${address.slice(-8)}`;
@@ -20,19 +20,20 @@ const PlayersTab: React.FC<PlayersTabProps> = ({ onOpenPlayer }) => {
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState<PlayerSortField>("net_profit");
     const [order, setOrder] = useState<"asc" | "desc">("desc");
-    const [page, setPage] = useState(0);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
 
     const { players, total, isLoading, error, reload } = usePlayersDirectory({
         search,
         sort,
         order,
-        limit: PAGE_SIZE,
-        offset: page * PAGE_SIZE
+        limit: pageSize,
+        offset: (page - 1) * pageSize
     });
 
     const applySearch = (value: string) => {
         setSearch(value.trim());
-        setPage(0);
+        setPage(1);
     };
 
     const toggleSort = (field: PlayerSortField) => {
@@ -42,11 +43,10 @@ const PlayersTab: React.FC<PlayersTabProps> = ({ onOpenPlayer }) => {
             setSort(field);
             setOrder("desc");
         }
-        setPage(0);
+        setPage(1);
     };
 
     const arrow = (field: PlayerSortField) => (sort === field ? (order === "asc" ? " ↑" : " ↓") : "");
-    const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
     return (
         <>
@@ -117,26 +117,16 @@ const PlayersTab: React.FC<PlayersTabProps> = ({ onOpenPlayer }) => {
                         </div>
                     ))}
 
-                {total > PAGE_SIZE && (
-                    <div className={styles.footer}>
-                        <span className={styles.secondary}>
-                            Page {page + 1} of {pageCount}
-                        </span>
-                        <div className={styles.toolbar}>
-                            <button type="button" className={`btn-ghost ${styles.pill}`} disabled={page === 0 || isLoading} onClick={() => setPage(p => p - 1)}>
-                                Previous
-                            </button>
-                            <button
-                                type="button"
-                                className={`btn-ghost ${styles.pill}`}
-                                disabled={page + 1 >= pageCount || isLoading}
-                                onClick={() => setPage(p => p + 1)}
-                            >
-                                Next
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <Pagination
+                    slice={pageInfo(total, page, pageSize)}
+                    pageSize={pageSize}
+                    disabled={isLoading}
+                    onPageChange={setPage}
+                    onPageSizeChange={size => {
+                        setPageSize(size);
+                        setPage(1);
+                    }}
+                />
             </div>
         </>
     );

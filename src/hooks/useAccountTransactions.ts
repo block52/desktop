@@ -8,7 +8,8 @@ export interface AccountTx {
     success: boolean;
 }
 
-const LIMIT = 10;
+/** Newest transactions fetched per direction; the explorer pages through them client-side. */
+const LIMIT = 60;
 
 export function normalizeAccountTx(raw: unknown): AccountTx | null {
     if (typeof raw !== "object" || raw === null) return null;

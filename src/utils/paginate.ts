@@ -9,21 +9,28 @@ export interface PageSlice<T> {
     last: number;
 }
 
-/** Slice a list into a page. A requested page past the end (or before 1) is clamped, never empty. */
-export function paginate<T>(list: readonly T[], requestedPage: number, pageSize: number): PageSlice<T> {
-    const total = list.length;
+export type PageInfo = Omit<PageSlice<unknown>, "items">;
+
+/** Page numbers and visible range for a list of `total` items; a requested page out of range is clamped. */
+export function pageInfo(total: number, requestedPage: number, pageSize: number): PageInfo {
     const pageCount = Math.max(1, Math.ceil(total / pageSize));
     const page = Math.min(Math.max(1, Math.floor(requestedPage)), pageCount);
     const start = (page - 1) * pageSize;
-    const items = list.slice(start, start + pageSize);
+    const shown = Math.max(0, Math.min(pageSize, total - start));
     return {
-        items,
         page,
         pageCount,
         total,
         first: total === 0 ? 0 : start + 1,
-        last: total === 0 ? 0 : start + items.length
+        last: total === 0 ? 0 : start + shown
     };
+}
+
+/** Slice a list into a page. A requested page past the end (or before 1) is clamped, never empty. */
+export function paginate<T>(list: readonly T[], requestedPage: number, pageSize: number): PageSlice<T> {
+    const info = pageInfo(list.length, requestedPage, pageSize);
+    const start = (info.page - 1) * pageSize;
+    return { ...info, items: list.slice(start, start + pageSize) };
 }
 
 /**

@@ -4,6 +4,8 @@ import { useAccountTransactions } from "../../hooks/useAccountTransactions";
 import { getCosmosClient } from "../../utils/cosmos/client";
 import { microToDecimal } from "../../utils/currency";
 import CopyButton from "../copyButton/CopyButton";
+import Pagination, { PAGE_SIZES } from "../pagination/Pagination";
+import { paginate } from "../../utils/paginate";
 import styles from "./ExplorerTabs.module.css";
 
 interface Coin {
@@ -38,6 +40,11 @@ const AddressLookupTab: React.FC<AddressLookupTabProps> = ({ address, onAddressC
 
     const target = address === "" ? null : address;
     const { txs, isLoading: txsLoading, error: txsError } = useAccountTransactions(target);
+    // The page belongs to one address and size; looking up another address starts again at page 1.
+    const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
+    const pageKey = `${address}|${pageSize}`;
+    const [pageState, setPageState] = useState({ key: pageKey, page: 1 });
+    const slice = paginate(txs, pageState.key === pageKey ? pageState.page : 1, pageSize);
 
     useEffect(() => {
         setDraft(address);
@@ -133,7 +140,7 @@ const AddressLookupTab: React.FC<AddressLookupTabProps> = ({ address, onAddressC
                                 <span className={styles.secondary}>No transactions found for this address.</span>
                             )}
                         </div>
-                        {txs.map(tx => (
+                        {slice.items.map(tx => (
                             <div key={tx.hash} className={`row-hover ${styles.row} ${styles.rowLink}`} onClick={() => onTxClick(tx.hash)}>
                                 <div className={styles.grow}>
                                     <span className={styles.primary}>{`${tx.hash.slice(0, 16)}…${tx.hash.slice(-6)}`}</span>
@@ -145,6 +152,12 @@ const AddressLookupTab: React.FC<AddressLookupTabProps> = ({ address, onAddressC
                                 <span className={`${styles.num} ${tx.success ? styles.won : styles.lost}`}>{tx.success ? "Success" : "Failed"}</span>
                             </div>
                         ))}
+                        <Pagination
+                            slice={slice}
+                            pageSize={pageSize}
+                            onPageChange={page => setPageState({ key: pageKey, page })}
+                            onPageSizeChange={setPageSize}
+                        />
                     </>
                 )}
             </div>
