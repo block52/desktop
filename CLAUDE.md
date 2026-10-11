@@ -46,6 +46,11 @@ Known intentional divergences — do not "fix" these when comparing:
 - **Wallet**: layout matches the mock (Available card + segmented Deposit/Withdraw switching the inline panel, Activity list from real `listWithdrawalRequests` data); the mock's QR-deposit rows have no equivalent in the real bridge flow (approve/deposit via web3 instead), "At tables" / "Lifetime net" rows have no data source — keys section is an app addition below the fold
 - **Hand distribution**: mock is a shuffle-fairness audit (chi-squared, frequency bars) — built from the indexer API (`VITE_INDEXER_URL`, default `https://indexer.block52.xyz`) as the default tab, with the Monte Carlo equity calculator kept as a second tab (an app addition). Adds suit/rank chi-squared tests and a duplicate-seed note from the web explorer page; the mock's Verdict/χ²/p-value/Cards-dealt tiles show "No data yet" until the indexer has revealed cards
 - **Nodes**: app manages RPC network endpoints; mock lists validators
+- **Lobby**: adds a Mine tab and "★ Yours" pill (tables you created), newest-first order, and 15/30/50-per-page pagination
+- **Create table**: web-parity form (game type, name validation, blind/buy-in presets, calculated range, creation-fee preview) — the mock's dialog is simpler
+- **Wallet**: refresh button, copyable address, and a transfers + withdrawals activity feed (the mock shows withdrawals only)
+- **Block explorer**: shared pagination (15/30/50) on every tab
+- **Table**: ported from the web app rather than the mock — web card/chip art, win and turn ripples, seat banner (last action, turn clock, WINS / place), Modern / Classic / Nouns themes, Sit & Go strip (blind level, next blinds, prizes), play settings menu (auto fold / muck / pre-check / sounds), pre-select check, sit-out boxes, add chips, leave confirmation, Sit & Go prize claim, auto-reconnect banner, live hand strength, and action / turn sounds
 
 ## Inherited Rules
 
