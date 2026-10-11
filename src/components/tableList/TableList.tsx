@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { isTournamentFormat, formatGameFormatDisplay, COSMOS_CONSTANTS, GameVariant } from "@block52/poker-vm-sdk";
 import { useFindGames } from "../../hooks/useFindGames";
 import type { GameWithFormat } from "../../hooks/useFindGames";
+import { sortGamesNewestFirst } from "../../utils/convertUtils";
 import CreateTableModal from "../modal/CreateTableModal";
 import CopyButton from "../copyButton/CopyButton";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
@@ -69,7 +70,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
     const sngCount = useMemo(() => rawGames.filter(isSitAndGo).length, [rawGames]);
 
     const games = useMemo(() => {
-        let list = rawGames;
+        let list = sortGamesNewestFirst(rawGames);
         if (formatFilter === "mine") {
             list = list.filter(isMine);
         } else if (formatFilter !== "all") {
