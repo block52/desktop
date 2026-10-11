@@ -14,6 +14,12 @@ export interface TableHeaderProps {
     variantLabel: string;
     smallBlind: string;
     bigBlind: string;
+    /** "$" for cash, "" for tournament chips. */
+    currencySymbol?: string;
+    /** What it costs to sit: "Buy-in $0.40 – $2.00" or "Entry $1.00". */
+    buyInLabel?: string;
+    /** The wallet this table plays from: shown even when you are not seated, so you can see if you can afford a seat. */
+    wallet?: { address: string; balance: string; isRefreshing: boolean; onRefresh: () => void; isShort?: boolean };
     handNumber: number;
     /** True when the connected wallet created this table. */
     isCreatedByYou?: boolean;
@@ -50,6 +56,9 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     variantLabel,
     smallBlind,
     bigBlind,
+    currencySymbol = "$",
+    buyInLabel,
+    wallet,
     handNumber,
     isCreatedByYou = false,
     onBack,
@@ -118,9 +127,37 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                     )}
                 </span>
                 <span className={styles.subline}>
-                    {variantLabel} · ${smallBlind} / ${bigBlind} · Hand #{handNumber}
+                    {variantLabel} · {currencySymbol}{smallBlind} / {currencySymbol}{bigBlind}
+                    {buyInLabel !== undefined && <> · {buyInLabel}</>} · Hand #{handNumber}
                 </span>
             </div>
+            {wallet !== undefined && (
+                <span className={styles.walletPill} title="Your wallet">
+                    <span
+                        className={`${styles.walletBalance} ${wallet.isShort === true ? styles.walletShort : ""}`}
+                        title={wallet.isShort === true ? "Not enough to sit at this table" : undefined}
+                    >
+                        ${wallet.balance}
+                    </span>
+                    <span className={styles.walletAddress}>
+                        {wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}
+                    </span>
+                    <CopyButton text={wallet.address} message="Address copied" title="Copy wallet address" />
+                    <button
+                        type="button"
+                        className={`${styles.walletRefresh} ${wallet.isRefreshing ? styles.walletRefreshing : ""}`}
+                        onClick={wallet.onRefresh}
+                        disabled={wallet.isRefreshing}
+                        aria-label="Refresh balance"
+                        title="Refresh balance"
+                    >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 12a9 9 0 1 1-3-6.7" />
+                            <path d="M21 4v5h-5" />
+                        </svg>
+                    </button>
+                </span>
+            )}
             {isCreatedByYou && <span className={styles.creatorPill}>Created by you</span>}
             <span className={styles.verifiedPill}>
                 <span className={styles.verifiedDot} />

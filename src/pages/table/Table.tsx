@@ -79,7 +79,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         useGameState();
     const { showSuccess, showError, showWarning } = useToast();
     const legalActions = usePlayerLegalActions();
-    const { balance: cosmosBalance } = useCosmosWallet();
+    const { balance: cosmosBalance, address: walletAddress, refreshBalance } = useCosmosWallet();
+    const [isRefreshingBalance, setIsRefreshingBalance] = useState<boolean>(false);
 
     const [wagerAmount, setWagerAmount] = useState<string>("");
     /** Seat the player clicked to sit at; non-null while the join modal is open. */
@@ -528,6 +529,27 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             <TableHeader
                 tableLabel={`Table ${tableId.slice(0, 6)}…${tableId.slice(-4)}`}
                 tableId={tableId}
+                currencySymbol={isTournamentBlinds ? "" : "$"}
+                buyInLabel={
+                    isTournamentBlinds
+                        ? `Entry $${(Number(gameState.gameOptions.minBuyIn) / 1_000_000).toFixed(2)}`
+                        : `Buy-in $${(Number(gameState.gameOptions.minBuyIn) / 1_000_000).toFixed(2)} – $${(Number(gameState.gameOptions.maxBuyIn) / 1_000_000).toFixed(2)}`
+                }
+                wallet={
+                    walletAddress !== null
+                        ? {
+                              address: walletAddress,
+                              balance: (Number(usdcBalanceAmount) / 1_000_000).toFixed(2),
+                              isRefreshing: isRefreshingBalance,
+                              // Not seated and below the table's minimum buy-in: the balance shows red.
+                              isShort: !isUserSeated && BigInt(usdcBalanceAmount) < BigInt(gameState.gameOptions.minBuyIn),
+                              onRefresh: () => {
+                                  setIsRefreshingBalance(true);
+                                  void refreshBalance().finally(() => setIsRefreshingBalance(false));
+                              }
+                          }
+                        : undefined
+                }
                 variantLabel={getVariantLabel(gameVariant !== undefined ? String(gameVariant) : undefined)}
                 smallBlind={blindText(gameState.gameOptions.smallBlind)}
                 bigBlind={blindText(gameState.gameOptions.bigBlind)}
