@@ -26,8 +26,7 @@ import type { PlayerActionResult, JoinTableResult, LeaveTableResult } from "../.
 import { TableHeader } from "../../components/table/TableHeader";
 import { TableBoard } from "../../components/table/TableBoard";
 import { HandLog } from "../../components/table/HandLog";
-import { JoinTableModal } from "../../components/modal/JoinTableModal";
-import { SitAndGoJoinModal } from "../../components/modal/SitAndGoJoinModal";
+import { TableModals } from "../../components/table/TableModals";
 import { useSeatJoinNotice } from "../../hooks/useSeatJoinNotice";
 import { useAllInEquity } from "../../hooks/useAllInEquity";
 import { useHandSeed } from "../../hooks/useHandSeed";
@@ -35,15 +34,12 @@ import { useHoleCardWatchdog } from "../../hooks/useHoleCardWatchdog";
 import { PlayerActionButtons } from "../../components/table/PlayerActionButtons";
 import { NoWalletOverlay } from "../../components/table/NoWalletOverlay";
 import { TableErrorPage } from "../../components/table/TableErrorPage";
-import { TopUpModal } from "../../components/modal/TopUpModal";
 import { topUpTable, type TopUpResult } from "../../hooks/playerActions/topUp";
 import { maxTopUpMicro } from "../../utils/topUpLimits";
 import { ConnectionBanner } from "../../components/table/ConnectionBanner";
 import { StepButtons, type BlockingStep } from "../../components/table/StepButtons";
 import { TournamentStrip } from "../../components/table/TournamentStrip";
 import { primaryAction } from "../../components/table/PlayerActionButtons";
-import { LeaveTableModal } from "../../components/modal/LeaveTableModal";
-import { SitAndGoResultModal } from "../../components/modal/SitAndGoResultModal";
 import { claimWinnings } from "../../hooks/playerActions/claimWinnings";
 import { useGameSettings } from "../../hooks/useGameSettings";
 import { useTableSounds } from "../../hooks/useTableSounds";
@@ -654,77 +650,67 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     )}
                 </TableBoard>
             </div>
-            {leaveOpen && canLeave && (
-                <LeaveTableModal
-                    returnAmount={leaveReturnAmount}
-                    isTournament={isTournamentBlinds}
-                    isInActiveHand={isInActiveHand}
-                    isSubmitting={isSubmitting}
-                    onClose={() => setLeaveOpen(false)}
-                    onConfirm={async () => {
-                        const left = await runAction("Leave", () => leaveTable(tableId, currentNetwork));
-                        if (left) setLeaveOpen(false);
-                    }}
-                />
-            )}
-            {topUpOpen && canTopUp && myPlayer !== undefined && (
-                <TopUpModal
-                    stack={BigInt(myPlayer.stack)}
-                    maxAddable={maxTopUp}
-                    isSubmitting={isSubmitting}
-                    onClose={() => setTopUpOpen(false)}
-                    onConfirm={async amount => {
-                        const added = await runAction("Top up", () => topUpTable(tableId, currentNetwork, amount));
-                        if (added) setTopUpOpen(false);
-                    }}
-                />
-            )}
-            {showResult && myResult !== undefined && (
-                <SitAndGoResultModal
-                    place={myResult.place}
-                    payout={myResult.payout !== "0" ? `$${(Number(myResult.payout) / 1_000_000).toFixed(2)}` : undefined}
-                    onClose={dismissResult}
-                    onClaim={async () => {
-                        await claimWinnings(tableId, currentNetwork, gameState);
-                        showSuccess("Prize collected");
-                    }}
-                    onLeave={async () => {
-                        await leaveTable(tableId, currentNetwork);
-                        showSuccess("Left the table");
-                        dismissResult();
-                    }}
-                />
-            )}
-            {modalSeat !== null && (() => {
-                const { gameOptions } = gameState;
-                return isTournamentBlinds ? (
-                    <SitAndGoJoinModal
-                        seatNumber={modalSeat}
-                        buyIn={gameOptions.minBuyIn}
-                        entryFee={gameOptions.entryFee}
-                        startingStack={gameOptions.startingStack}
-                        blindLevelMinutes={gameOptions.blindLevelDuration}
-                        smallBlind={gameOptions.smallBlind}
-                        bigBlind={gameOptions.bigBlind}
-                        seated={gameState.players.length}
-                        maxPlayers={gameOptions.maxPlayers}
-                        balance={usdcBalanceAmount}
-                        isSubmitting={isSubmitting}
-                        onConfirm={confirmJoin}
-                        onClose={closeJoinModal}
-                    />
-                ) : (
-                    <JoinTableModal
-                        seatNumber={modalSeat}
-                        minBuyIn={gameOptions.minBuyIn}
-                        maxBuyIn={gameOptions.maxBuyIn}
-                        balance={usdcBalanceAmount}
-                        isSubmitting={isSubmitting}
-                        onClose={closeJoinModal}
-                        onConfirm={confirmJoin}
-                    />
-                );
-            })()}
+            <TableModals
+                isSubmitting={isSubmitting}
+                leave={
+                    leaveOpen && canLeave
+                        ? {
+                              returnAmount: leaveReturnAmount,
+                              isTournament: isTournamentBlinds,
+                              isInActiveHand,
+                              onClose: () => setLeaveOpen(false),
+                              onConfirm: async () => {
+                                  const left = await runAction("Leave", () => leaveTable(tableId, currentNetwork));
+                                  if (left) setLeaveOpen(false);
+                              }
+                          }
+                        : null
+                }
+                topUp={
+                    topUpOpen && canTopUp && myPlayer !== undefined
+                        ? {
+                              stack: BigInt(myPlayer.stack),
+                              maxAddable: maxTopUp,
+                              onClose: () => setTopUpOpen(false),
+                              onConfirm: async amount => {
+                                  const added = await runAction("Top up", () => topUpTable(tableId, currentNetwork, amount));
+                                  if (added) setTopUpOpen(false);
+                              }
+                          }
+                        : null
+                }
+                result={
+                    showResult && myResult !== undefined
+                        ? {
+                              place: myResult.place,
+                              payout: myResult.payout !== "0" ? `$${(Number(myResult.payout) / 1_000_000).toFixed(2)}` : undefined,
+                              onClose: dismissResult,
+                              onClaim: async () => {
+                                  await claimWinnings(tableId, currentNetwork, gameState);
+                                  showSuccess("Prize collected");
+                              },
+                              onLeave: async () => {
+                                  await leaveTable(tableId, currentNetwork);
+                                  showSuccess("Left the table");
+                                  dismissResult();
+                              }
+                          }
+                        : null
+                }
+                join={
+                    modalSeat !== null
+                        ? {
+                              seatNumber: modalSeat,
+                              isTournament: isTournamentBlinds,
+                              gameOptions: gameState.gameOptions,
+                              seated: gameState.players.length,
+                              balance: usdcBalanceAmount,
+                              onConfirm: confirmJoin,
+                              onClose: closeJoinModal
+                          }
+                        : null
+                }
+            />
             {isUserSeated && (
                 <div className={styles.actionSlot}>
                 {!waitingForPlayers && !sitAndGoWaiting && (
