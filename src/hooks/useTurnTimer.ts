@@ -21,8 +21,9 @@ export function useTurnTimer(gameState: TexasHoldemStateDTO | undefined): TurnTi
     const [now, setNow] = useState(() => Date.now());
     const [anchored, setAnchored] = useState<{ key: string; ms: number }>({ key: "", ms: 0 });
 
-    const timeoutSeconds = gameState?.gameOptions.timeout ?? DEFAULT_TIMEOUT_SECONDS;
-    const nextToAct = gameState?.nextToAct ?? 0;
+    // Before the table loads there is no clock; afterwards the table's own timeout and seat are used as sent.
+    const timeoutSeconds = gameState !== undefined ? gameState.gameOptions.timeout : DEFAULT_TIMEOUT_SECONDS;
+    const nextToAct = gameState !== undefined ? gameState.nextToAct : 0;
     const turnKey = gameState !== undefined ? turnId(nextToAct, gameState.previousActions.length) : "";
     const isRunning = gameState !== undefined && nextToAct > 0 && gameState.players.length >= 2;
 

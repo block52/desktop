@@ -97,3 +97,6 @@ out/
 # Local tooling output
 .playwright-mcp/
 .superpowers/
+
+# Generated code-review reports
+.reviews/

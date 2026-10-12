@@ -745,7 +745,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                               }
                             : undefined
                     }
-                    handLabel={isFolded ? null : describeHandStrength(myPlayer?.holeCards ?? undefined, gameState.communityCards)}
+                    handLabel={isFolded ? null : describeHandStrength(myPlayer?.holeCards, gameState.communityCards)}
                     stepActive={stepDue}
                     sitInMode={
                         seatDisplay.kind === "sit-in-bootstrap" ? "bootstrap" : seatDisplay.kind === "sit-in-options" ? "options" : "none"
