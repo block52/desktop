@@ -46,7 +46,7 @@ Known intentional divergences — do not "fix" these when comparing:
 - **Wallet**: layout matches the mock (Available card + segmented Deposit/Withdraw switching the inline panel, Activity list from real `listWithdrawalRequests` data); the mock's QR-deposit rows have no equivalent in the real bridge flow (approve/deposit via web3 instead), "At tables" / "Lifetime net" rows have no data source — keys section is an app addition below the fold
 - **Hand distribution**: mock is a shuffle-fairness audit (chi-squared, frequency bars) — built from the indexer API (`VITE_INDEXER_URL`, default `https://indexer.block52.xyz`) as the default tab, with the Monte Carlo equity calculator kept as a second tab (an app addition). Adds suit/rank chi-squared tests and a duplicate-seed note from the web explorer page; the mock's Verdict/χ²/p-value/Cards-dealt tiles show "No data yet" until the indexer has revealed cards
 - **Nodes**: app manages RPC network endpoints; mock lists validators
-- **Lobby**: adds a Mine tab and "★ Yours" pill (tables you created), newest-first order, and 15/30/50-per-page pagination
+- **Lobby**: adds a Mine tab (tables you created, marked by an accent bar and "by you"), per-row Playing / Waiting / Finished status badges, a creator line instead of the small id, newest-first order, and 15/30/50-per-page pagination
 - **Create table**: web-parity form (game type, name validation, blind/buy-in presets, calculated range, creation-fee preview) — the mock's dialog is simpler
 - **Wallet**: refresh button, copyable address, and a transfers + withdrawals activity feed (the mock shows withdrawals only)
 - **Block explorer**: shared pagination (15/30/50) on every tab
