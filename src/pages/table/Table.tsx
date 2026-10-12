@@ -41,6 +41,7 @@ import { StepButtons, type BlockingStep } from "../../components/table/StepButto
 import { TournamentStrip } from "../../components/table/TournamentStrip";
 import { primaryAction } from "../../components/table/PlayerActionButtons";
 import { claimWinnings } from "../../hooks/playerActions/claimWinnings";
+import { actionErrorMessage, isPayoutAlreadyClaimed } from "../../utils/chainErrors";
 import { useGameSettings } from "../../hooks/useGameSettings";
 import { useTableSounds } from "../../hooks/useTableSounds";
 import { useTurnTimer } from "../../hooks/useTurnTimer";
@@ -155,7 +156,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             showSuccess(`${label} confirmed`);
             return true;
         } catch (err) {
-            showError(err instanceof Error ? err.message : String(err));
+            showError(actionErrorMessage(err));
             return false;
         } finally {
             actionInFlight.current = false;
@@ -194,7 +195,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         },
         err => {
             setAutoActivity(null);
-            showError(err.message);
+            showError(actionErrorMessage(err));
         },
         settings.autoPostBlinds
     );
@@ -212,7 +213,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         },
         err => {
             setAutoActivity(null);
-            showError(err.message);
+            showError(actionErrorMessage(err));
         },
         settings.autoDeal
     );
@@ -227,7 +228,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
         },
         err => {
             setAutoActivity(null);
-            showError(err.message);
+            showError(actionErrorMessage(err));
         },
         settings.autoNewHand
     );
@@ -287,7 +288,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                 .then(() => {
                     setAwaitingFrame({ label: "Sit in", actionCount: actionCountNow });
                 })
-                .catch(err => showError(err instanceof Error ? err.message : String(err)))
+                .catch(err => showError(actionErrorMessage(err)))
                 .finally(() => setAutoActivity(null));
         }
         if (!wantsAutoSitIn) {
@@ -332,7 +333,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const submitSitOut = () => {
         void sitOut(tableId, currentNetwork).catch(err => {
             setSitOutNextHandOptimistic(null);
-            showError(err instanceof Error ? err.message : String(err));
+            showError(actionErrorMessage(err));
         });
     };
     const toggleSitOutNextHand = () => {
@@ -507,12 +508,16 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const stepDue = smallBlindDue || bigBlindDue || dealDue;
     // In flight (by hand or automatically) or accepted and waiting for the table to move on.
     const stepLabel = pendingAction ?? awaitingFrame?.label ?? null;
+    // With the auto setting on, a due step is already being taken for you: show it as in progress straight away.
+    const autoSmall = settings.autoPostBlinds && smallBlindDue && legalActions.isPlayerTurn;
+    const autoBig = settings.autoPostBlinds && bigBlindDue && legalActions.isPlayerTurn;
+    const autoDealing = settings.autoDeal && dealDue && legalActions.isPlayerTurn;
     const blockingStep: BlockingStep =
-        autoActivity === "Posting small blind…" || stepLabel === "Post small blind"
+        autoActivity === "Posting small blind…" || stepLabel === "Post small blind" || autoSmall
             ? "small-blind"
-            : autoActivity === "Posting big blind…" || stepLabel === "Post big blind"
+            : autoActivity === "Posting big blind…" || stepLabel === "Post big blind" || autoBig
               ? "big-blind"
-              : autoActivity === "Dealing cards…" || stepLabel === "Deal"
+              : autoActivity === "Dealing cards…" || stepLabel === "Deal" || autoDealing
                 ? "deal"
                 : null;
     const stepButtons =
@@ -674,8 +679,20 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                               isInActiveHand,
                               onClose: () => setLeaveOpen(false),
                               onConfirm: async () => {
-                                  const left = await runAction("Leave", () => leaveTable(tableId, currentNetwork));
-                                  if (left) setLeaveOpen(false);
+                                  // A prize already claimed means the chain has removed the seat: leaving again is a no-op.
+                                  const leave = async () => {
+                                      try {
+                                          return await leaveTable(tableId, currentNetwork);
+                                      } catch (err) {
+                                          if (!isPayoutAlreadyClaimed(err)) throw err;
+                                          return { hash: "", gameId: tableId, action: NonPlayerActionType.LEAVE };
+                                      }
+                                  };
+                                  const left = await runAction("Leave", leave);
+                                  if (left) {
+                                      setLeaveOpen(false);
+                                      navigate("/");
+                                  }
                               }
                           }
                         : null
@@ -699,14 +716,33 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                               place: myResult.place,
                               payout: myResult.payout !== "0" ? `$${(Number(myResult.payout) / 1_000_000).toFixed(2)}` : undefined,
                               onClose: dismissResult,
+                              // Claiming settles with MsgLeaveGame, so a claimed prize means the seat is already left.
                               onClaim: async () => {
-                                  await claimWinnings(tableId, currentNetwork, gameState);
-                                  showSuccess("Prize collected");
+                                  try {
+                                      await claimWinnings(tableId, currentNetwork, gameState);
+                                      showSuccess("Prize collected");
+                                  } catch (err) {
+                                      if (!isPayoutAlreadyClaimed(err)) {
+                                          showError(actionErrorMessage(err));
+                                          return;
+                                      }
+                                      showSuccess("Prize already collected");
+                                  }
+                                  dismissResult();
+                                  navigate("/");
                               },
                               onLeave: async () => {
-                                  await leaveTable(tableId, currentNetwork);
-                                  showSuccess("Left the table");
+                                  try {
+                                      await leaveTable(tableId, currentNetwork);
+                                      showSuccess("Left the table");
+                                  } catch (err) {
+                                      if (!isPayoutAlreadyClaimed(err)) {
+                                          showError(actionErrorMessage(err));
+                                          return;
+                                      }
+                                  }
                                   dismissResult();
+                                  navigate("/");
                               }
                           }
                         : null
