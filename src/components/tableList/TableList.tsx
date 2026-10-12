@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { isTournamentFormat, isCashFormat, formatGameFormatDisplay, COSMOS_CONSTANTS, GameVariant } from "@block52/poker-vm-sdk";
 import { useFindGames } from "../../hooks/useFindGames";
 import type { GameWithFormat } from "../../hooks/useFindGames";
-import { useTablesStatus } from "../../hooks/useTablesStatus";
+import { useTablesStatus, type TableLiveStatus } from "../../hooks/useTablesStatus";
 import { sortGamesNewestFirst } from "../../utils/convertUtils";
 import { paginate } from "../../utils/paginate";
 import Pagination, { PAGE_SIZES } from "../pagination/Pagination";
@@ -56,6 +56,14 @@ function formatBuyIn(game: GameWithFormat): string {
 }
 
 type FormatFilter = "all" | "cash" | "sit-and-go" | "mine";
+type StatusFilter = "all" | TableLiveStatus;
+
+const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+    { value: "all", label: "Any status" },
+    { value: "playing", label: "Playing" },
+    { value: "waiting", label: "Waiting" },
+    { value: "finished", label: "Finished" }
+];
 
 interface TableListProps {
     search: string;
@@ -66,6 +74,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
     const { games: rawGames, isLoading, error, refetch } = useFindGames();
 
     const [formatFilter, setFormatFilter] = useState<FormatFilter>("all");
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
     const { currentNetwork } = useNetwork();
     const { showSuccess, showError } = useToast();
@@ -94,7 +103,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
     };
     const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
     // The page belongs to one filter/search/size combination; changing any of them starts again at page 1.
-    const pageKey = `${formatFilter}|${search.trim()}|${pageSize}`;
+    const pageKey = `${formatFilter}|${statusFilter}|${search.trim()}|${pageSize}`;
     const [pageState, setPageState] = useState({ key: pageKey, page: 1 });
     const requestedPage = pageState.key === pageKey ? pageState.page : 1;
 
@@ -106,7 +115,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
     const cashCount = useMemo(() => rawGames.filter(game => !isSitAndGo(game)).length, [rawGames]);
     const sngCount = useMemo(() => rawGames.filter(isSitAndGo).length, [rawGames]);
 
-    const games = useMemo(() => {
+    const matching = useMemo(() => {
         let list = sortGamesNewestFirst(rawGames);
         if (formatFilter === "mine") {
             list = list.filter(isMine);
@@ -122,8 +131,10 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
         return list;
     }, [rawGames, search, formatFilter]);
 
+    // Status is read per table from chain state: only the visible page is checked, unless a status filter needs every match.
+    const liveStatus = useTablesStatus(statusFilter === "all" ? paginate(matching, requestedPage, pageSize).items : matching);
+    const games = statusFilter === "all" ? matching : matching.filter(game => liveStatus.get(game.gameId) === statusFilter);
     const slice = paginate(games, requestedPage, pageSize);
-    const liveStatus = useTablesStatus(slice.items);
 
     const headerRow = (
         <div className={styles.headerRow}>
@@ -154,6 +165,19 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                     >
                         Mine <span className="seg-count">{mineCount}</span>
                     </button>
+                </div>
+            </div>
+            <div className={styles.segmentedWrap}>
+                <div className="segmented" role="group" aria-label="Filter by status">
+                    {STATUS_FILTERS.map(option => (
+                        <button
+                            key={option.value}
+                            className={statusFilter === option.value ? "seg on" : "seg"}
+                            onClick={() => setStatusFilter(option.value)}
+                        >
+                            {option.label}
+                        </button>
+                    ))}
                 </div>
             </div>
             <button className={`btn-ghost ${styles.createButton}`} onClick={() => setShowCreateModal(true)}>

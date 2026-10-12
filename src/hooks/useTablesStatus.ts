@@ -5,6 +5,7 @@ import { isTablePlaying, isTournamentFinished } from "../utils/tournamentState";
 import type { GameWithFormat } from "../utils/convertUtils";
 
 const POLL_MS = 15000;
+const BATCH = 10;
 
 async function fetchPublicState(rest: string, gameId: string): Promise<TexasHoldemStateDTO> {
     const response = await fetch(`${rest}/block52/pokerchain/poker/v1/game_state_public/${encodeURIComponent(gameId)}`);
@@ -28,7 +29,12 @@ export function useTablesStatus(games: GameWithFormat[]): ReadonlyMap<string, Ta
         let cancelled = false;
 
         const check = async () => {
-            const results = await Promise.allSettled(tracked.map(game => fetchPublicState(rest, game.gameId)));
+            const results: PromiseSettledResult<TexasHoldemStateDTO>[] = [];
+            for (let start = 0; start < tracked.length; start += BATCH) {
+                const batch = tracked.slice(start, start + BATCH);
+                results.push(...(await Promise.allSettled(batch.map(game => fetchPublicState(rest, game.gameId)))));
+                if (cancelled) return;
+            }
             if (cancelled) return;
             const next = new Map<string, TableLiveStatus>();
             results.forEach((result, index) => {
