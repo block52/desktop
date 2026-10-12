@@ -19,6 +19,8 @@ export interface TableBoardProps extends Omit<PlayerSeatingProps, "players"> {
     pot: string;
     /** Whether the total pot has chips in it; an empty pot is hidden while waiting for players. */
     hasPot: boolean;
+    /** Hide the pot pill and chips altogether (a finished tournament's table state still carries the last pot). */
+    hidePot?: boolean;
     /** Total pot as a whole-dollar/chip value, for the chip pile. */
     potValue: number;
     /** Formatted main pot (currency symbol included), set only when it differs from the total pot (post-flop side bets). */
@@ -38,6 +40,7 @@ export const TableBoard: React.FC<TableBoardProps> = ({
     communityCards,
     pot,
     hasPot,
+    hidePot = false,
     potValue,
     mainPot,
     round,
@@ -48,7 +51,7 @@ export const TableBoard: React.FC<TableBoardProps> = ({
     ...seatingProps
 }) => {
     const winningCards = seatingProps.winningCards ?? [];
-    const potDisplay = (
+    const potDisplay = hidePot ? null : (
         <div className={styles.potStack}>
             {hasPot && <ChipPile amount={potValue} />}
             <div className={styles.potPill}>

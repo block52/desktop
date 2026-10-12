@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { TexasHoldemStateDTO } from "@block52/poker-vm-sdk";
+import { TexasHoldemRound, type TexasHoldemStateDTO } from "@block52/poker-vm-sdk";
 import { latestActionTimestampMs, secondsRemaining, turnId } from "../utils/turnTimer";
 
 const DEFAULT_TIMEOUT_SECONDS = 30;
@@ -25,7 +25,8 @@ export function useTurnTimer(gameState: TexasHoldemStateDTO | undefined): TurnTi
     const timeoutSeconds = gameState !== undefined ? gameState.gameOptions.timeout : DEFAULT_TIMEOUT_SECONDS;
     const nextToAct = gameState !== undefined ? gameState.nextToAct : 0;
     const turnKey = gameState !== undefined ? turnId(nextToAct, gameState.previousActions.length) : "";
-    const isRunning = gameState !== undefined && nextToAct > 0 && gameState.players.length >= 2;
+    // No clock once the hand (or the tournament) is over, even though the table still names a seat to act.
+    const isRunning = gameState !== undefined && nextToAct > 0 && gameState.players.length >= 2 && gameState.round !== TexasHoldemRound.END;
 
     // Re-anchor only when the turn itself changes (derived state, set during render).
     if (gameState !== undefined && anchored.key !== turnKey) {

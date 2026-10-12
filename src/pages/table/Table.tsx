@@ -49,6 +49,7 @@ import { useTableAutoPlay } from "../../hooks/playerActions/useTableAutoPlay";
 import { postSmallBlind } from "../../hooks/playerActions/postSmallBlind";
 import { postBigBlind } from "../../hooks/playerActions/postBigBlind";
 import { dealCardsWithEntropy } from "../../hooks/playerActions/dealCards";
+import { isTournamentFinished, tournamentSurvivor } from "../../utils/tournamentState";
 import { getPlayerActionDisplay } from "../../utils/playerActionDisplay";
 import { sitOut } from "../../hooks/playerActions/sitOut";
 import { useAutoSitOutNextBB } from "../../hooks/playerActions/useAutoSitOutNextBB";
@@ -440,12 +441,23 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const winnersBySeat = new Map(
         gameState.winners.map(winner => [winner.seat, { amount: formatAmount(winner.amount), description: winner.description }] as const)
     );
+    // A finished tournament's last frame still carries the final pot and bets; none of it is live.
+    const tournamentFinished = isTournamentFinished(gameState, isTournamentBlinds);
+    const survivorAddress = tournamentFinished ? tournamentSurvivor(gameState) : null;
     const resultsByAddress = new Map(
         gameState.results.map(result => [
             result.playerId.toLowerCase(),
             { place: result.place, payout: result.payout !== "0" ? `$${(Number(result.payout) / 1_000_000).toFixed(2)}` : undefined }
         ] as const)
     );
+    // The chain may leave the last player standing out of `results`; they are the winner.
+    if (survivorAddress !== null && !resultsByAddress.has(survivorAddress.toLowerCase())) {
+        const firstPrize = gameState.payouts !== undefined ? gameState.payouts.find(payout => payout.place === 1) : undefined;
+        resultsByAddress.set(survivorAddress.toLowerCase(), {
+            place: 1,
+            payout: firstPrize !== undefined && firstPrize.amount !== "0" ? `$${(Number(firstPrize.amount) / 1_000_000).toFixed(2)}` : undefined
+        });
+    }
     const winningCards = gameState.winners.flatMap(winner => winner.cards ?? []).map(code => code.toUpperCase());
     const blindText = (value: string) => formatAmount(value);
     const callMicro = legalActions.legalActions.find(candidate => candidate.action === PlayerActionType.CALL)?.min;
@@ -575,6 +587,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     nextBigBlind={gameState.gameOptions.nextBigBlind !== undefined ? formatChips(gameState.gameOptions.nextBigBlind) : undefined}
                     levelStartTime={gameState.gameOptions.levelStartTime}
                     levelDurationMinutes={gameState.gameOptions.blindLevelDuration}
+                    isFinished={tournamentFinished}
                     prizes={
                         gameState.payouts !== undefined
                             ? gameState.payouts.map(p => ({ place: p.place, amount: `$${(Number(p.amount) / 1_000_000).toFixed(2)}` }))
@@ -584,10 +597,10 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
             )}
             <div className={styles.boardRow}>
                 <TableBoard
-                    players={gameState.players}
+                    players={tournamentFinished ? gameState.players.map(player => ({ ...player, sumOfBets: "0" })) : gameState.players}
                     maxPlayers={gameState.gameOptions.maxPlayers}
                     localAddress={localAddress}
-                    nextToAct={gameState.nextToAct}
+                    nextToAct={tournamentFinished ? -1 : gameState.nextToAct}
                     smallBlindPosition={gameState.smallBlindPosition}
                     bigBlindPosition={gameState.bigBlindPosition}
                     dealer={gameState.dealer}
@@ -606,6 +619,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     communityCards={gameState.communityCards}
                     pot={potText(totalPotMicro)}
                     hasPot={totalPotMicro > 0n}
+                    hidePot={tournamentFinished}
                     potValue={chipValue(gameState.totalPot)}
                     mainPot={showMainPot ? potText(mainPotMicro) : undefined}
                     round={gameState.round}
@@ -711,7 +725,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                         : null
                 }
             />
-            {isUserSeated && (
+            {isUserSeated && !tournamentFinished && (
                 <div className={styles.actionSlot}>
                 {!waitingForPlayers && !sitAndGoWaiting && (
                 <PlayerActionButtons

@@ -14,6 +14,8 @@ interface TournamentStripProps {
     levelDurationMinutes: number;
     /** Prize places, first place first; amounts already formatted for display. */
     prizes: Array<{ place: number; amount: string }>;
+    /** The tournament has ended: there is no next level to count down to. */
+    isFinished?: boolean;
 }
 
 const ORDINALS = ["1st", "2nd", "3rd"];
@@ -28,7 +30,8 @@ export const TournamentStrip: React.FC<TournamentStripProps> = ({
     nextBigBlind,
     levelStartTime,
     levelDurationMinutes,
-    prizes
+    prizes,
+    isFinished = false
 }) => {
     const [now, setNow] = useState(() => Date.now());
     useEffect(() => {
@@ -36,7 +39,7 @@ export const TournamentStrip: React.FC<TournamentStripProps> = ({
         return () => clearInterval(interval);
     }, []);
 
-    const remaining = level !== undefined ? blindLevelSecondsRemaining(levelStartTime, levelDurationMinutes, now) : null;
+    const remaining = level !== undefined && !isFinished ? blindLevelSecondsRemaining(levelStartTime, levelDurationMinutes, now) : null;
     const hasNext = nextSmallBlind !== undefined && nextBigBlind !== undefined;
 
     return (
@@ -51,13 +54,21 @@ export const TournamentStrip: React.FC<TournamentStripProps> = ({
                     {smallBlind} / {bigBlind}
                 </span>
             </div>
-            {hasNext && (
+            {isFinished && (
+                <div className={styles.item}>
+                    <span className="section-label">Status</span>
+                    <span className={styles.value}>Finished</span>
+                </div>
+            )}
+            {hasNext && !isFinished && (
                 <div className={styles.item}>
                     <span className="section-label">Next</span>
                     <span className={styles.value}>
                         {nextSmallBlind} / {nextBigBlind}
                         {remaining !== null && (
-                            <span className={`${styles.countdown} ${remaining < 0 ? styles.overtime : ""}`}>in {formatCountdown(remaining)}</span>
+                            <span className={`${styles.countdown} ${remaining < 0 ? styles.overtime : ""}`}>
+                                {remaining < 0 ? "level change due" : `in ${formatCountdown(remaining)}`}
+                            </span>
                         )}
                     </span>
                 </div>
