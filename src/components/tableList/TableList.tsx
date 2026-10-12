@@ -244,13 +244,13 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                 <div className={styles.identity}>
                                     <span className={styles.feltIcon} />
                                     <div className={styles.identityText}>
-                                        <span className={styles.tableName}>{game.name ?? shortId(game.gameId)}</span>
+                                        <span className={styles.titleLine}>
+                                            <span className={styles.tableName}>{game.name ?? shortId(game.gameId)}</span>
+                                            <CopyButton text={game.gameId} message="Table ID copied" title="Copy table ID" />
+                                        </span>
                                         <span className={styles.tableSubline}>
-                                            <span className={styles.sublineId}>
-                                                {shortId(game.gameId)}
-                                                <CopyButton text={game.gameId} message="Table ID copied" title="Copy table ID" />
-                                            </span>
-                                            <span>· {variantLabel(game)}</span>
+                                            {game.creator !== undefined && <span>by {isMine(game) ? "you" : shortId(game.creator)}</span>}
+                                            <span>{game.creator !== undefined ? "· " : ""}{variantLabel(game)}</span>
                                             {liveStatus.get(game.gameId) === "playing" && (
                                                 <span>
                                                     ·<span className={styles.playingBadge}>Playing</span>
@@ -265,9 +265,6 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                                 <span>
                                                     ·<span className={styles.finishedBadge}>Finished</span>
                                                 </span>
-                                            )}
-                                            {game.creator !== undefined && !isMine(game) && (
-                                                <span>· by {shortId(game.creator)}</span>
                                             )}
                                             {isMine(game) && (
                                                 <span>

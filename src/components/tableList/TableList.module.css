@@ -333,12 +333,6 @@
     }
 }
 
-.sublineId {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
 /* Creator-only options: a quiet kebab at the row's far right, menu opens beneath it. */
 .moreButton {
     width: 30px;
@@ -452,4 +446,11 @@
     font-family: Inter, system-ui, sans-serif;
     font-size: 11.5px;
     font-weight: 600;
+}
+
+.titleLine {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
 }
