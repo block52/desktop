@@ -50,7 +50,7 @@
 .gridHeader,
 .row {
     display: grid;
-    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.4fr) 150px;
+    grid-template-columns: minmax(0, 2.2fr) 96px minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.4fr) 150px;
     gap: 12px;
     align-items: center;
 }
@@ -294,6 +294,7 @@
         order: 2;
     }
 
+    .statusCell,
     .formatCell,
     .playersCell,
     .blindsCell,
@@ -386,7 +387,6 @@
     gap: 5px;
     height: 20px;
     padding: 0 10px;
-    margin-left: 6px;
     border-radius: 999px;
     background: hsl(142 70% 40% / 0.16);
     color: hsl(142 70% 62%);
@@ -408,7 +408,6 @@
     align-items: center;
     height: 20px;
     padding: 0 10px;
-    margin-left: 6px;
     border-radius: 999px;
     background: hsl(245 25% 16%);
     color: rgb(148, 163, 184);
@@ -422,7 +421,6 @@
     align-items: center;
     height: 20px;
     padding: 0 10px;
-    margin-left: 6px;
     border-radius: 999px;
     background: hsl(40 90% 50% / 0.14);
     color: hsl(40 90% 65%);
@@ -436,4 +434,9 @@
     align-items: center;
     gap: 6px;
     min-width: 0;
+}
+
+.statusCell {
+    display: flex;
+    align-items: center;
 }

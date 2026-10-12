@@ -208,6 +208,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
             <div className={`pane-lite ${styles.panel}`}>
                 <div className={styles.gridHeader}>
                     <span className="section-label">Table</span>
+                    <span className="section-label">Status</span>
                     <span className="section-label">Format</span>
                     <span className="section-label">Players</span>
                     <span className="section-label">Blinds</span>
@@ -251,24 +252,15 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                         <span className={styles.tableSubline}>
                                             {game.creator !== undefined && <span>by {isMine(game) ? "you" : shortId(game.creator)}</span>}
                                             <span>{game.creator !== undefined ? "· " : ""}{variantLabel(game)}</span>
-                                            {liveStatus.get(game.gameId) === "playing" && (
-                                                <span>
-                                                    ·<span className={styles.playingBadge}>Playing</span>
-                                                </span>
-                                            )}
-                                            {liveStatus.get(game.gameId) === "waiting" && (
-                                                <span>
-                                                    ·<span className={styles.waitingBadge}>Waiting</span>
-                                                </span>
-                                            )}
-                                            {liveStatus.get(game.gameId) === "finished" && (
-                                                <span>
-                                                    ·<span className={styles.finishedBadge}>Finished</span>
-                                                </span>
-                                            )}
-                                                                                    </span>
+                                        </span>
                                     </div>
                                 </div>
+
+                                <span className={styles.statusCell}>
+                                    {liveStatus.get(game.gameId) === "playing" && <span className={styles.playingBadge}>Playing</span>}
+                                    {liveStatus.get(game.gameId) === "waiting" && <span className={styles.waitingBadge}>Waiting</span>}
+                                    {liveStatus.get(game.gameId) === "finished" && <span className={styles.finishedBadge}>Finished</span>}
+                                </span>
 
                                 <span className={styles.formatCell}>
                                     {formatGameFormatDisplay(game.gameFormat)}
