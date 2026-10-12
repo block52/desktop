@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { isSitAndGoFormat, type TexasHoldemStateDTO } from "@block52/poker-vm-sdk";
 import { useNetwork } from "../context/NetworkContext";
-import { isTablePlaying } from "../utils/tournamentState";
+import { isTablePlaying, isTournamentFinished } from "../utils/tournamentState";
 import type { GameWithFormat } from "../utils/convertUtils";
 
 const POLL_MS = 15000;
@@ -13,10 +13,12 @@ async function fetchPublicState(rest: string, gameId: string): Promise<TexasHold
     return JSON.parse(body.game_state);
 }
 
-/** Ids of the given tables that have a hand in play right now, re-checked while the list is on screen. */
-export function useTablesPlaying(games: GameWithFormat[]): ReadonlySet<string> {
+export type TableLiveStatus = "playing" | "finished";
+
+/** Live status of the given tables (a hand in play, or a finished Sit & Go), re-checked while the list is on screen. */
+export function useTablesStatus(games: GameWithFormat[]): ReadonlyMap<string, TableLiveStatus> {
     const { currentNetwork } = useNetwork();
-    const [playing, setPlaying] = useState<ReadonlySet<string>>(new Set());
+    const [statuses, setStatuses] = useState<ReadonlyMap<string, TableLiveStatus>>(new Map());
     const idsKey = games.map(game => game.gameId).join(",");
 
     useEffect(() => {
@@ -28,13 +30,15 @@ export function useTablesPlaying(games: GameWithFormat[]): ReadonlySet<string> {
         const check = async () => {
             const results = await Promise.allSettled(tracked.map(game => fetchPublicState(rest, game.gameId)));
             if (cancelled) return;
-            const next = new Set<string>();
+            const next = new Map<string, TableLiveStatus>();
             results.forEach((result, index) => {
                 if (result.status !== "fulfilled") return;
                 const game = tracked[index];
-                if (isTablePlaying(result.value, isSitAndGoFormat(game.gameFormat))) next.add(game.gameId);
+                const isTournament = isSitAndGoFormat(game.gameFormat);
+                if (isTournamentFinished(result.value, isTournament)) next.set(game.gameId, "finished");
+                else if (isTablePlaying(result.value, isTournament)) next.set(game.gameId, "playing");
             });
-            setPlaying(next);
+            setStatuses(next);
         };
 
         void check();
@@ -47,5 +51,5 @@ export function useTablesPlaying(games: GameWithFormat[]): ReadonlySet<string> {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentNetwork, idsKey]);
 
-    return playing;
+    return statuses;
 }
