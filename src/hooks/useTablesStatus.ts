@@ -13,9 +13,9 @@ async function fetchPublicState(rest: string, gameId: string): Promise<TexasHold
     return JSON.parse(body.game_state);
 }
 
-export type TableLiveStatus = "playing" | "finished";
+export type TableLiveStatus = "playing" | "finished" | "waiting";
 
-/** Live status of the given tables (a hand in play, or a finished Sit & Go), re-checked while the list is on screen. */
+/** Live status of the given tables (a hand in play, a finished Sit & Go, or waiting for players), re-checked while the list is on screen. */
 export function useTablesStatus(games: GameWithFormat[]): ReadonlyMap<string, TableLiveStatus> {
     const { currentNetwork } = useNetwork();
     const [statuses, setStatuses] = useState<ReadonlyMap<string, TableLiveStatus>>(new Map());
@@ -36,7 +36,9 @@ export function useTablesStatus(games: GameWithFormat[]): ReadonlyMap<string, Ta
                 const game = tracked[index];
                 const isTournament = isSitAndGoFormat(game.gameFormat);
                 if (isTournamentFinished(result.value, isTournament)) next.set(game.gameId, "finished");
+                else if (isTournament && game.currentPlayers < game.maxPlayers) next.set(game.gameId, "waiting");
                 else if (isTablePlaying(result.value, isTournament)) next.set(game.gameId, "playing");
+                else if (!isTournament && result.value.players.length < 2) next.set(game.gameId, "waiting");
             });
             setStatuses(next);
         };

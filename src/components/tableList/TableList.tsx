@@ -256,6 +256,11 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                                     ·<span className={styles.playingBadge}>Playing</span>
                                                 </span>
                                             )}
+                                            {liveStatus.get(game.gameId) === "waiting" && (
+                                                <span>
+                                                    ·<span className={styles.waitingBadge}>Waiting</span>
+                                                </span>
+                                            )}
                                             {liveStatus.get(game.gameId) === "finished" && (
                                                 <span>
                                                     ·<span className={styles.finishedBadge}>Finished</span>
