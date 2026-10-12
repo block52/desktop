@@ -15,3 +15,11 @@ export function tournamentSurvivor(state: TexasHoldemStateDTO): string | null {
     const survivors = state.players.filter(player => player.status !== PlayerStatus.BUSTED);
     return survivors.length === 1 ? survivors[0].address : null;
 }
+
+/** A hand is being played right now: a cash table mid-hand, or a Sit & Go that has started and is not over. */
+export function isTablePlaying(state: TexasHoldemStateDTO, isTournament: boolean): boolean {
+    const live = state.players.filter(player => player.status !== PlayerStatus.BUSTED && player.status !== PlayerStatus.SITTING_OUT);
+    if (live.length < 2) return false;
+    if (isTournament) return !isTournamentFinished(state, true);
+    return state.round !== TexasHoldemRound.ANTE && state.round !== TexasHoldemRound.END;
+}

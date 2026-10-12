@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { isTournamentFormat, isCashFormat, formatGameFormatDisplay, COSMOS_CONSTANTS, GameVariant } from "@block52/poker-vm-sdk";
 import { useFindGames } from "../../hooks/useFindGames";
 import type { GameWithFormat } from "../../hooks/useFindGames";
+import { useTablesPlaying } from "../../hooks/useTablesPlaying";
 import { sortGamesNewestFirst } from "../../utils/convertUtils";
 import { paginate } from "../../utils/paginate";
 import Pagination, { PAGE_SIZES } from "../pagination/Pagination";
@@ -122,6 +123,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
     }, [rawGames, search, formatFilter]);
 
     const slice = paginate(games, requestedPage, pageSize);
+    const playingIds = useTablesPlaying(slice.items);
 
     const headerRow = (
         <div className={styles.headerRow}>
@@ -249,6 +251,11 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                                                 <CopyButton text={game.gameId} message="Table ID copied" title="Copy table ID" />
                                             </span>
                                             <span>· {variantLabel(game)}</span>
+                                            {playingIds.has(game.gameId) && (
+                                                <span>
+                                                    ·<span className={styles.playingBadge}>Playing</span>
+                                                </span>
+                                            )}
                                             {game.creator !== undefined && !isMine(game) && (
                                                 <span>· by {shortId(game.creator)}</span>
                                             )}

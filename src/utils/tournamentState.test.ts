@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PlayerStatus, TexasHoldemRound, type TexasHoldemStateDTO } from "@block52/poker-vm-sdk";
-import { isTournamentFinished, tournamentSurvivor } from "./tournamentState";
+import { isTablePlaying, isTournamentFinished, tournamentSurvivor } from "./tournamentState";
 
 function table(round: TexasHoldemRound, statuses: PlayerStatus[], resultCount: number): TexasHoldemStateDTO {
     return {
@@ -36,5 +36,21 @@ describe("isTournamentFinished", () => {
 describe("tournamentSurvivor", () => {
     it("is null while several players remain", () => {
         expect(tournamentSurvivor(table(TexasHoldemRound.FLOP, [PlayerStatus.ACTIVE, PlayerStatus.ACTIVE], 0))).toBeNull();
+    });
+});
+
+describe("isTablePlaying", () => {
+    it("is true for a cash table mid-hand and false between hands", () => {
+        expect(isTablePlaying(table(TexasHoldemRound.FLOP, [PlayerStatus.ACTIVE, PlayerStatus.ACTIVE], 0), false)).toBe(true);
+        expect(isTablePlaying(table(TexasHoldemRound.ANTE, [PlayerStatus.ACTIVE, PlayerStatus.ACTIVE], 0), false)).toBe(false);
+    });
+
+    it("needs two live players", () => {
+        expect(isTablePlaying(table(TexasHoldemRound.FLOP, [PlayerStatus.ACTIVE], 0), false)).toBe(false);
+    });
+
+    it("is true for a started Sit & Go and false once it finished", () => {
+        expect(isTablePlaying(table(TexasHoldemRound.ANTE, [PlayerStatus.ACTIVE, PlayerStatus.ACTIVE, PlayerStatus.BUSTED], 1), true)).toBe(true);
+        expect(isTablePlaying(table(TexasHoldemRound.END, [PlayerStatus.ACTIVE, PlayerStatus.BUSTED], 1), true)).toBe(false);
     });
 });

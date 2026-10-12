@@ -402,3 +402,26 @@
     width: 30px;
     flex-shrink: 0;
 }
+
+.playingBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 20px;
+    padding: 0 10px;
+    margin-left: 6px;
+    border-radius: 999px;
+    background: hsl(142 70% 40% / 0.16);
+    color: hsl(142 70% 62%);
+    font-family: Inter, system-ui, sans-serif;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.playingBadge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
