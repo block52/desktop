@@ -76,6 +76,9 @@ function getVariantLabel(variant: string | undefined): string {
 
 // The action slot floats 8px above the bottom edge; keep the seat a little clear of it as well.
 const ACTION_SLOT_GAP_PX = 14;
+// The bar's height with the wager row showing (your turn). Reserved from the moment you are seated, so the
+// board does not shift when the bar first appears or grows; a taller bar (narrow windows) raises it once.
+const ACTION_SLOT_DEFAULT_HEIGHT_PX = 136;
 
 const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const navigate = useNavigate();
@@ -606,7 +609,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     }
                 />
             )}
-            <div className={styles.boardRow} style={{ "--action-reserve": `${actionSlotMaxHeight > 0 ? actionSlotMaxHeight + ACTION_SLOT_GAP_PX : 0}px` } as React.CSSProperties}>
+            <div className={styles.boardRow} style={{ "--action-reserve": `${isUserSeated && !tournamentFinished ? Math.max(actionSlotMaxHeight, ACTION_SLOT_DEFAULT_HEIGHT_PX) + ACTION_SLOT_GAP_PX : 0}px` } as React.CSSProperties}>
                 <TableBoard
                     players={tournamentFinished ? gameState.players.map(player => ({ ...player, sumOfBets: "0" })) : gameState.players}
                     maxPlayers={gameState.gameOptions.maxPlayers}

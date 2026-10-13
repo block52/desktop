@@ -803,3 +803,9 @@
         transform: rotate(0deg);
     }
 }
+
+.heroBannerSlot {
+    min-height: 26px;
+    display: flex;
+    justify-content: center;
+}

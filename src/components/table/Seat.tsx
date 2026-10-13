@@ -358,7 +358,10 @@ export const Seat: React.FC<SeatProps> = ({
                         </div>
                     )}
                 </div>
-                <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} turnRemainingSec={turnRemainingSec} turnKey={turnKey} status={statusLabel} winner={winner} />
+                {/* Always takes the strip's height, so the seat does not jump when the clock or an action appears. */}
+                <div className={styles.heroBannerSlot}>
+                    <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} turnRemainingSec={turnRemainingSec} turnKey={turnKey} status={statusLabel} winner={winner} />
+                </div>
                 {!hasCards && betBlock("")}
                 {footer !== undefined && <div className={styles.heroFooter}>{footer}</div>}
             </div>
