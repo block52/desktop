@@ -43,13 +43,15 @@ jobs:
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
     name: build (${{ matrix.name }})
+    # Holds the release secret. Protect it under Settings > Environments > release (required reviewers, and
+    # deployment branches/tags limited to main and v*), then store VITE_MAINNET_RPC_URL as an environment secret.
+    environment: release
     env:
       VITE_PROJECT_ID: ${{ vars.VITE_PROJECT_ID }}
       VITE_INDEXER_URL: ${{ vars.VITE_INDEXER_URL }}
       VITE_PAYMENT_PROXY_URL: ${{ vars.VITE_PAYMENT_PROXY_URL }}
       VITE_SNG_SCHEDULE_URL: ${{ vars.VITE_SNG_SCHEDULE_URL }}
       VITE_TREASURY_WALLET_ADDRESS: ${{ vars.VITE_TREASURY_WALLET_ADDRESS }}
-      VITE_MAINNET_RPC_URL: ${{ secrets.VITE_MAINNET_RPC_URL }}
       VITE_PROFILE_NFT_INDEXER_URL: ${{ vars.VITE_PROFILE_NFT_INDEXER_URL }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -57,7 +59,10 @@ jobs:
         if: runner.os == 'Linux'
         uses: ./.github/actions/linux-packaging-tools
       - uses: ./.github/actions/setup
+      # Only the build step sees the secret; dependency install scripts run without it.
       - run: yarn make
+        env:
+          VITE_MAINNET_RPC_URL: ${{ secrets.VITE_MAINNET_RPC_URL }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: installer-${{ matrix.name }}

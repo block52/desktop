@@ -96,6 +96,11 @@ The tag must match the version in `package.json`; the Release workflow fails oth
 your own settings, define the `VITE_*` values as repository **variables** and `VITE_MAINNET_RPC_URL` as a
 repository **secret** (Settings → Secrets and variables → Actions).
 
+The installer build runs in a `release` [environment](https://docs.github.com/actions/deployment/targeting-different-environments).
+For a public repository, create it under Settings → Environments, restrict deployments to `main` and `v*` tags,
+require a reviewer, and keep `VITE_MAINNET_RPC_URL` there as an environment secret so only approved release
+builds can read it. The secret is exposed to the `yarn make` step only, not to dependency install scripts.
+
 ## Security notes
 
 - The wallet's seed phrase is currently stored in the app's local storage, in plain text on disk. Anyone with
