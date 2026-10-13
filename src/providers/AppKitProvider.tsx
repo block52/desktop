@@ -40,7 +40,7 @@ createAppKit({
   projectId,
   metadata,
   features: {
-    analytics: true,
+    analytics: false,
     socials: false,
     email: false,
     // Optional - defaults to your Cloud configuration

@@ -7,6 +7,10 @@
 
 const IPFS_GATEWAYS = ["https://dweb.link", "https://w3s.link", "https://cloudflare-ipfs.com", "https://ipfs.io"];
 const ARWEAVE_GATEWAY = "https://arweave.net/";
+// A bare image URL is chosen by the player who registered the avatar, and every client at the table would
+// request it — handing that player the viewers' IP addresses. Only hosts that serve NFT media for many
+// collections are fetched directly; everything else must be content-addressed (IPFS / Arweave).
+const TRUSTED_IMAGE_HOSTS = ["nft-cdn.alchemy.com", "i.seadn.io", "i2.seadn.io", "raw.seadn.io"];
 const NFT_AVATAR_PATTERN = /^nft:eip155:\d+\/erc721:0x[a-fA-F0-9]{40}\/[^|]+\|(.+)$/;
 const PATH_GATEWAY = /^https?:\/\/[^/]+\/ipfs\/([A-Za-z0-9]+)(?:\/(.*))?$/i;
 const SUBDOMAIN_GATEWAY = /^https?:\/\/([A-Za-z0-9]+)\.ipfs\.[^/]+(?:\/(.*))?$/i;
@@ -38,6 +42,13 @@ export function avatarImageCandidates(avatar: string | undefined | null): string
         return IPFS_GATEWAYS.map(gateway => `${gateway}/ipfs/${ipfs.cid}${suffix}`);
     }
     if (image.startsWith("ar://")) return [image.replace("ar://", ARWEAVE_GATEWAY)];
-    if (image.startsWith("https://") || image.startsWith("http://") || image.startsWith("data:image/")) return [image];
+    if (image.startsWith("data:image/")) return [image];
+    if (image.startsWith("https://")) {
+        try {
+            return TRUSTED_IMAGE_HOSTS.includes(new URL(image).hostname) ? [image] : [];
+        } catch {
+            return [];
+        }
+    }
     return [];
 }

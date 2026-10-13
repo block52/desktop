@@ -15,7 +15,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: ./.github/actions/setup
       - name: Tag matches package.json version
         if: startsWith(github.ref, 'refs/tags/v')
@@ -52,13 +52,13 @@ jobs:
       VITE_MAINNET_RPC_URL: ${{ secrets.VITE_MAINNET_RPC_URL }}
       VITE_PROFILE_NFT_INDEXER_URL: ${{ vars.VITE_PROFILE_NFT_INDEXER_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Linux packaging tools (deb, rpm)
         if: runner.os == 'Linux'
         uses: ./.github/actions/linux-packaging-tools
       - uses: ./.github/actions/setup
       - run: yarn make
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: installer-${{ matrix.name }}
           path: out/make/**/*
@@ -71,8 +71,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: installers
           pattern: installer-*

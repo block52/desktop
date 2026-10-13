@@ -1,9 +1,18 @@
 import { findDepositCurrency } from "../config/depositCurrencies";
 
+const DEFAULT_PAYMENT_PROXY_URL = "https://poker-vm-proxy-js-ixe4h.ondigitalocean.app";
+
 /** The payment proxy that fronts NOWPayments (creates payments, reports status, bridges the USDC). */
 export function getPaymentProxyUrl(): string {
     const configured: unknown = import.meta.env.VITE_PAYMENT_PROXY_URL;
-    return typeof configured === "string" && configured !== "" ? configured.replace(/\/+$/, "") : "https://poker-vm-proxy-js-ixe4h.ondigitalocean.app";
+    if (typeof configured !== "string" || configured === "") return DEFAULT_PAYMENT_PROXY_URL;
+    const url = new URL(configured);
+    // Payment details come from this host, so it must be encrypted (plain http only for a local dev proxy).
+    const isLocal = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (url.protocol !== "https:" && !(url.protocol === "http:" && isLocal)) {
+        throw new Error("VITE_PAYMENT_PROXY_URL must be an https URL");
+    }
+    return configured.replace(/\/+$/, "");
 }
 
 export const MIN_CRYPTO_DEPOSIT_USD = 10;
@@ -84,7 +93,7 @@ export async function createCryptoPayment(args: { amount: number; currency: stri
     ) {
         throw new Error("Payment service returned an incomplete payment");
     }
-    return {
+    const payment: CreatedPayment = {
         paymentId: body.payment_id,
         payAddress: body.pay_address,
         payAmount: body.pay_amount,
@@ -92,6 +101,34 @@ export async function createCryptoPayment(args: { amount: number; currency: stri
         priceAmount: body.price_amount,
         expiresAt: body.expires_at
     };
+    assertPaymentMatchesRequest(payment, args);
+    return payment;
+}
+
+const BITCOIN_ADDRESS = /^(bc1[ac-hj-np-z02-9]{11,87}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/;
+const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+
+/**
+ * The payment service chooses the address the user is told to send funds to. Refuse anything that does not
+ * look like what was asked for (same currency, same USD price, an address of the right shape, a future
+ * expiry), so a faulty or compromised service cannot silently redirect a deposit.
+ */
+function assertPaymentMatchesRequest(payment: CreatedPayment, request: { amount: number; currency: string }): void {
+    const currency = findDepositCurrency(request.currency);
+    const addressMatches = currency === undefined ? false : currency.code === "btc" ? BITCOIN_ADDRESS.test(payment.payAddress) : EVM_ADDRESS.test(payment.payAddress);
+    const matches =
+        currency !== undefined &&
+        payment.payCurrency.toLowerCase() === currency.code &&
+        Number.isFinite(payment.priceAmount) &&
+        Math.abs(payment.priceAmount - request.amount) <= 0.01 &&
+        Number.isFinite(payment.payAmount) &&
+        payment.payAmount > 0 &&
+        addressMatches &&
+        Number.isFinite(Date.parse(payment.expiresAt)) &&
+        Date.parse(payment.expiresAt) > Date.now();
+    if (!matches) {
+        throw new Error("The payment service returned details that do not match your request. Do not send any funds — try again later.");
+    }
 }
 
 export async function getCryptoPaymentStatus(paymentId: string, signal?: AbortSignal): Promise<PaymentStatus> {

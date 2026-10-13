@@ -19,8 +19,15 @@ describe("avatarImageCandidates", () => {
         expect(avatarImageCandidates("https://ipfs.io/ipfs/QmABC/x.png")[0]).toBe("https://dweb.link/ipfs/QmABC/x.png");
     });
 
-    it("passes a plain https image through", () => {
-        expect(avatarImageCandidates(`nft:eip155:1/erc721:${CONTRACT}/7|https://cdn.example.com/a.png`)).toEqual(["https://cdn.example.com/a.png"]);
+    it("passes an image from a trusted NFT media host through", () => {
+        expect(avatarImageCandidates(`nft:eip155:1/erc721:${CONTRACT}/7|https://nft-cdn.alchemy.com/eth-mainnet/abc`)).toEqual([
+            "https://nft-cdn.alchemy.com/eth-mainnet/abc"
+        ]);
+    });
+
+    it("drops an image on a host the player controls (it would reveal every viewer's IP)", () => {
+        expect(avatarImageCandidates(`nft:eip155:1/erc721:${CONTRACT}/7|https://cdn.example.com/a.png`)).toEqual([]);
+        expect(avatarImageCandidates("http://tracker.example.com/pixel.png")).toEqual([]);
     });
 
     it("rejects unsupported schemes", () => {
