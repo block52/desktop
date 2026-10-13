@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useMemo } from "react";
+import { COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
+import { isValidBech32Address } from "../../utils/bech32";
+import { parseUsdcToMicro } from "../../utils/currency";
 import styles from "./SendModal.module.css";
-
-const B52_ADDRESS_REGEX = /^b521[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{38,}$/;
 
 interface SendModalProps {
     fromAddress: string;
     usdcBalance: string;
-    onSend: (recipient: string, amountUsdc: number) => Promise<string>;
+    onSend: (recipient: string, amountUsdc: string) => Promise<string>;
     onClose: () => void;
 }
 
@@ -16,26 +17,34 @@ const SendModal: React.FC<SendModalProps> = ({ usdcBalance, onSend, onClose }) =
     const [isSending, setIsSending] = useState(false);
     const [error, setError] = useState("");
     const [txHash, setTxHash] = useState("");
+    const [isReviewing, setIsReviewing] = useState(false);
 
     const numericBalance = useMemo(() => Number(usdcBalance), [usdcBalance]);
-    const numericAmount = useMemo(() => parseFloat(amount) || 0, [amount]);
+    const amountMicro = useMemo(() => {
+        try {
+            return parseUsdcToMicro(amount);
+        } catch {
+            return null;
+        }
+    }, [amount]);
+    const numericAmount = amountMicro === null ? 0 : Number(amountMicro) / 1_000_000;
 
-    const isValidRecipient = useMemo(() => B52_ADDRESS_REGEX.test(recipient), [recipient]);
+    const isValidRecipient = useMemo(() => isValidBech32Address(recipient, COSMOS_CONSTANTS.ADDRESS_PREFIX), [recipient]);
     const isExceedingBalance = numericAmount > numericBalance;
-    const canSend = isValidRecipient && numericAmount > 0 && !isExceedingBalance && !isSending;
+    const canSend = isValidRecipient && amountMicro !== null && amountMicro > 0n && !isExceedingBalance && !isSending;
 
     const handleSend = useCallback(async () => {
         setError("");
         setIsSending(true);
         try {
-            const hash = await onSend(recipient, numericAmount);
+            const hash = await onSend(recipient, amount.trim());
             setTxHash(hash);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Transaction failed");
         } finally {
             setIsSending(false);
         }
-    }, [onSend, recipient, numericAmount]);
+    }, [onSend, recipient, amount]);
 
     const handleOverlayClick = useCallback((e: React.MouseEvent) => {
         if (e.target === e.currentTarget) onClose();
@@ -90,14 +99,17 @@ const SendModal: React.FC<SendModalProps> = ({ usdcBalance, onSend, onClose }) =
                     <input
                         type="text"
                         value={recipient}
-                        onChange={e => setRecipient(e.target.value.trim())}
+                        onChange={e => {
+                            setRecipient(e.target.value.trim());
+                            setIsReviewing(false);
+                        }}
                         placeholder="b521..."
                         className={`${styles.input} ${recipient && !isValidRecipient ? styles.inputError : ""}`}
                         spellCheck={false}
                     />
                     {recipient && !isValidRecipient && (
                         <p className={`${styles.inputHint} ${styles.inputHintError}`}>
-                            Must be a valid b52 address (starts with b521)
+                            Not a valid Block52 address (check every character)
                         </p>
                     )}
                 </div>
@@ -107,7 +119,10 @@ const SendModal: React.FC<SendModalProps> = ({ usdcBalance, onSend, onClose }) =
                     <input
                         type="number"
                         value={amount}
-                        onChange={e => setAmount(e.target.value)}
+                        onChange={e => {
+                            setAmount(e.target.value);
+                            setIsReviewing(false);
+                        }}
                         placeholder="0.00"
                         min="0"
                         step="0.000001"
@@ -120,15 +135,30 @@ const SendModal: React.FC<SendModalProps> = ({ usdcBalance, onSend, onClose }) =
                     )}
                 </div>
 
+                {isReviewing && (
+                    <div className={styles.balanceBox}>
+                        <span className={styles.balanceLabel}>
+                            Send {amount.trim()} USDC to this address. Check every character — sends cannot be reversed.
+                        </span>
+                        <span className={styles.balanceValue} style={{ wordBreak: "break-all", fontSize: 13 }}>{recipient}</span>
+                    </div>
+                )}
+
                 {error && <div className={styles.errorBanner}>{error}</div>}
 
                 <div className={styles.actions}>
                     <button onClick={onClose} className={`btn-ghost ${styles.cancelButton}`}>
                         Cancel
                     </button>
-                    <button onClick={handleSend} disabled={!canSend} className={`btn-glow ${styles.primaryButton}`}>
-                        {isSending ? "Sending..." : "Send"}
-                    </button>
+                    {isReviewing ? (
+                        <button onClick={handleSend} disabled={!canSend} className={`btn-glow ${styles.primaryButton}`}>
+                            {isSending ? "Sending..." : `Confirm send ${amount.trim()} USDC`}
+                        </button>
+                    ) : (
+                        <button onClick={() => setIsReviewing(true)} disabled={!canSend} className={`btn-glow ${styles.primaryButton}`}>
+                            Review
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

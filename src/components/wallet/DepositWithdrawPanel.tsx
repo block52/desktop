@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { maxUint256 } from "viem";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { createSigningClientFromMnemonic, COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
@@ -10,13 +9,13 @@ import useWalletBalance from "../../hooks/wallet/useWalletBalance";
 import useAllowance from "../../hooks/wallet/useAllowance";
 import useApprove from "../../hooks/wallet/useApprove";
 import useDepositUSDC from "../../hooks/wallet/useDepositUSDC";
-import { convertAmountToBigInt } from "../../utils/currency";
+import { convertAmountToBigInt, parseUsdcToMicro } from "../../utils/currency";
 import { useToast } from "../../context/ToastContext";
 import { useNetwork } from "../../context/NetworkContext";
 import { getCosmosMnemonic, getCosmosAddress } from "../../utils/cosmos/storage";
 import { base64ToHex } from "../../utils/encodingUtils";
 import { withdrawAbi, BRIDGE_ADDRESS } from "../../abis/contractABI";
-import { ETH_USDC_ADDRESS, ETH_USDT_ADDRESS } from "../../config/constants";
+import { ETH_CHAIN_ID, ETH_USDC_ADDRESS, ETH_USDT_ADDRESS } from "../../config/constants";
 import CryptoDepositPanel from "../modal/CryptoDepositPanel";
 import styles from "./DepositWithdrawPanel.module.css";
 
@@ -72,9 +71,10 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
         setError("");
     }, [selectedToken]);
 
+    const [requestedApproval, setRequestedApproval] = useState(0n);
     useEffect(() => {
-        if (isApproveConfirmed) setApprovedAmount(maxUint256);
-    }, [isApproveConfirmed]);
+        if (isApproveConfirmed) setApprovedAmount(requestedApproval);
+    }, [isApproveConfirmed, requestedApproval]);
 
     useEffect(() => {
         if (isDepositConfirmed) {
@@ -100,11 +100,13 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
     const handleApprove = useCallback(async () => {
         setError("");
         try {
-            await approve(tokenAddress, BRIDGE_ADDRESS, maxUint256);
+            // Approve exactly what this deposit needs: an unlimited allowance would leave the whole balance spendable by the bridge contract.
+            setRequestedApproval(amountBigInt);
+            await approve(tokenAddress, BRIDGE_ADDRESS, amountBigInt);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Approval failed");
         }
-    }, [approve, tokenAddress]);
+    }, [approve, tokenAddress, amountBigInt]);
 
     const handleDeposit = useCallback(async () => {
         setError("");
@@ -263,7 +265,10 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
     const { currentNetwork } = useNetwork();
 
     const { data: ethTxHash, writeContract, error: writeError } = useWriteContract();
-    const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({ hash: ethTxHash });
+    const { data: ethReceipt, isSuccess: hasReceipt } = useWaitForTransactionReceipt({ hash: ethTxHash });
+    // A mined-but-reverted transaction also yields a receipt; only status "success" is a completed withdrawal.
+    const isTxConfirmed = hasReceipt && ethReceipt?.status === "success";
+    const isTxReverted = hasReceipt && ethReceipt?.status === "reverted";
 
     const [amount, setAmount] = useState("");
     const [step, setStep] = useState<Step>("input");
@@ -292,6 +297,13 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
             void onDone();
         }
     }, [isTxConfirmed, step, showSuccess, onDone]);
+
+    useEffect(() => {
+        if (isTxReverted && step === "completing") {
+            setError("The Ethereum transaction was reverted. Your withdrawal is still pending — try completing it again.");
+            setStep("ready");
+        }
+    }, [isTxReverted, step]);
 
     useEffect(() => {
         if (writeError && step === "completing") {
@@ -388,7 +400,7 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
 
         try {
             const { client } = await getSigningClient();
-            const microAmount = BigInt(Math.floor(numericAmount * Math.pow(10, COSMOS_CONSTANTS.USDC_DECIMALS)));
+            const microAmount = parseUsdcToMicro(amount);
             const hash = await client.initiateWithdrawal(web3Address, microAmount);
             setCosmosTxHash(hash);
             setStep("waiting_sig");
@@ -397,7 +409,7 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
             setError(err.message ?? "Failed to initiate withdrawal");
             setStep("input");
         }
-    }, [isWeb3Connected, web3Address, numericAmount, balance, getSigningClient, startPolling]);
+    }, [isWeb3Connected, web3Address, amount, numericAmount, balance, getSigningClient, startPolling]);
 
     const handleCompleteOnEthereum = useCallback(() => {
         if (!withdrawalInfo) return;
@@ -413,7 +425,8 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
                 withdrawalInfo.baseAddress as `0x${string}`,
                 withdrawalInfo.nonce as `0x${string}`,
                 base64ToHex(withdrawalInfo.signature) as `0x${string}`
-            ]
+            ],
+            chainId: ETH_CHAIN_ID
         });
     }, [withdrawalInfo, writeContract]);
 

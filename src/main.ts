@@ -18,7 +18,21 @@ const createWindow = () => {
     icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      webSecurity: true,
     },
+  });
+
+  // The window only ever shows the app. Links open in the system browser (https only), never in a new
+  // Electron window that would inherit the preload bridge, and the page itself can't navigate away.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (isWebUrl(url)) void shell.openExternal(url);
+    return { action: "deny" };
+  });
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    if (url !== mainWindow.webContents.getURL()) event.preventDefault();
   });
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -55,7 +69,10 @@ app.whenReady().then(() => {
   // Set Content-Security-Policy.
   // Vite's dev server requires 'unsafe-eval' for HMR; production builds do not.
   const isDev = !!MAIN_WINDOW_VITE_DEV_SERVER_URL;
-  const scriptSrc = isDev ? "'self' 'unsafe-inline' 'unsafe-eval'" : "'self' 'unsafe-inline'";
+  const scriptSrc = isDev ? "'self' 'unsafe-inline' 'unsafe-eval'" : "'self'";
+
+  // No page may use the camera, microphone, geolocation, notifications etc.
+  session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
 
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
@@ -68,7 +85,8 @@ app.whenReady().then(() => {
           "img-src 'self' data: https: blob:; " +
           "font-src 'self' data: https:; " +
           "connect-src 'self' ws://localhost:* wss://localhost:* http://localhost:* https: wss://relay.walletconnect.org wss://relay.walletconnect.com wss://node1.block52.xyz wss://node.texashodl.net wss://node.tommillerservices.com; " +
-          "worker-src 'self' blob:;"
+          "worker-src 'self' blob:; " +
+          "object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
         ],
       },
     });

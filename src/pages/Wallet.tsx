@@ -14,7 +14,7 @@ import {
     setCosmosAddress,
 } from "../utils/cosmos/storage";
 import { useCosmosWallet } from "../hooks/useCosmosWallet";
-import { microToDecimal } from "../utils/currency";
+import { microToDecimal, parseUsdcToMicro } from "../utils/currency";
 import { useNetwork } from "../context/NetworkContext";
 import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
 import { useWithdrawalActivity } from "../hooks/useWithdrawalActivity";
@@ -55,7 +55,7 @@ const Wallet: React.FC = () => {
         balance.find(b => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)?.amount ?? "0";
 
     const handleSend = useCallback(
-        async (recipient: string, amountUsdc: number): Promise<string> => {
+        async (recipient: string, amountUsdc: string): Promise<string> => {
             const mnemonic = getCosmosMnemonic();
             const fromAddress = getCosmosAddress();
 
@@ -75,9 +75,7 @@ const Wallet: React.FC = () => {
                 mnemonic,
             );
 
-            const amountMicro = BigInt(
-                Math.floor(amountUsdc * Math.pow(10, COSMOS_CONSTANTS.USDC_DECIMALS)),
-            );
+            const amountMicro = parseUsdcToMicro(amountUsdc);
             return signingClient.sendTokens(
                 fromAddress,
                 recipient,
@@ -130,6 +128,12 @@ const Wallet: React.FC = () => {
         load();
     }, []);
 
+    const handleSeedSaved = () => {
+        setExistingAddress(newAddress);
+        setNewMnemonic("");
+        setNewAddress("");
+    };
+
     const handleGenerate = async () => {
         setIsBusy(true);
         setError("");
@@ -139,7 +143,6 @@ const Wallet: React.FC = () => {
             setCosmosAddress(wallet.address);
             setNewMnemonic(wallet.mnemonic);
             setNewAddress(wallet.address);
-            setExistingAddress(wallet.address);
         } catch (err) {
             console.error("Generate wallet failed:", err);
             setError("Failed to generate wallet. Please try again.");
@@ -293,6 +296,13 @@ const Wallet: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
+
+                                <button
+                                    onClick={handleSeedSaved}
+                                    className={`btn-glow ${styles.primaryAction} ${styles.fullWidth}`}
+                                >
+                                    I have saved my seed phrase
+                                </button>
                             </>
                         )}
                     </div>

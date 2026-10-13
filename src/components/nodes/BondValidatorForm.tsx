@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { parseUsdcToMicro } from "../../utils/currency";
 import styles from "./BondValidatorForm.module.css";
 
 export interface BondPayload {
@@ -111,9 +112,17 @@ const BondValidatorForm: React.FC<BondValidatorFormProps> = ({
         setFormError(message);
         if (message !== "") return;
 
+        let amountMicro: bigint;
+        try {
+            amountMicro = parseUsdcToMicro(bondRaw);
+        } catch (err) {
+            setFormError(err instanceof Error ? err.message : "Enter a valid self-bond amount");
+            return;
+        }
+
         void onBond({
             consensusPubkeyBase64: consensusKey,
-            amountMicro: BigInt(Math.round(bondUsdc * 1_000_000)),
+            amountMicro,
             moniker: moniker.trim(),
             website: website.trim(),
             securityContact: securityContact.trim(),
