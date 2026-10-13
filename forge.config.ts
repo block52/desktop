@@ -11,13 +11,16 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     icon: "./assets/icon",
+    // The executable inside every package. Without it the packager names it after productName while the
+    // deb/rpm makers look for the package.json name, which fails the Linux build.
+    executableName: "block52",
   },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({}),
     new MakerZIP({}, ["darwin"]),
-    new MakerRpm({}),
-    new MakerDeb({}),
+    new MakerRpm({ options: { bin: "block52" } }),
+    new MakerDeb({ options: { bin: "block52" } }),
   ],
   plugins: [
     new VitePlugin({
