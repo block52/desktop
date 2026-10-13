@@ -10,7 +10,7 @@ interface SendModalProps {
     onClose: () => void;
 }
 
-const SendModal: React.FC<SendModalProps> = ({ fromAddress, usdcBalance, onSend, onClose }) => {
+const SendModal: React.FC<SendModalProps> = ({ usdcBalance, onSend, onClose }) => {
     const [recipient, setRecipient] = useState("");
     const [amount, setAmount] = useState("");
     const [isSending, setIsSending] = useState(false);

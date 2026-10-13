@@ -75,7 +75,7 @@ app.whenReady().then(() => {
   });
 
   if (process.platform === "darwin") {
-    app.dock.setIcon(nativeImage.createFromPath(iconPath));
+    app.dock?.setIcon(nativeImage.createFromPath(iconPath));
   }
   createWindow();
 });

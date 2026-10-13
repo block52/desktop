@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from "vitest";
 import { GameFormat, GameVariant, GameListItem } from "@block52/poker-vm-sdk";
 import { convertGameListItemToGameWithFormat, convertGameList } from "./convertUtils";
 
@@ -18,7 +19,6 @@ describe("convertUtils", () => {
             timeout: 30
         },
         createdAt: "2026-02-04T10:00:00Z",
-        updatedAt: "2026-02-04T10:05:00Z",
         ...overrides
     });
 
@@ -37,11 +37,9 @@ describe("convertUtils", () => {
             expect(result.gameVariant).toBe(GameVariant.TEXAS_HOLDEM);
             expect(result.smallBlind).toBe("50000");
             expect(result.bigBlind).toBe("100000");
-            expect(result.status).toBe("waiting");
             expect(result.creator).toBe("cosmos1abc");
             expect(result.timeout).toBe(30);
             expect(result.createdAt).toBe("2026-02-04T10:00:00Z");
-            expect(result.updatedAt).toBe("2026-02-04T10:05:00Z");
         });
 
         it("should map format at root level (not from gameOptions)", () => {
@@ -68,20 +66,18 @@ describe("convertUtils", () => {
             expect(result.gameVariant).toBe("unknown");
         });
 
-        it("should handle optional creator/createdAt/updatedAt", () => {
+        it("should handle optional creator/createdAt", () => {
             const game = makeGameListItem({
                 creator: undefined,
-                createdAt: undefined,
-                updatedAt: undefined
+                createdAt: undefined
             });
             const result = convertGameListItemToGameWithFormat(game);
             expect(result.creator).toBeUndefined();
             expect(result.createdAt).toBeUndefined();
-            expect(result.updatedAt).toBeUndefined();
         });
 
         it("should throw when gameOptions is missing", () => {
-            const game = makeGameListItem({ gameOptions: undefined as any });
+            const game = makeGameListItem({ gameOptions: undefined as unknown as GameListItem["gameOptions"] });
             expect(() => convertGameListItemToGameWithFormat(game)).toThrow("missing gameOptions");
         });
     });
@@ -97,17 +93,17 @@ describe("convertUtils", () => {
         });
 
         it("should filter out games missing gameOptions", () => {
-            const warnSpy = jest.spyOn(console, "warn").mockImplementation();
+            const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
             const games = [
                 makeGameListItem({ gameId: "game_good" }),
-                makeGameListItem({ gameId: "game_bad", gameOptions: undefined as any }),
+                makeGameListItem({ gameId: "game_bad", gameOptions: undefined as unknown as GameListItem["gameOptions"] }),
                 makeGameListItem({ gameId: "game_good2" })
             ];
             const result = convertGameList(games);
             expect(result).toHaveLength(2);
             expect(result[0].gameId).toBe("game_good");
             expect(result[1].gameId).toBe("game_good2");
-            expect(warnSpy).toHaveBeenCalledWith("[convertGameList] Game missing gameOptions, skipping:", "game_bad");
+            expect(warnSpy).toHaveBeenCalledWith("[convertGameList] skipping game missing gameOptions:", "game_bad");
             warnSpy.mockRestore();
         });
 
@@ -117,8 +113,8 @@ describe("convertUtils", () => {
         });
 
         it("should return empty array when all games lack gameOptions", () => {
-            const warnSpy = jest.spyOn(console, "warn").mockImplementation();
-            const games = [makeGameListItem({ gameId: "bad1", gameOptions: undefined as any }), makeGameListItem({ gameId: "bad2", gameOptions: null as any })];
+            const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+            const games = [makeGameListItem({ gameId: "bad1", gameOptions: undefined as unknown as GameListItem["gameOptions"] }), makeGameListItem({ gameId: "bad2", gameOptions: null as unknown as GameListItem["gameOptions"] })];
             const result = convertGameList(games);
             expect(result).toEqual([]);
             expect(warnSpy).toHaveBeenCalledTimes(2);

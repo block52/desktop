@@ -1,4 +1,3 @@
-import React from "react";
 import { createRoot } from "react-dom/client";
 import { AppKitProvider } from "./providers/AppKitProvider";
 import { NetworkProvider } from "./context/NetworkContext";
