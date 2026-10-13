@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCosmosMnemonic, clearCosmosData } from "../../utils/cosmos/storage";
+import { clearCosmosClient, clearSigningClientCache } from "../../utils/cosmos/client";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
 import SeedPhraseGrid from "./SeedPhraseGrid";
 import styles from "./WalletKeysModal.module.css";
@@ -20,6 +21,9 @@ const WalletKeysModal: React.FC<WalletKeysModalProps> = ({ address, onClose, onC
     const handleClear = () => {
         if (!window.confirm("Clear your wallet? Make sure you have saved your seed phrase!")) return;
         clearCosmosData();
+        // Drop the decrypted signer and client that still hold the old key in memory.
+        clearSigningClientCache();
+        clearCosmosClient();
         onCleared();
     };
 

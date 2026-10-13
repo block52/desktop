@@ -13,6 +13,7 @@ import {
     setCosmosMnemonic,
     setCosmosAddress,
 } from "../utils/cosmos/storage";
+import { clearCosmosClient, clearSigningClientCache } from "../utils/cosmos/client";
 import { useCosmosWallet } from "../hooks/useCosmosWallet";
 import { microToDecimal, parseUsdcToMicro } from "../utils/currency";
 import { useNetwork } from "../context/NetworkContext";
@@ -112,10 +113,12 @@ const Wallet: React.FC = () => {
             const mnemonic = getCosmosMnemonic();
             let address = getCosmosAddress();
 
-            if (mnemonic && !address) {
+            // The key is the source of truth: always derive the address from it, and repair the stored copy if it differs.
+            if (mnemonic) {
                 try {
-                    address = await getAddressFromMnemonic(mnemonic, "b52");
-                    setCosmosAddress(address);
+                    const derived = await getAddressFromMnemonic(mnemonic, "b52");
+                    if (derived !== address) setCosmosAddress(derived);
+                    address = derived;
                 } catch (err) {
                     console.error("Failed to derive address:", err);
                 }
@@ -141,6 +144,8 @@ const Wallet: React.FC = () => {
             const wallet = await generateWallet("b52", 24);
             setCosmosMnemonic(wallet.mnemonic);
             setCosmosAddress(wallet.address);
+            clearSigningClientCache();
+            clearCosmosClient();
             setNewMnemonic(wallet.mnemonic);
             setNewAddress(wallet.address);
         } catch (err) {
@@ -162,6 +167,8 @@ const Wallet: React.FC = () => {
             const wallet = await createWalletFromMnemonic(importMnemonic.trim(), "b52");
             setCosmosMnemonic(importMnemonic.trim());
             setCosmosAddress(wallet.address);
+            clearSigningClientCache();
+            clearCosmosClient();
             setExistingAddress(wallet.address);
             setImportMnemonic("");
         } catch (err) {

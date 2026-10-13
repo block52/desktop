@@ -131,6 +131,25 @@ export const clearCosmosClient = (): void => {
   currentEndpoints = null;
 };
 
+const verifiedChainEndpoints = new Set<string>();
+
+/**
+ * A node picks the chain id the transaction is signed for. Before signing against an endpoint for the first
+ * time, confirm it really serves the Block52 chain, so a wrong or hostile node can't get a signature meant
+ * for another network.
+ */
+async function assertEndpointServesBlock52(restEndpoint: string): Promise<void> {
+  if (verifiedChainEndpoints.has(restEndpoint)) return;
+  const response = await fetch(`${restEndpoint.replace(/\/+$/, "")}/cosmos/base/tendermint/v1beta1/node_info`);
+  if (!response.ok) throw new Error(`Could not verify the network (node responded ${response.status})`);
+  const info: { default_node_info?: { network?: string } } = await response.json();
+  const network = info.default_node_info?.network;
+  if (network !== COSMOS_CONSTANTS.CHAIN_ID) {
+    throw new Error(`This node reports network "${network}", not "${COSMOS_CONSTANTS.CHAIN_ID}". Refusing to sign.`);
+  }
+  verifiedChainEndpoints.add(restEndpoint);
+}
+
 export interface SigningClientResult {
   signingClient: SigningCosmosClient;
   userAddress: string;
@@ -166,7 +185,7 @@ export async function getSigningClient(network: NetworkEndpoints): Promise<Signi
     return signingClientCache.promise;
   }
 
-  const promise = createSigningClientFromMnemonic(
+  const promise = assertEndpointServesBlock52(restEndpoint).then(() => createSigningClientFromMnemonic(
     {
       rpcEndpoint,
       restEndpoint,
@@ -176,7 +195,7 @@ export async function getSigningClient(network: NetworkEndpoints): Promise<Signi
       gasPrice: "0stake", // Gasless
     },
     mnemonic,
-  ).then((signingClient) => ({ signingClient, userAddress }));
+  )).then((signingClient) => ({ signingClient, userAddress }));
 
   // If construction rejects, drop the cache so the next call retries
   // instead of returning a permanently-failed promise.

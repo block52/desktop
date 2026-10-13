@@ -36,6 +36,16 @@ function fakeSigningClient(): Record<string, unknown> {
     return { performActionSync: vi.fn(), joinGame: vi.fn(), leaveGame: vi.fn() };
 }
 
+function stubNodeNetwork(network: string): void {
+    vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ default_node_info: { network } }) }))
+    );
+}
+
+beforeEach(() => stubNodeNetwork("pokerchain"));
+afterEach(() => vi.unstubAllGlobals());
+
 describe("getSigningClient", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -51,6 +61,13 @@ describe("getSigningClient", () => {
         await getSigningClient(NETWORK_A);
 
         expect(mockCreateSigningClientFromMnemonic).toHaveBeenCalledTimes(1);
+    });
+
+    it("refuses to sign for a node that serves a different network", async () => {
+        stubNodeNetwork("some-other-chain");
+
+        await expect(getSigningClient({ ...NETWORK_A, rest: "http://rest-wrong-chain" })).rejects.toThrow(/Refusing to sign/);
+        expect(mockCreateSigningClientFromMnemonic).not.toHaveBeenCalled();
     });
 
     it("dedupes concurrent callers into a single in-flight derivation", async () => {

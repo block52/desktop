@@ -11,6 +11,7 @@ import {
     type CreatedPayment,
     type PaymentStatus
 } from "../../utils/cryptoPayment";
+import { assertAddressMatchesWallet } from "../../utils/cosmos/verifiedAddress";
 import CopyButton from "../copyButton/CopyButton";
 import dialog from "./TableDialog.module.css";
 import styles from "./CryptoDepositPanel.module.css";
@@ -45,6 +46,7 @@ export const CryptoDepositPanel: React.FC<CryptoDepositPanelProps> = ({ cosmosAd
         setIsCreating(true);
         setError("");
         try {
+            await assertAddressMatchesWallet(cosmosAddress);
             setPayment(await createCryptoPayment({ amount: amountNumber, currency: currencyCode, cosmosAddress }));
         } catch (err) {
             setError(err instanceof Error ? err.message : "Could not create the payment");

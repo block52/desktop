@@ -10,6 +10,7 @@ import useAllowance from "../../hooks/wallet/useAllowance";
 import useApprove from "../../hooks/wallet/useApprove";
 import useDepositUSDC from "../../hooks/wallet/useDepositUSDC";
 import { convertAmountToBigInt, parseUsdcToMicro } from "../../utils/currency";
+import { assertAddressMatchesWallet } from "../../utils/cosmos/verifiedAddress";
 import { useToast } from "../../context/ToastContext";
 import { useNetwork } from "../../context/NetworkContext";
 import { getCosmosMnemonic, getCosmosAddress } from "../../utils/cosmos/storage";
@@ -111,6 +112,7 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
     const handleDeposit = useCallback(async () => {
         setError("");
         try {
+            await assertAddressMatchesWallet(cosmosAddress);
             if (selectedToken === "USDC") {
                 await deposit(amountBigInt, cosmosAddress);
             } else {
