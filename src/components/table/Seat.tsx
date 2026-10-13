@@ -264,7 +264,7 @@ export const Seat: React.FC<SeatProps> = ({
     const seatTop =
         top < 50
             ? `max(${top}%, ${above + RESULT_PILL_OVERHANG_PX + PANE_EDGE_GAP_PX}px)`
-            : `min(${top}%, calc(100% - ${below + PANE_EDGE_GAP_PX}px - var(--action-reserve, 0px)))`;
+            : `min(${top}%, calc(100% - ${below + PANE_EDGE_GAP_PX}px))`;
     const style: React.CSSProperties = { left: `${left}%`, top: seatTop };
 
     if (!occupied) {

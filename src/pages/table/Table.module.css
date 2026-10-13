@@ -20,6 +20,8 @@
     gap: 10px;
     flex: 1;
     min-height: 0;
+    /* The floating action bar sits in this strip, so the felt and every seat stay clear of it. */
+    padding-bottom: var(--action-reserve, 0px);
 }
 
 @media (max-width: 768px) {
