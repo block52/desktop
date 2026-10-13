@@ -71,8 +71,11 @@ app.whenReady().then(() => {
   // Vite's dev server requires 'unsafe-eval' for HMR; production builds do not.
   const isDev = !!MAIN_WINDOW_VITE_DEV_SERVER_URL;
 
-  // No page may use the camera, microphone, geolocation, notifications etc.
-  session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
+  // No page may use the camera, microphone, geolocation, notifications etc. Writing to the clipboard
+  // (the copy buttons) is the one thing the app needs.
+  const allowedPermissions = new Set(["clipboard-sanitized-write"]);
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => callback(allowedPermissions.has(permission)));
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => allowedPermissions.has(permission));
 
   const csp = buildContentSecurityPolicy({
     isDev,

@@ -1,8 +1,10 @@
+// @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copyText } from "./clipboard";
 
 afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
 });
 
 describe("copyText", () => {
@@ -16,16 +18,32 @@ describe("copyText", () => {
         expect(result).toBe(true);
     });
 
-    it("returns false when the clipboard write rejects", async () => {
+    it("falls back to selecting and copying when the async clipboard write is refused", async () => {
         vi.stubGlobal("navigator", {
             clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) }
         });
+        const exec = vi.fn(() => true);
+        document.execCommand = exec;
+
+        expect(await copyText("b52abc")).toBe(true);
+        expect(exec).toHaveBeenCalledWith("copy");
+        expect(document.querySelector("textarea")).toBeNull();
+    });
+
+    it("returns false when the clipboard write rejects and the fallback fails too", async () => {
+        vi.stubGlobal("navigator", {
+            clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) }
+        });
+        document.execCommand = vi.fn(() => false);
 
         expect(await copyText("b52abc")).toBe(false);
     });
 
-    it("returns false when navigator.clipboard is unavailable", async () => {
+    it("returns false when navigator.clipboard is unavailable and nothing else can copy", async () => {
         vi.stubGlobal("navigator", {});
+        document.execCommand = vi.fn(() => {
+            throw new Error("unsupported");
+        });
 
         expect(await copyText("b52abc")).toBe(false);
     });
