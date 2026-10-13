@@ -712,3 +712,27 @@
     background: hsl(222 18% 32%);
     color: hsl(215 20% 78%);
 }
+
+/* Hero seat: the same countdown ring as a badge on the plate's corner (the bar below the plate stays). */
+.heroPlate {
+    position: relative;
+}
+
+.heroClock {
+    position: absolute;
+    left: -16px;
+    top: -16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: hsl(240 28% 8% / 0.96);
+    z-index: 2;
+}
+
+.heroClock .turnRing {
+    inset: -3px;
+}
+
+.heroClock .turnRingSeconds {
+    font-size: 17px;
+}

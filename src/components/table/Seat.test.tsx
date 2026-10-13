@@ -39,4 +39,11 @@ describe("Seat", () => {
         expect(screen.queryByText("Fold")).toBeNull();
         expect(container.querySelector("[class*='actionChip']")).toBeNull();
     });
+
+    it("shows the countdown on the hero plate as well as the bar under it", () => {
+        render(<Seat {...base} isHero isActive turnTimeoutSec={30} turnRemainingSec={8} turnKey="t1" />);
+        const timers = screen.getAllByRole("timer");
+        expect(timers.length).toBe(2);
+        expect(timers.some(timer => timer.textContent === "8")).toBe(true);
+    });
 });

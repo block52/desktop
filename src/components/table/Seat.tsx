@@ -315,6 +315,11 @@ export const Seat: React.FC<SeatProps> = ({
                 )}
                 <WinBadge winner={winner} result={result} equity={equity} />
                 <div className={`${styles.heroPlate} ${hasCards ? styles.heroPlateWithCards : ""} ${isActive ? styles.heroPlateActive : ""}`}>
+                    {isActive === true && turnTimeoutSec !== undefined && turnTimeoutSec > 0 && (
+                        <div className={styles.heroClock}>
+                            <TurnRing timeoutSec={turnTimeoutSec} remainingSec={turnRemainingSec} turnKey={turnKey} />
+                        </div>
+                    )}
                     <div className={styles.heroNameRow}>
                         <span className={styles.heroName}>You</span>
                         <BlindTag isSmallBlind={isSmallBlind} isBigBlind={isBigBlind} />
