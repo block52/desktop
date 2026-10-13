@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { ToastProvider } from "../../context/ToastContext";
 import WalletKeysModal from "./WalletKeysModal";
@@ -43,14 +43,14 @@ describe("WalletKeysModal", () => {
         expect(screen.getByText("lima")).toBeTruthy();
     });
 
-    it("calls onCleared when the wallet is cleared and confirmed", () => {
+    it("calls onCleared when the wallet is cleared and confirmed", async () => {
         setCosmosMnemonic(MNEMONIC);
         const onCleared = vi.fn();
         vi.spyOn(window, "confirm").mockReturnValue(true);
         renderModal(onCleared);
 
         fireEvent.click(screen.getByRole("button", { name: "Clear Wallet" }));
-        expect(onCleared).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(onCleared).toHaveBeenCalledTimes(1));
     });
 
     it("calls onClose when the close button is clicked", () => {

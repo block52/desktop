@@ -124,7 +124,7 @@ export const useCosmosWallet = (): UseCosmosWalletReturn => {
       const addr = await getAddressFromMnemonic(mnemonic, "b52");
 
       // Store mnemonic AND address in localStorage
-      setCosmosMnemonic(mnemonic);
+      await setCosmosMnemonic(mnemonic);
       setCosmosAddress(addr);
 
       // Update state

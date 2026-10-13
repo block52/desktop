@@ -142,7 +142,7 @@ const Wallet: React.FC = () => {
         setError("");
         try {
             const wallet = await generateWallet("b52", 24);
-            setCosmosMnemonic(wallet.mnemonic);
+            await setCosmosMnemonic(wallet.mnemonic);
             setCosmosAddress(wallet.address);
             clearSigningClientCache();
             clearCosmosClient();
@@ -165,7 +165,7 @@ const Wallet: React.FC = () => {
                 return;
             }
             const wallet = await createWalletFromMnemonic(importMnemonic.trim(), "b52");
-            setCosmosMnemonic(importMnemonic.trim());
+            await setCosmosMnemonic(importMnemonic.trim());
             setCosmosAddress(wallet.address);
             clearSigningClientCache();
             clearCosmosClient();

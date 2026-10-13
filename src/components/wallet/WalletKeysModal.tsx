@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { WalletStatus } from "../../wallet/types";
 import { useNavigate } from "react-router-dom";
 import { getCosmosMnemonic, clearCosmosData } from "../../utils/cosmos/storage";
 import { clearCosmosClient, clearSigningClientCache } from "../../utils/cosmos/client";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
 import SeedPhraseGrid from "./SeedPhraseGrid";
+import ReauthPrompt from "./ReauthPrompt";
+import WalletSecurityPanel from "./WalletSecurityPanel";
 import styles from "./WalletKeysModal.module.css";
 
 interface WalletKeysModalProps {
@@ -17,10 +20,37 @@ const WalletKeysModal: React.FC<WalletKeysModalProps> = ({ address, onClose, onC
     const copy = useCopyToClipboard();
     const [mnemonic] = useState<string | null>(() => getCosmosMnemonic());
     const [showMnemonic, setShowMnemonic] = useState(false);
+    const bridge = window.electronAPI?.wallet;
+    const [status, setStatus] = useState<WalletStatus | null>(null);
+    const [isConfirmed, setIsConfirmed] = useState(false);
+    const [pendingReveal, setPendingReveal] = useState<"show" | "copy" | null>(null);
 
-    const handleClear = () => {
+    useEffect(() => {
+        void bridge?.status().then(setStatus);
+    }, [bridge]);
+
+    // With a password set, showing or copying the seed phrase asks for it again.
+    const needsConfirmation = bridge !== undefined && status !== null && status.hasPassword && !isConfirmed;
+
+    const revealAction = (action: "show" | "copy") => {
+        if (needsConfirmation) {
+            setPendingReveal(action);
+            return;
+        }
+        if (action === "show") setShowMnemonic(v => !v);
+        else if (mnemonic) void copy(mnemonic, "Seed phrase copied");
+    };
+
+    const handleConfirmed = () => {
+        setIsConfirmed(true);
+        if (pendingReveal === "show") setShowMnemonic(true);
+        else if (pendingReveal === "copy" && mnemonic) void copy(mnemonic, "Seed phrase copied");
+        setPendingReveal(null);
+    };
+
+    const handleClear = async () => {
         if (!window.confirm("Clear your wallet? Make sure you have saved your seed phrase!")) return;
-        clearCosmosData();
+        await clearCosmosData();
         // Drop the decrypted signer and client that still hold the old key in memory.
         clearSigningClientCache();
         clearCosmosClient();
@@ -58,10 +88,10 @@ const WalletKeysModal: React.FC<WalletKeysModalProps> = ({ address, onClose, onC
                         <div className={styles.seedHeaderRow}>
                             <span className={styles.fieldLabel}>Seed Phrase</span>
                             <div className={styles.seedHeaderButtons}>
-                                <button onClick={() => setShowMnemonic(v => !v)} className={`btn-ghost ${styles.ghostAction}`}>
+                                <button onClick={() => revealAction("show")} className={`btn-ghost ${styles.ghostAction}`}>
                                     {showMnemonic ? "Hide" : "Show"}
                                 </button>
-                                <button onClick={() => void copy(mnemonic, "Seed phrase copied")} className={`btn-ghost ${styles.ghostAction}`}>
+                                <button onClick={() => revealAction("copy")} className={`btn-ghost ${styles.ghostAction}`}>
                                     Copy
                                 </button>
                             </div>
@@ -69,6 +99,17 @@ const WalletKeysModal: React.FC<WalletKeysModalProps> = ({ address, onClose, onC
                         <SeedPhraseGrid mnemonic={mnemonic} hidden={!showMnemonic} />
                     </div>
                 )}
+
+                {pendingReveal !== null && bridge !== undefined && status !== null && (
+                    <ReauthPrompt
+                        bridge={bridge}
+                        touchId={status.touchIdEnabled && status.touchIdAvailable}
+                        onConfirmed={handleConfirmed}
+                        onCancel={() => setPendingReveal(null)}
+                    />
+                )}
+
+                {bridge !== undefined && <WalletSecurityPanel bridge={bridge} />}
 
                 <div className={styles.stack}>
                     <button

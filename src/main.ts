@@ -2,6 +2,7 @@ import { app, BrowserWindow, nativeImage, ipcMain, shell, session } from "electr
 import path from "node:path";
 import started from "electron-squirrel-startup";
 import { buildContentSecurityPolicy, hostsFromUrls } from "./csp";
+import { registerWalletIpc } from "./wallet/walletIpc";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -67,6 +68,8 @@ ipcMain.on("open-external", (_event, url: unknown) => {
 });
 
 app.whenReady().then(() => {
+  registerWalletIpc();
+
   // Set Content-Security-Policy.
   // Vite's dev server requires 'unsafe-eval' for HMR; production builds do not.
   const isDev = !!MAIN_WINDOW_VITE_DEV_SERVER_URL;
