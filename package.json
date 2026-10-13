@@ -66,6 +66,7 @@
   },
   "resolutions": {
     "axios": "^1.20.0",
-    "protobufjs": "^7.6.1"
+    "protobufjs": "^7.6.1",
+    "ws": "^8.21.0"
   }
 }
