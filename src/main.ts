@@ -1,6 +1,7 @@
 import { app, BrowserWindow, nativeImage, ipcMain, shell, session } from "electron";
 import path from "node:path";
 import started from "electron-squirrel-startup";
+import { buildContentSecurityPolicy, hostsFromUrls } from "./csp";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -69,25 +70,26 @@ app.whenReady().then(() => {
   // Set Content-Security-Policy.
   // Vite's dev server requires 'unsafe-eval' for HMR; production builds do not.
   const isDev = !!MAIN_WINDOW_VITE_DEV_SERVER_URL;
-  const scriptSrc = isDev ? "'self' 'unsafe-inline' 'unsafe-eval'" : "'self'";
 
   // No page may use the camera, microphone, geolocation, notifications etc.
   session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
+
+  const csp = buildContentSecurityPolicy({
+    isDev,
+    extraConnectHosts: hostsFromUrls([
+      import.meta.env.VITE_INDEXER_URL,
+      import.meta.env.VITE_PAYMENT_PROXY_URL,
+      import.meta.env.VITE_SNG_SCHEDULE_URL,
+      import.meta.env.VITE_PROFILE_NFT_INDEXER_URL,
+      import.meta.env.VITE_MAINNET_RPC_URL,
+    ]),
+  });
 
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        "Content-Security-Policy": [
-          "default-src 'self'; " +
-          `script-src ${scriptSrc}; ` +
-          "style-src 'self' 'unsafe-inline'; " +
-          "img-src 'self' data: https: blob:; " +
-          "font-src 'self' data: https:; " +
-          "connect-src 'self' ws://localhost:* wss://localhost:* http://localhost:* https: wss://relay.walletconnect.org wss://relay.walletconnect.com wss://node1.block52.xyz wss://node.texashodl.net wss://node.tommillerservices.com; " +
-          "worker-src 'self' blob:; " +
-          "object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
-        ],
+        "Content-Security-Policy": [csp],
       },
     });
   });
