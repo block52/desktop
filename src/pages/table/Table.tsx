@@ -46,6 +46,7 @@ import { useGameSettings } from "../../hooks/useGameSettings";
 import { useTableSounds } from "../../hooks/useTableSounds";
 import { useTurnTimer } from "../../hooks/useTurnTimer";
 import { useSngResultDismissal } from "../../hooks/useSngResultDismissal";
+import { useMaxElementHeight } from "../../hooks/useMaxElementHeight";
 import { useTableAutoPlay } from "../../hooks/playerActions/useTableAutoPlay";
 import { postSmallBlind } from "../../hooks/playerActions/postSmallBlind";
 import { postBigBlind } from "../../hooks/playerActions/postBigBlind";
@@ -73,6 +74,9 @@ function getVariantLabel(variant: string | undefined): string {
     return "NLH";
 }
 
+// The action slot floats 8px above the bottom edge; keep the seat a little clear of it as well.
+const ACTION_SLOT_GAP_PX = 14;
+
 const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
@@ -83,6 +87,8 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
     const { showSuccess, showError, showWarning } = useToast();
     const legalActions = usePlayerLegalActions();
     const { balance: cosmosBalance, address: walletAddress, refreshBalance } = useCosmosWallet();
+    // Seats keep clear of the floating action bar: reserve its tallest height at the bottom of the board.
+    const [setActionSlotElement, actionSlotMaxHeight] = useMaxElementHeight();
     const [isRefreshingBalance, setIsRefreshingBalance] = useState<boolean>(false);
 
     const [wagerAmount, setWagerAmount] = useState<string>("");
@@ -600,7 +606,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     }
                 />
             )}
-            <div className={styles.boardRow}>
+            <div className={styles.boardRow} style={{ "--action-reserve": `${actionSlotMaxHeight > 0 ? actionSlotMaxHeight + ACTION_SLOT_GAP_PX : 0}px` } as React.CSSProperties}>
                 <TableBoard
                     players={tournamentFinished ? gameState.players.map(player => ({ ...player, sumOfBets: "0" })) : gameState.players}
                     maxPlayers={gameState.gameOptions.maxPlayers}
@@ -762,7 +768,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                 }
             />
             {isUserSeated && !tournamentFinished && (
-                <div className={styles.actionSlot}>
+                <div className={styles.actionSlot} ref={setActionSlotElement}>
                 {!waitingForPlayers && !sitAndGoWaiting && (
                 <PlayerActionButtons
                     isSubmitting={isSubmitting || isFeedStale || awaitingFrame !== null}
