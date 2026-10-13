@@ -736,3 +736,70 @@
 .heroClock .turnRingSeconds {
     font-size: 17px;
 }
+
+/* ── Avatar sweep: elapsed time dims the picture, a spark marks the edge of what is left ── */
+@property --sweep {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 1;
+}
+
+.turnSweep {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.turnSweepDim {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    --sweep: var(--sweep-from);
+    background: conic-gradient(from 0deg, rgba(255, 255, 255, 0.16) calc(var(--sweep) * 1turn), rgba(6, 6, 18, 0.66) 0);
+    animation: turnSweepRun linear forwards;
+}
+
+@keyframes turnSweepRun {
+    from {
+        --sweep: var(--sweep-from);
+    }
+    to {
+        --sweep: 0;
+    }
+}
+
+.turnSweepSpark {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    transform: rotate(var(--spark-from));
+    animation: turnSparkRun linear forwards;
+}
+
+.turnSweepSpark span {
+    position: absolute;
+    left: 50%;
+    top: -3px;
+    width: 8px;
+    height: 8px;
+    margin-left: -4px;
+    border-radius: 50%;
+    background: hsl(43 96% 62%);
+    box-shadow: 0 0 6px 2px hsl(43 96% 58% / 0.9);
+}
+
+.turnRingUrgent .turnSweepSpark span {
+    background: hsl(0 90% 64%);
+    box-shadow: 0 0 6px 2px hsl(0 84% 60% / 0.9);
+}
+
+@keyframes turnSparkRun {
+    to {
+        transform: rotate(0deg);
+    }
+}

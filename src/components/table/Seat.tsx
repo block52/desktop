@@ -85,11 +85,37 @@ const RING_RADIUS = 31;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 const URGENT_SECONDS = 5;
 
-/** The turn clock drawn around an avatar: an arc that drains over the time left, with the seconds in the middle. */
-function TurnRing({ timeoutSec, remainingSec, turnKey }: { timeoutSec: number; remainingSec?: number; turnKey?: string }) {
+/**
+ * The turn clock on a seat. On an avatar it is a sweep: the part of the clock already used dims the picture
+ * and the part left stays bright, with a spark at the edge that runs back towards the top. The hero's badge
+ * (no picture to dim) uses a draining ring instead. The seconds sit in the middle either way.
+ */
+function TurnRing({ timeoutSec, remainingSec, turnKey, variant = "sweep" }: { timeoutSec: number; remainingSec?: number; turnKey?: string; variant?: "sweep" | "ring" }) {
     const left = Math.max(remainingSec ?? timeoutSec, 0);
     const startFraction = Math.min(left / timeoutSec, 1);
     const urgent = remainingSec !== undefined && remainingSec <= URGENT_SECONDS;
+    const seconds = remainingSec !== undefined ? <span className={styles.turnRingSeconds}>{remainingSec}</span> : null;
+
+    if (variant === "sweep") {
+        return (
+            <div className={`${styles.turnSweep} ${urgent ? styles.turnRingUrgent : ""}`} role="timer" aria-label="Time to act">
+                <div
+                    key={turnKey}
+                    className={styles.turnSweepDim}
+                    style={{ "--sweep-from": startFraction, animationDuration: `${left}s` } as React.CSSProperties}
+                />
+                <div
+                    key={`${turnKey ?? ""}-spark`}
+                    className={styles.turnSweepSpark}
+                    style={{ "--spark-from": `${startFraction * 360}deg`, animationDuration: `${left}s` } as React.CSSProperties}
+                >
+                    <span />
+                </div>
+                {seconds}
+            </div>
+        );
+    }
+
     return (
         <div className={`${styles.turnRing} ${urgent ? styles.turnRingUrgent : ""}`} role="timer" aria-label="Time to act">
             <svg className={styles.turnRingSvg} viewBox="0 0 66 66" aria-hidden="true">
@@ -110,7 +136,7 @@ function TurnRing({ timeoutSec, remainingSec, turnKey }: { timeoutSec: number; r
                     }
                 />
             </svg>
-            {remainingSec !== undefined && <span className={styles.turnRingSeconds}>{remainingSec}</span>}
+            {seconds}
         </div>
     );
 }
@@ -317,7 +343,7 @@ export const Seat: React.FC<SeatProps> = ({
                 <div className={`${styles.heroPlate} ${hasCards ? styles.heroPlateWithCards : ""} ${isActive ? styles.heroPlateActive : ""}`}>
                     {isActive === true && turnTimeoutSec !== undefined && turnTimeoutSec > 0 && (
                         <div className={styles.heroClock}>
-                            <TurnRing timeoutSec={turnTimeoutSec} remainingSec={turnRemainingSec} turnKey={turnKey} />
+                            <TurnRing timeoutSec={turnTimeoutSec} remainingSec={turnRemainingSec} turnKey={turnKey} variant="ring" />
                         </div>
                     )}
                     <div className={styles.heroNameRow}>
