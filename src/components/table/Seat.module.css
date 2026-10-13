@@ -610,3 +610,105 @@
     color: white;
     box-shadow: 0 6px 18px -4px hsl(263 83% 50% / 0.6);
 }
+
+/* ── Turn clock ring and persistent action chip on the avatar ── */
+.turnRing {
+    position: absolute;
+    inset: -5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.turnRingSvg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    overflow: visible;
+}
+
+.turnRingTrack {
+    fill: none;
+    stroke: rgba(15, 15, 30, 0.55);
+    stroke-width: 4;
+}
+
+.turnRingArc {
+    fill: none;
+    stroke: hsl(43 96% 58%);
+    stroke-width: 4;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 4px hsl(43 96% 58% / 0.8));
+    animation: turnRingDrain linear forwards;
+}
+
+.turnRingUrgent .turnRingArc {
+    stroke: hsl(0 84% 60%);
+    filter: drop-shadow(0 0 5px hsl(0 84% 60% / 0.9));
+}
+
+.turnRingSeconds {
+    position: relative;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.7);
+}
+
+.turnRingUrgent .turnRingSeconds {
+    color: hsl(0 90% 78%);
+    animation: turnRingPulse 1s ease-in-out infinite;
+}
+
+@keyframes turnRingDrain {
+    from {
+        stroke-dashoffset: var(--ring-from);
+    }
+    to {
+        stroke-dashoffset: var(--ring-to);
+    }
+}
+
+@keyframes turnRingPulse {
+    50% {
+        transform: scale(1.18);
+    }
+}
+
+.actionChip {
+    position: absolute;
+    left: -10px;
+    bottom: -7px;
+    z-index: 3;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #fff;
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.actionChip_good {
+    background: hsl(142 62% 34%);
+}
+
+.actionChip_warm {
+    background: hsl(30 90% 46%);
+}
+
+.actionChip_hot {
+    background: hsl(0 72% 46%);
+}
+
+.actionChip_cool {
+    background: hsl(222 18% 32%);
+    color: hsl(215 20% 78%);
+}

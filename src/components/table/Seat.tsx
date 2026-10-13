@@ -81,6 +81,56 @@ function AvatarFace({ avatar, initials }: { avatar?: string; initials: string })
 
 const PLACE_SUFFIX: Record<number, string> = { 1: "1st", 2: "2nd", 3: "3rd" };
 
+const RING_RADIUS = 31;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+const URGENT_SECONDS = 5;
+
+/** The turn clock drawn around an avatar: an arc that drains over the time left, with the seconds in the middle. */
+function TurnRing({ timeoutSec, remainingSec, turnKey }: { timeoutSec: number; remainingSec?: number; turnKey?: string }) {
+    const left = Math.max(remainingSec ?? timeoutSec, 0);
+    const startFraction = Math.min(left / timeoutSec, 1);
+    const urgent = remainingSec !== undefined && remainingSec <= URGENT_SECONDS;
+    return (
+        <div className={`${styles.turnRing} ${urgent ? styles.turnRingUrgent : ""}`} role="timer" aria-label="Time to act">
+            <svg className={styles.turnRingSvg} viewBox="0 0 66 66" aria-hidden="true">
+                <circle className={styles.turnRingTrack} cx="33" cy="33" r={RING_RADIUS} />
+                <circle
+                    key={turnKey}
+                    className={styles.turnRingArc}
+                    cx="33"
+                    cy="33"
+                    r={RING_RADIUS}
+                    style={
+                        {
+                            strokeDasharray: RING_CIRCUMFERENCE,
+                            "--ring-from": RING_CIRCUMFERENCE * (1 - startFraction),
+                            "--ring-to": RING_CIRCUMFERENCE,
+                            animationDuration: `${left}s`
+                        } as React.CSSProperties
+                    }
+                />
+            </svg>
+            {remainingSec !== undefined && <span className={styles.turnRingSeconds}>{remainingSec}</span>}
+        </div>
+    );
+}
+
+const ACTION_CHIPS: Record<string, { label: string; tone: "good" | "warm" | "hot" | "cool" }> = {
+    check: { label: "Check", tone: "good" },
+    call: { label: "Call", tone: "good" },
+    bet: { label: "Bet", tone: "warm" },
+    raise: { label: "Raise", tone: "warm" },
+    "all-in": { label: "All-in", tone: "hot" },
+    fold: { label: "Fold", tone: "cool" }
+};
+
+/** The seat's latest action kept on the avatar for the rest of the street (blind posts are shown by the SB/BB tags). */
+function ActionChip({ action }: { action?: string }) {
+    const chip = action !== undefined ? ACTION_CHIPS[action] : undefined;
+    if (chip === undefined) return null;
+    return <span className={`${styles.actionChip} ${styles[`actionChip_${chip.tone}`]}`}>{chip.label}</span>;
+}
+
 /** Floating pill above a seat: the tournament place (with prize) when known, else the amount just won. */
 /** Expanding rings behind the seat: white while it is this seat's turn, gold (plus rising chips) when it won. */
 function Ripple({ kind, hero }: { kind: "turn" | "win"; hero?: boolean }) {
@@ -294,7 +344,12 @@ export const Seat: React.FC<SeatProps> = ({
             <WinBadge winner={winner} result={result} equity={equity} />
             <div className={styles.avatar} data-seat-avatar>
                 <AvatarFace avatar={avatar} initials={initials} />
+                {isActive === true && turnTimeoutSec !== undefined && turnTimeoutSec > 0 && (
+                    <TurnRing timeoutSec={turnTimeoutSec} remainingSec={turnRemainingSec} turnKey={turnKey} />
+                )}
                 {isDealer && <span className={styles.dealer}>D</span>}
+                {!isFolded && <ActionChip action={lastAction?.action} />}
+                {isFolded && <ActionChip action="fold" />}
             </div>
             <div className={styles.nameplate}>
                 <div className={styles.nameRow}>
@@ -303,7 +358,7 @@ export const Seat: React.FC<SeatProps> = ({
                 </div>
                 <div className={`${styles.stack} ${isFolded ? styles.stackMuted : ""}`}>{isFolded ? "Folded" : stack}</div>
             </div>
-            <SeatBanner lastAction={lastAction} isActive={isActive} turnTimeoutSec={turnTimeoutSec} turnRemainingSec={turnRemainingSec} turnKey={turnKey} status={statusLabel} winner={winner} flipped={isUpper} />
+            <SeatBanner lastAction={lastAction} status={statusLabel} winner={winner} flipped={isUpper} />
             {hasCards && !isFolded && (
                 <div className={styles.cards}>
                     {/* Hidden cards arrive as "X" placeholders and are drawn as card backs; revealed cards show their face. */}
