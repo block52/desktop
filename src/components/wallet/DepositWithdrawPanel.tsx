@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
-import { createSigningClientFromMnemonic, COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
+import { COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
 import usdcUrl from "../../assets/lobby/usdc.svg";
 import usdtUrl from "../../assets/lobby/usdt.svg";
 import useDecimals from "../../hooks/wallet/useDecimals";
@@ -13,7 +13,7 @@ import { convertAmountToBigInt, parseUsdcToMicro } from "../../utils/currency";
 import { assertAddressMatchesWallet } from "../../utils/cosmos/verifiedAddress";
 import { useToast } from "../../context/ToastContext";
 import { useNetwork } from "../../context/NetworkContext";
-import { getCosmosMnemonic, getCosmosAddress } from "../../utils/cosmos/storage";
+import { getSigningClient as getRemoteSigningClient } from "../../utils/cosmos/client";
 import { base64ToHex } from "../../utils/encodingUtils";
 import { withdrawAbi, BRIDGE_ADDRESS } from "../../abis/contractABI";
 import { ETH_CHAIN_ID, ETH_USDC_ADDRESS, ETH_USDT_ADDRESS } from "../../config/constants";
@@ -315,22 +315,8 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
     }, [writeError, step]);
 
     const getSigningClient = useCallback(async () => {
-        const mnemonic = getCosmosMnemonic();
-        const fromAddress = getCosmosAddress();
-        if (!mnemonic || !fromAddress) throw new Error("No wallet found. Create or import a wallet first.");
-
-        const client = await createSigningClientFromMnemonic(
-            {
-                rpcEndpoint: currentNetwork.rpc,
-                restEndpoint: currentNetwork.rest,
-                chainId: COSMOS_CONSTANTS.CHAIN_ID,
-                prefix: COSMOS_CONSTANTS.ADDRESS_PREFIX,
-                denom: COSMOS_CONSTANTS.GAS_DENOM,
-                gasPrice: COSMOS_CONSTANTS.DEFAULT_GAS_PRICE
-            },
-            mnemonic
-        );
-        return { client, fromAddress };
+        const { signingClient, userAddress } = await getRemoteSigningClient(currentNetwork);
+        return { client: signingClient, fromAddress: userAddress };
     }, [currentNetwork]);
 
     const startPolling = useCallback(

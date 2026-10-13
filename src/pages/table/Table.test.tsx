@@ -24,8 +24,7 @@ vi.mock("../../hooks/useCosmosWallet", () => ({
     useCosmosWallet: () => ({ balance: [], address: hoisted.address, refreshBalance: vi.fn() })
 }));
 vi.mock("../../utils/cosmos/storage", () => ({
-    getCosmosAddress: () => hoisted.address,
-    getCosmosMnemonic: () => null
+    getCosmosAddress: () => hoisted.address
 }));
 vi.mock("../../hooks/useHandSeed", () => ({ useHandSeed: () => null }));
 vi.mock("../../components/table/TableHeader", () => ({ TableHeader: () => null }));

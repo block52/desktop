@@ -7,13 +7,15 @@
 
 import {
   CosmosClient,
-  createSigningClientFromMnemonic,
   getDefaultCosmosConfig as getDefaultCosmosConfigSDK,
   COSMOS_CONSTANTS,
   SigningCosmosClient,
 } from "@block52/poker-vm-sdk";
-import { getCosmosAddress, getCosmosMnemonic } from "./storage";
+import { SIGNING_METHODS } from "../../wallet/types";
+import type { SigningMethod } from "../../wallet/types";
+import { getCosmosAddress } from "./storage";
 import { getCosmosUrls, NetworkEndpoints } from "./urls";
+import { requireWalletBridge } from "./walletBridge";
 
 // Local type definition (not exported from SDK main index)
 interface CosmosConfig {
@@ -23,7 +25,6 @@ interface CosmosConfig {
   prefix: string;
   denom: string;
   gasPrice: string;
-  mnemonic?: string;
 }
 
 // Re-export types and constants from SDK
@@ -104,17 +105,12 @@ export const getCosmosClient = (
   }
 
   if (!clientInstance) {
-    const mnemonic = getCosmosMnemonic();
     const config = customEndpoints
       ? getCosmosConfigWithEndpoints(customEndpoints.rpc, customEndpoints.rest)
       : getDefaultCosmosConfig(network!);
 
-    if (!mnemonic) {
-      // For read-only operations (like explorer), create client without mnemonic
-      clientInstance = new CosmosClient(config);
-    } else {
-      clientInstance = new CosmosClient({ ...config, mnemonic });
-    }
+    // Read-only: signing happens in the main process, never with a key held here.
+    clientInstance = new CosmosClient(config);
 
     // Track current endpoints for change detection
     currentEndpoints = newEndpoints;
@@ -131,99 +127,56 @@ export const clearCosmosClient = (): void => {
   currentEndpoints = null;
 };
 
-const verifiedChainEndpoints = new Set<string>();
-
 /**
- * A node picks the chain id the transaction is signed for. Before signing against an endpoint for the first
- * time, confirm it really serves the Block52 chain, so a wrong or hostile node can't get a signature meant
- * for another network.
+ * The signing client that runs in the main process (see src/wallet/signer.ts). The page gets only these
+ * methods; each call is sent over IPC and signed there, so the seed phrase never reaches the page.
  */
-async function assertEndpointServesBlock52(restEndpoint: string): Promise<void> {
-  if (verifiedChainEndpoints.has(restEndpoint)) return;
-  const response = await fetch(`${restEndpoint.replace(/\/+$/, "")}/cosmos/base/tendermint/v1beta1/node_info`);
-  if (!response.ok) throw new Error(`Could not verify the network (node responded ${response.status})`);
-  const info: { default_node_info?: { network?: string } } = await response.json();
-  const network = info.default_node_info?.network;
-  if (network !== COSMOS_CONSTANTS.CHAIN_ID) {
-    throw new Error(`This node reports network "${network}", not "${COSMOS_CONSTANTS.CHAIN_ID}". Refusing to sign.`);
-  }
-  verifiedChainEndpoints.add(restEndpoint);
-}
+export type RemoteSigningClient = Pick<SigningCosmosClient, SigningMethod>;
 
 export interface SigningClientResult {
-  signingClient: SigningCosmosClient;
+  signingClient: RemoteSigningClient;
   userAddress: string;
 }
 
-let signingClientCache: {
-  key: string;
-  promise: Promise<SigningClientResult>;
-} | null = null;
+function remoteSigningClient(network: NetworkEndpoints): RemoteSigningClient {
+  const bridge = requireWalletBridge();
+  const { rpcEndpoint, restEndpoint } = getCosmosUrls(network);
+  const endpoints = { rpc: rpcEndpoint, rest: restEndpoint };
+  const methods = SIGNING_METHODS.map((method) => [
+    method,
+    (...args: unknown[]) => bridge.signingCall(endpoints, method, args),
+  ]);
+  return Object.fromEntries(methods) as unknown as RemoteSigningClient;
+}
 
 /**
- * Get (or build and cache) the signing client for the current wallet + network.
+ * Get the signing client for the current wallet + network.
  *
- * Returns the same Promise across concurrent calls within a session, so the
- * expensive PBKDF2 derivation runs once per (wallet, network) pair.
+ * The main process builds and caches the real client (the expensive key derivation runs once per
+ * network there), so this is cheap.
  *
- * @throws Error if Cosmos wallet is not initialized (no mnemonic or address)
+ * @throws Error if Cosmos wallet is not initialized (no address)
  */
 export async function getSigningClient(network: NetworkEndpoints): Promise<SigningClientResult> {
   const userAddress = getCosmosAddress();
-  const mnemonic = getCosmosMnemonic();
 
-  if (!userAddress || !mnemonic) {
+  if (!userAddress) {
     throw new Error(
       "Block52 wallet not initialized. Please create or import a Block52 wallet first.",
     );
   }
 
-  const { rpcEndpoint, restEndpoint } = getCosmosUrls(network);
-  const key = `${userAddress}|${rpcEndpoint}|${restEndpoint}`;
-
-  if (signingClientCache?.key === key) {
-    return signingClientCache.promise;
-  }
-
-  const promise = assertEndpointServesBlock52(restEndpoint).then(() => createSigningClientFromMnemonic(
-    {
-      rpcEndpoint,
-      restEndpoint,
-      chainId: COSMOS_CONSTANTS.CHAIN_ID,
-      prefix: COSMOS_CONSTANTS.ADDRESS_PREFIX,
-      denom: "stake",
-      gasPrice: "0stake", // Gasless
-    },
-    mnemonic,
-  )).then((signingClient) => ({ signingClient, userAddress }));
-
-  // If construction rejects, drop the cache so the next call retries
-  // instead of returning a permanently-failed promise.
-  promise.catch(() => {
-    if (signingClientCache?.promise === promise) {
-      signingClientCache = null;
-    }
-  });
-
-  signingClientCache = { key, promise };
-  return promise;
+  return { signingClient: remoteSigningClient(network), userAddress };
 }
 
 /**
- * Clear the cached signing client.
+ * Drop the main process's cached signing client so the next call reconnects.
  *
  * Call on: logout, wallet import/change, network switch, and from
  * withMoneyMoverRetry's error-recovery path below.
  */
-export function clearSigningClientCache(): void {
-  const previous = signingClientCache;
-  signingClientCache = null;
-  // Best-effort cleanup — disconnect if the SDK exposes it.
-  previous?.promise
-    .then((c) => (c.signingClient as { disconnect?: () => void }).disconnect?.())
-    .catch(() => {
-      /* already-rejected promise, nothing to disconnect */
-    });
+export async function clearSigningClientCache(): Promise<void> {
+  await window.electronAPI?.wallet.resetSigner();
 }
 
 /**
@@ -305,7 +258,7 @@ export async function withMoneyMoverRetry<T>(
       throw err;
     }
     // Force a fresh client so the retry re-queries the account sequence.
-    clearSigningClientCache();
+    await clearSigningClientCache();
     if (sequenceMismatch) {
       // Give the pending money-mover a chance to commit so the re-query
       // returns the advanced sequence instead of the same stale value.

@@ -103,8 +103,11 @@ builds can read it. The secret is exposed to the `yarn make` step only, not to d
 
 ## Security notes
 
-- The wallet's seed phrase is currently stored in the app's local storage, in plain text on disk. Anyone with
-  access to your user profile can read it. Back up the seed phrase and keep the wallet balance small.
+- The wallet's seed phrase is encrypted on disk with your operating system's secure storage (macOS Keychain,
+  Windows DPAPI, Linux keyring) and signing happens in the app's main process, so the web page never holds the key.
+  You can add a password, Touch ID unlock (macOS) and auto-lock under Wallet → Wallet keys → Security. Sending funds,
+  withdrawing and bonding a validator ask for confirmation in a native dialog. Back up the seed phrase: a lost
+  password cannot be recovered. On a Linux machine without a keyring the phrase is only obfuscated, so set a password.
 - Installers are **not signed or notarized** yet, so macOS Gatekeeper and Windows SmartScreen will warn on first
   launch.
 - Never share your seed phrase. Block52 will never ask for it.

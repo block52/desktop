@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { WalletStatus } from "../../wallet/types";
 import { useNavigate } from "react-router-dom";
-import { getCosmosMnemonic, clearCosmosData } from "../../utils/cosmos/storage";
+import type { WalletStatus } from "../../wallet/types";
+import { clearCosmosData } from "../../utils/cosmos/storage";
 import { clearCosmosClient, clearSigningClientCache } from "../../utils/cosmos/client";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
 import SeedPhraseGrid from "./SeedPhraseGrid";
@@ -15,44 +15,65 @@ interface WalletKeysModalProps {
     onCleared: () => void;
 }
 
+const SEED_VISIBLE_MS = 60_000;
+
 const WalletKeysModal: React.FC<WalletKeysModalProps> = ({ address, onClose, onCleared }) => {
     const navigate = useNavigate();
     const copy = useCopyToClipboard();
-    const [mnemonic] = useState<string | null>(() => getCosmosMnemonic());
-    const [showMnemonic, setShowMnemonic] = useState(false);
     const bridge = window.electronAPI?.wallet;
     const [status, setStatus] = useState<WalletStatus | null>(null);
-    const [isConfirmed, setIsConfirmed] = useState(false);
+    // The seed phrase is only fetched from the wallet when it is asked for, and dropped again after a minute.
+    const [mnemonic, setMnemonic] = useState<string | null>(null);
     const [pendingReveal, setPendingReveal] = useState<"show" | "copy" | null>(null);
+    const [error, setError] = useState("");
 
     useEffect(() => {
         void bridge?.status().then(setStatus);
     }, [bridge]);
 
-    // With a password set, showing or copying the seed phrase asks for it again.
-    const needsConfirmation = bridge !== undefined && status !== null && status.hasPassword && !isConfirmed;
+    useEffect(() => {
+        if (mnemonic === null) return;
+        const timer = setTimeout(() => setMnemonic(null), SEED_VISIBLE_MS);
+        return () => clearTimeout(timer);
+    }, [mnemonic]);
 
-    const revealAction = (action: "show" | "copy") => {
-        if (needsConfirmation) {
+    const reveal = async (action: "show" | "copy") => {
+        if (bridge === undefined) return;
+        setError("");
+        try {
+            const revealed = await bridge.revealMnemonic();
+            if (revealed === null) return;
+            if (action === "show") setMnemonic(revealed);
+            else await copy(revealed, "Seed phrase copied");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Could not reveal the seed phrase.");
+        }
+    };
+
+    // With a password set, showing or copying the seed phrase asks for it again.
+    const requestReveal = (action: "show" | "copy") => {
+        if (action === "show" && mnemonic !== null) {
+            setMnemonic(null);
+            return;
+        }
+        if (status !== null && status.hasPassword) {
             setPendingReveal(action);
             return;
         }
-        if (action === "show") setShowMnemonic(v => !v);
-        else if (mnemonic) void copy(mnemonic, "Seed phrase copied");
+        void reveal(action);
     };
 
     const handleConfirmed = () => {
-        setIsConfirmed(true);
-        if (pendingReveal === "show") setShowMnemonic(true);
-        else if (pendingReveal === "copy" && mnemonic) void copy(mnemonic, "Seed phrase copied");
+        const action = pendingReveal;
         setPendingReveal(null);
+        if (action !== null) void reveal(action);
     };
 
     const handleClear = async () => {
         if (!window.confirm("Clear your wallet? Make sure you have saved your seed phrase!")) return;
         await clearCosmosData();
-        // Drop the decrypted signer and client that still hold the old key in memory.
-        clearSigningClientCache();
+        // Drop the signing client that still holds the old key in the main process.
+        await clearSigningClientCache();
         clearCosmosClient();
         onCleared();
     };
@@ -83,20 +104,25 @@ const WalletKeysModal: React.FC<WalletKeysModalProps> = ({ address, onClose, onC
                     </div>
                 </div>
 
-                {mnemonic && (
+                {bridge !== undefined && (
                     <div className={styles.field}>
                         <div className={styles.seedHeaderRow}>
                             <span className={styles.fieldLabel}>Seed Phrase</span>
                             <div className={styles.seedHeaderButtons}>
-                                <button onClick={() => revealAction("show")} className={`btn-ghost ${styles.ghostAction}`}>
-                                    {showMnemonic ? "Hide" : "Show"}
+                                <button onClick={() => requestReveal("show")} className={`btn-ghost ${styles.ghostAction}`}>
+                                    {mnemonic !== null ? "Hide" : "Show"}
                                 </button>
-                                <button onClick={() => revealAction("copy")} className={`btn-ghost ${styles.ghostAction}`}>
+                                <button onClick={() => requestReveal("copy")} className={`btn-ghost ${styles.ghostAction}`}>
                                     Copy
                                 </button>
                             </div>
                         </div>
-                        <SeedPhraseGrid mnemonic={mnemonic} hidden={!showMnemonic} />
+                        {mnemonic !== null ? (
+                            <SeedPhraseGrid mnemonic={mnemonic} />
+                        ) : (
+                            <p className={styles.noteText}>Hidden. Your seed phrase stays encrypted until you ask to see it.</p>
+                        )}
+                        {error !== "" && <span className={styles.errorText}>{error}</span>}
                     </div>
                 )}
 
@@ -118,7 +144,7 @@ const WalletKeysModal: React.FC<WalletKeysModalProps> = ({ address, onClose, onC
                     >
                         Return to Dashboard
                     </button>
-                    <button onClick={handleClear} className={styles.dangerAction}>
+                    <button onClick={() => void handleClear()} className={styles.dangerAction}>
                         Clear Wallet
                     </button>
                 </div>

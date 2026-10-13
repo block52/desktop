@@ -30,6 +30,8 @@ directly), and attacks that require a compromised operating system or physical a
 
 ## Good to know
 
-- The wallet seed phrase is currently stored unencrypted in the app's local storage. This is a known limitation
-  that is being worked on, so reports about it alone are not needed.
+- The wallet seed phrase is encrypted at rest with the OS secure storage (optionally also with a password) and signing
+  runs in the main process. Without a password, any process running as your user can still ask the OS keychain for
+  the key, which is a limit of OS storage rather than of this app. On Linux without a keyring the phrase is only
+  obfuscated.
 - Release installers are not yet code-signed.
