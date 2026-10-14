@@ -49,4 +49,10 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: ./.github/actions/setup
-      - run: yarn audit --groups dependencies
+      # yarn's exit code is a bitmask (2 low, 4 moderate, 8 high, 16 critical). Fail on moderate and above only,
+      # so an advisory with no upstream patch at low severity does not turn CI red.
+      - run: |
+          set +e
+          yarn audit --groups dependencies
+          code=$?
+          [ $((code & 28)) -eq 0 ]
