@@ -25,6 +25,8 @@ jobs:
     # RELEASE_PUSH_TOKEN lives in the `release` environment, so a reviewer rule there gates the version bump too.
     environment: release
     runs-on: ubuntu-latest
+    env:
+      HAS_PUSH_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN != '' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -62,7 +64,9 @@ jobs:
           echo "version=${next}" >> "$GITHUB_OUTPUT"
 
       # Pushes made with the workflow token don't start other workflows, so start the build explicitly.
+      # A push made with RELEASE_PUSH_TOKEN does start the Release workflow by itself (the tag trigger).
       - name: Start the installer build
+        if: env.HAS_PUSH_TOKEN != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.bump.outputs.version }}
