@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildUpstreamUrl, handleRequest } from "./worker.js";
+import { buildUpstreamUrl, handleRequest, normalizeKey } from "./worker.js";
 
 const OWNER = "0x1111111111111111111111111111111111111111";
 const ENV = { ALCHEMY_KEY: "test-key-123" };
@@ -66,7 +66,20 @@ describe("nft proxy", () => {
         const response = await handleRequest(get(`owner=${OWNER}`), ENV, upstream);
 
         expect(response.status).toBe(502);
-        expect(await response.text()).not.toContain("test-key-123");
+        const text = await response.text();
+        expect(text).not.toContain("test-key-123");
+        expect(text).toContain("Alchemy answered 400");
+    });
+
+    it("tolerates a key pasted with whitespace or as the whole Alchemy URL", async () => {
+        expect(normalizeKey("  abc123\n")).toBe("abc123");
+        expect(normalizeKey("https://eth-mainnet.g.alchemy.com/v2/abc123")).toBe("abc123");
+        expect(normalizeKey("https://eth-mainnet.g.alchemy.com/nft/v3/abc123/")).toBe("abc123");
+        expect(normalizeKey(undefined)).toBe("");
+
+        const upstream = upstreamJson({ ownedNfts: [] });
+        await handleRequest(get(`owner=${OWNER}`), { ALCHEMY_KEY: "https://eth-mainnet.g.alchemy.com/v2/abc123" }, upstream);
+        expect(new URL(upstream.mock.calls[0][0]).pathname).toBe("/nft/v3/abc123/getNFTsForOwner");
     });
 
     it("passes rate limiting on to the app", async () => {

@@ -32,10 +32,17 @@ export function buildUpstreamUrl(key, owner, pageKey) {
     return url;
 }
 
+/** The key as pasted: trimmed, and if the whole Alchemy URL was pasted, just its last path segment. */
+export function normalizeKey(value) {
+    const trimmed = typeof value === "string" ? value.trim() : "";
+    return trimmed.includes("/") ? trimmed.replace(/\/+$/, "").split("/").pop() : trimmed;
+}
+
 export async function handleRequest(request, env, upstreamFetch = fetch) {
     if (request.method === "OPTIONS") return reply(null, 204);
     if (request.method !== "GET") return reply("Method not allowed", 405);
-    if (typeof env.ALCHEMY_KEY !== "string" || env.ALCHEMY_KEY === "") return reply("Not configured", 500);
+    const key = normalizeKey(env.ALCHEMY_KEY);
+    if (key === "") return reply("Not configured", 500);
 
     const params = new URL(request.url).searchParams;
     const owner = params.get("owner") ?? "";
@@ -46,7 +53,7 @@ export async function handleRequest(request, env, upstreamFetch = fetch) {
 
     let upstream;
     try {
-        upstream = await upstreamFetch(buildUpstreamUrl(env.ALCHEMY_KEY, owner, pageKey).toString(), {
+        upstream = await upstreamFetch(buildUpstreamUrl(key, owner, pageKey).toString(), {
             headers: { Accept: "application/json" },
             cf: { cacheTtl: CACHE_SECONDS, cacheEverything: true },
         });
@@ -54,8 +61,9 @@ export async function handleRequest(request, env, upstreamFetch = fetch) {
         return reply("Upstream unavailable", 502);
     }
 
-    // Pass the data through; never echo upstream error bodies, which can include the request URL (and the key).
-    if (!upstream.ok) return reply("Upstream error", upstream.status === 429 ? 429 : 502);
+    // Pass the data through. The upstream error body is never echoed (it can include the request URL, and the
+    // key), but its status code is, which is enough to tell a bad key (401/403) from a disabled API (400/404).
+    if (!upstream.ok) return reply(`Upstream error (Alchemy answered ${upstream.status})`, upstream.status === 429 ? 429 : 502);
     return reply(upstream.body, 200, {
         "Content-Type": "application/json",
         "Cache-Control": `public, max-age=${CACHE_SECONDS}`,
