@@ -1,0 +1,6 @@
+name = "block52-nft-proxy"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# The Alchemy key is a secret, never put it in this file:
+#   npx wrangler secret put ALCHEMY_KEY

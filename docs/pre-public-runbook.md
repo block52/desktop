@@ -7,8 +7,8 @@ Time needed: about 45 minutes, plus one release build.
 
 ## 0. Before you start
 
-- [ ] Decide the Alchemy key question (restrict it in the Alchemy dashboard, or move the NFT picker behind a proxy
-      and set `VITE_PROFILE_NFT_INDEXER_URL`). The key is baked into each installer at build time, so settle
+- [ ] Decide the Alchemy key question (restrict it in the Alchemy dashboard, or deploy `tools/nft-proxy` and set
+      `VITE_PROFILE_NFT_INDEXER_URL` so no key ships in the app). The key is baked into each installer at build time, so settle
       this before the release you intend to publish.
 - [ ] Make sure `main` here is the commit you want to publish: `git log --oneline -5`, and `yarn lint && yarn test`
       are green.

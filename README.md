@@ -53,7 +53,7 @@ noted. **They are baked into the shipped bundle, so never put a secret you are n
 | `VITE_SNG_SCHEDULE_URL` | Weekly Sit & Go schedule JSON |
 | `VITE_TREASURY_WALLET_ADDRESS` | Treasury wallet address |
 | `VITE_PROFILE_NFT_INDEXER_URL` | NFT listing for the avatar picker: URL template with `{owner}` / `{chainId}` |
-| `VITE_MAINNET_RPC_URL` | Alternative NFT source: an Alchemy mainnet RPC URL |
+| `VITE_MAINNET_RPC_URL` | Alternative NFT source: an Alchemy mainnet RPC URL (ships the key in the app; prefer the proxy in [`tools/nft-proxy`](tools/nft-proxy)) |
 
 ## Project layout
 
