@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { WalletStatus } from "../../wallet/types";
-import { closeWalletSession, openWalletSession, unlockWalletSession } from "../../utils/cosmos/walletSession";
+import { openWalletSession, unlockWalletSession } from "../../utils/cosmos/walletSession";
 import styles from "./WalletLockGate.module.css";
 
 interface WalletLockGateProps {
@@ -99,7 +99,6 @@ const WalletLockGate: React.FC<WalletLockGateProps> = ({ children }) => {
     useEffect(() => {
         if (bridge === undefined) return;
         return bridge.onLocked(() => {
-            closeWalletSession();
             void bridge.status().then(setStatus);
         });
     }, [bridge]);

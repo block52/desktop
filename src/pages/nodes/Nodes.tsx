@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createSigningClientFromMnemonic, COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
+import { COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
 import { useNetwork } from "../../context/NetworkContext";
 import type { NetworkEndpoints } from "../../context/NetworkContext";
 import { useNodeRegistry, useValidatorEarnings } from "../../hooks/useNodeRegistry";
 import { useCosmosWallet } from "../../hooks/useCosmosWallet";
 import { useToast } from "../../context/ToastContext";
-import { getCosmosClient } from "../../utils/cosmos/client";
-import { getCosmosMnemonic } from "../../utils/cosmos/storage";
+import { getCosmosClient, getSigningClient } from "../../utils/cosmos/client";
+import { getCosmosAddress } from "../../utils/cosmos/storage";
 import NodeStats from "../../components/nodes/NodeStats";
 import RunNodeGuide, { buildSeeds } from "../../components/nodes/RunNodeGuide";
 import NodeDetailsModal from "../../components/nodes/NodeDetailsModal";
@@ -154,20 +154,8 @@ const Nodes: React.FC = () => {
             setIsBonding(true);
             setBondError("");
             try {
-                const mnemonic = getCosmosMnemonic();
-                if (mnemonic === null) throw new Error("Create or import a wallet before bonding a validator.");
-
-                const client = await createSigningClientFromMnemonic(
-                    {
-                        rpcEndpoint: currentNetwork.rpc,
-                        restEndpoint: currentNetwork.rest,
-                        chainId: COSMOS_CONSTANTS.CHAIN_ID,
-                        prefix: COSMOS_CONSTANTS.ADDRESS_PREFIX,
-                        denom: COSMOS_CONSTANTS.GAS_DENOM,
-                        gasPrice: COSMOS_CONSTANTS.DEFAULT_GAS_PRICE
-                    },
-                    mnemonic
-                );
+                if (getCosmosAddress() === null) throw new Error("Create or import a wallet before bonding a validator.");
+                const { signingClient: client } = await getSigningClient(currentNetwork);
 
                 const hash = await client.createValidator({
                     consensusPubkeyBase64: payload.consensusPubkeyBase64,

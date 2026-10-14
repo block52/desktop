@@ -9,14 +9,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-import { getAddressFromMnemonic } from "@block52/poker-vm-sdk";
 import { useNetwork } from "../context/NetworkContext";
 import { getCosmosClient, getSigningClient } from "../utils/cosmos/client";
-import {
-  getCosmosMnemonic,
-  setCosmosAddress,
-  setCosmosMnemonic,
-} from "../utils/cosmos/storage";
+import { getCosmosAddress, setCosmosAddress } from "../utils/cosmos/storage";
+import { requireWalletBridge } from "../utils/cosmos/walletBridge";
 
 interface Balance {
   denom: string;
@@ -63,17 +59,16 @@ export const useCosmosWallet = (): UseCosmosWalletReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load address from mnemonic
+  // The wallet (main process) is the source of truth for the address
   useEffect(() => {
     const loadAddress = async () => {
-      const mnemonic = getCosmosMnemonic();
-      if (!mnemonic) {
+      if (getCosmosAddress() === null) {
         setAddress(null);
         return;
       }
 
       try {
-        const addr = await getAddressFromMnemonic(mnemonic, "b52");
+        const addr = await requireWalletBridge().getAddress();
         setAddress(addr);
       } catch (err) {
         console.error("Error loading Cosmos address:", err);
@@ -120,11 +115,8 @@ export const useCosmosWallet = (): UseCosmosWalletReturn => {
     setError(null);
 
     try {
-      // Get address from mnemonic
-      const addr = await getAddressFromMnemonic(mnemonic, "b52");
-
-      // Store mnemonic AND address in localStorage
-      await setCosmosMnemonic(mnemonic);
+      // The wallet validates and stores the phrase and returns the address
+      const addr = await requireWalletBridge().importMnemonic(mnemonic);
       setCosmosAddress(addr);
 
       // Update state

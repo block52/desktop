@@ -1,19 +1,8 @@
 import React, { useState, useCallback, useEffect } from "react";
-import {
-    generateWallet,
-    createWalletFromMnemonic,
-    getAddressFromMnemonic,
-    isValidMnemonic,
-    createSigningClientFromMnemonic,
-    COSMOS_CONSTANTS,
-} from "@block52/poker-vm-sdk";
-import {
-    getCosmosMnemonic,
-    getCosmosAddress,
-    setCosmosMnemonic,
-    setCosmosAddress,
-} from "../utils/cosmos/storage";
-import { clearCosmosClient, clearSigningClientCache } from "../utils/cosmos/client";
+import { COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
+import { getCosmosAddress, setCosmosAddress } from "../utils/cosmos/storage";
+import { requireWalletBridge } from "../utils/cosmos/walletBridge";
+import { clearCosmosClient, clearSigningClientCache, getSigningClient } from "../utils/cosmos/client";
 import { useCosmosWallet } from "../hooks/useCosmosWallet";
 import { microToDecimal, parseUsdcToMicro } from "../utils/currency";
 import { useNetwork } from "../context/NetworkContext";
@@ -57,24 +46,7 @@ const Wallet: React.FC = () => {
 
     const handleSend = useCallback(
         async (recipient: string, amountUsdc: string): Promise<string> => {
-            const mnemonic = getCosmosMnemonic();
-            const fromAddress = getCosmosAddress();
-
-            if (!mnemonic || !fromAddress) {
-                throw new Error("No wallet found. Please create or import a wallet first.");
-            }
-
-            const signingClient = await createSigningClientFromMnemonic(
-                {
-                    rpcEndpoint: currentNetwork.rpc,
-                    restEndpoint: currentNetwork.rest,
-                    chainId: COSMOS_CONSTANTS.CHAIN_ID,
-                    prefix: COSMOS_CONSTANTS.ADDRESS_PREFIX,
-                    denom: COSMOS_CONSTANTS.GAS_DENOM,
-                    gasPrice: COSMOS_CONSTANTS.DEFAULT_GAS_PRICE,
-                },
-                mnemonic,
-            );
+            const { signingClient, userAddress: fromAddress } = await getSigningClient(currentNetwork);
 
             const amountMicro = parseUsdcToMicro(amountUsdc);
             return signingClient.sendTokens(
@@ -110,13 +82,12 @@ const Wallet: React.FC = () => {
 
     useEffect(() => {
         const load = async () => {
-            const mnemonic = getCosmosMnemonic();
             let address = getCosmosAddress();
 
-            // The key is the source of truth: always derive the address from it, and repair the stored copy if it differs.
-            if (mnemonic) {
+            // The wallet is the source of truth: always take the address from it, and repair the stored copy if it differs.
+            if (address !== null) {
                 try {
-                    const derived = await getAddressFromMnemonic(mnemonic, "b52");
+                    const derived = await requireWalletBridge().getAddress();
                     if (derived !== address) setCosmosAddress(derived);
                     address = derived;
                 } catch (err) {
@@ -141,10 +112,9 @@ const Wallet: React.FC = () => {
         setIsBusy(true);
         setError("");
         try {
-            const wallet = await generateWallet("b52", 24);
-            await setCosmosMnemonic(wallet.mnemonic);
+            const wallet = await requireWalletBridge().generate();
             setCosmosAddress(wallet.address);
-            clearSigningClientCache();
+            void clearSigningClientCache();
             clearCosmosClient();
             setNewMnemonic(wallet.mnemonic);
             setNewAddress(wallet.address);
@@ -160,16 +130,11 @@ const Wallet: React.FC = () => {
         setIsBusy(true);
         setError("");
         try {
-            if (!isValidMnemonic(importMnemonic.trim())) {
-                setError("Invalid seed phrase. Must be 12, 15, 18, 21, or 24 words.");
-                return;
-            }
-            const wallet = await createWalletFromMnemonic(importMnemonic.trim(), "b52");
-            await setCosmosMnemonic(importMnemonic.trim());
-            setCosmosAddress(wallet.address);
-            clearSigningClientCache();
+            const address = await requireWalletBridge().importMnemonic(importMnemonic.trim());
+            setCosmosAddress(address);
+            void clearSigningClientCache();
             clearCosmosClient();
-            setExistingAddress(wallet.address);
+            setExistingAddress(address);
             setImportMnemonic("");
         } catch (err) {
             console.error("Import wallet failed:", err);

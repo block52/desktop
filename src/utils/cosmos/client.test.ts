@@ -1,28 +1,18 @@
+// @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NetworkEndpoints } from "../../context/NetworkContext";
+import type { WalletBridge } from "../../wallet/types";
 
-const { mockCreateSigningClientFromMnemonic, mockGetCosmosAddress, mockGetCosmosMnemonic } = vi.hoisted(() => ({
-    mockCreateSigningClientFromMnemonic: vi.fn(),
+const { mockGetCosmosAddress } = vi.hoisted(() => ({
     mockGetCosmosAddress: vi.fn(),
-    mockGetCosmosMnemonic: vi.fn(),
 }));
-
-vi.mock("@block52/poker-vm-sdk", async () => {
-    const actual = await vi.importActual<typeof import("@block52/poker-vm-sdk")>("@block52/poker-vm-sdk");
-    return {
-        ...actual,
-        createSigningClientFromMnemonic: mockCreateSigningClientFromMnemonic,
-    };
-});
 
 vi.mock("./storage", () => ({
     getCosmosAddress: mockGetCosmosAddress,
-    getCosmosMnemonic: mockGetCosmosMnemonic,
 }));
 
 import {
     getSigningClient,
-    clearSigningClientCache,
     isSequenceMismatchError,
     isTransportError,
     withMoneyMoverRetry,
@@ -30,88 +20,43 @@ import {
 } from "./client";
 
 const NETWORK_A: NetworkEndpoints = { name: "testnet-a", rpc: "http://rpc-a", rest: "http://rest-a", grpc: "http://grpc-a", ws: "ws://ws-a" };
-const NETWORK_B: NetworkEndpoints = { name: "testnet-b", rpc: "http://rpc-b", rest: "http://rest-b", grpc: "http://grpc-b", ws: "ws://ws-b" };
 
-function fakeSigningClient(): Record<string, unknown> {
-    return { performActionSync: vi.fn(), joinGame: vi.fn(), leaveGame: vi.fn() };
-}
+const bridge = {
+    signingCall: vi.fn(),
+    resetSigner: vi.fn(async () => undefined),
+};
 
-function stubNodeNetwork(network: string): void {
-    vi.stubGlobal(
-        "fetch",
-        vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ default_node_info: { network } }) }))
-    );
-}
+beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetCosmosAddress.mockReturnValue("b52addr1");
+    window.electronAPI = { openExternal: vi.fn(), wallet: bridge as unknown as WalletBridge };
+});
 
-beforeEach(() => stubNodeNetwork("pokerchain"));
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+    window.electronAPI = undefined;
+});
 
 describe("getSigningClient", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        clearSigningClientCache();
-        mockGetCosmosAddress.mockReturnValue("b52addr1");
-        mockGetCosmosMnemonic.mockReturnValue("test mnemonic words here");
-        mockCreateSigningClientFromMnemonic.mockResolvedValue(fakeSigningClient());
+    it("sends each signing call to the wallet with the network endpoints", async () => {
+        bridge.signingCall.mockResolvedValue("0xhash");
+
+        const { signingClient, userAddress } = await getSigningClient(NETWORK_A);
+        const hash = await signingClient.joinGame("table-1", 3, 500n);
+
+        expect(userAddress).toBe("b52addr1");
+        expect(hash).toBe("0xhash");
+        expect(bridge.signingCall).toHaveBeenCalledWith({ rpc: "http://rpc-a", rest: "http://rest-a" }, "joinGame", ["table-1", 3, 500n]);
     });
 
-    it("derives the signing client only once across repeated calls in the same session", async () => {
-        await getSigningClient(NETWORK_A);
-        await getSigningClient(NETWORK_A);
-        await getSigningClient(NETWORK_A);
+    it("exposes nothing that would hand out the key", async () => {
+        const { signingClient } = await getSigningClient(NETWORK_A);
 
-        expect(mockCreateSigningClientFromMnemonic).toHaveBeenCalledTimes(1);
-    });
-
-    it("refuses to sign for a node that serves a different network", async () => {
-        stubNodeNetwork("some-other-chain");
-
-        await expect(getSigningClient({ ...NETWORK_A, rest: "http://rest-wrong-chain" })).rejects.toThrow(/Refusing to sign/);
-        expect(mockCreateSigningClientFromMnemonic).not.toHaveBeenCalled();
-    });
-
-    it("dedupes concurrent callers into a single in-flight derivation", async () => {
-        const [a, b] = await Promise.all([getSigningClient(NETWORK_A), getSigningClient(NETWORK_A)]);
-
-        expect(mockCreateSigningClientFromMnemonic).toHaveBeenCalledTimes(1);
-        expect(a).toBe(b);
-    });
-
-    it("rebuilds when the network endpoints change", async () => {
-        await getSigningClient(NETWORK_A);
-        await getSigningClient(NETWORK_B);
-
-        expect(mockCreateSigningClientFromMnemonic).toHaveBeenCalledTimes(2);
-    });
-
-    it("rebuilds when the wallet address changes (wallet swap)", async () => {
-        await getSigningClient(NETWORK_A);
-        mockGetCosmosAddress.mockReturnValue("b52addr2");
-        await getSigningClient(NETWORK_A);
-
-        expect(mockCreateSigningClientFromMnemonic).toHaveBeenCalledTimes(2);
-    });
-
-    it("rebuilds after clearSigningClientCache()", async () => {
-        await getSigningClient(NETWORK_A);
-        clearSigningClientCache();
-        await getSigningClient(NETWORK_A);
-
-        expect(mockCreateSigningClientFromMnemonic).toHaveBeenCalledTimes(2);
-    });
-
-    it("drops the cache when derivation rejects so the next call retries", async () => {
-        mockCreateSigningClientFromMnemonic.mockRejectedValueOnce(new Error("connection refused"));
-
-        await expect(getSigningClient(NETWORK_A)).rejects.toThrow("connection refused");
-
-        mockCreateSigningClientFromMnemonic.mockResolvedValueOnce(fakeSigningClient());
-        await expect(getSigningClient(NETWORK_A)).resolves.toBeDefined();
-        expect(mockCreateSigningClientFromMnemonic).toHaveBeenCalledTimes(2);
+        expect("getWallet" in signingClient).toBe(false);
+        expect("setWallet" in signingClient).toBe(false);
     });
 
     it("throws if the wallet is not initialized", async () => {
-        mockGetCosmosMnemonic.mockReturnValue(null);
+        mockGetCosmosAddress.mockReturnValue(null);
 
         await expect(getSigningClient(NETWORK_A)).rejects.toThrow("Block52 wallet not initialized");
     });
@@ -150,11 +95,6 @@ describe("isTransportError", () => {
 
 describe("withMoneyMoverRetry", () => {
     beforeEach(() => {
-        vi.clearAllMocks();
-        clearSigningClientCache();
-        mockGetCosmosAddress.mockReturnValue("b52addr1");
-        mockGetCosmosMnemonic.mockReturnValue("test mnemonic words here");
-        mockCreateSigningClientFromMnemonic.mockResolvedValue(fakeSigningClient());
         vi.useFakeTimers();
     });
 
@@ -168,7 +108,7 @@ describe("withMoneyMoverRetry", () => {
         const result = await withMoneyMoverRetry(NETWORK_A, fn);
 
         expect(result).toBe("0xhash");
-        expect(mockCreateSigningClientFromMnemonic).toHaveBeenCalledTimes(1);
+        expect(bridge.resetSigner).not.toHaveBeenCalled();
     });
 
     it("retries once with a fresh client after a sequence mismatch, waiting for the pending tx to commit", async () => {
@@ -181,7 +121,7 @@ describe("withMoneyMoverRetry", () => {
 
         expect(result).toBe("0xretry");
         expect(fn).toHaveBeenCalledTimes(2);
-        expect(mockCreateSigningClientFromMnemonic).toHaveBeenCalledTimes(2);
+        expect(bridge.resetSigner).toHaveBeenCalledTimes(1);
     });
 
     it("retries once on transport errors without waiting", async () => {

@@ -66,7 +66,7 @@ export async function executeTransportAction(
         // applied — so clear the cached client, wait a beat for the pending
         // tx to commit and bump the on-chain sequence, then retry once.
         if (isSequenceMismatchError(err)) {
-            clearSigningClientCache();
+            await clearSigningClientCache();
             await new Promise(resolve => setTimeout(resolve, SEQUENCE_RETRY_DELAY_MS));
             try {
                 return await broadcastAction(tableId, action, amount, network, data);

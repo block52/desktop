@@ -2,17 +2,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-vi.mock("@block52/poker-vm-sdk", async importOriginal => ({
-    ...(await importOriginal<typeof import("@block52/poker-vm-sdk")>()),
-    generateWallet: vi.fn(async () => ({
-        mnemonic: "alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec romeo sierra tango uniform victor whiskey xray",
-        address: "b5210lpeclqj7xjd0alc796ceuq7gqyskwnsnv5waw"
-    }))
+vi.mock("../utils/cosmos/walletBridge", () => ({
+    requireWalletBridge: () => ({
+        generate: vi.fn(async () => ({
+            mnemonic: "alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar papa quebec romeo sierra tango uniform victor whiskey xray",
+            address: "b5210lpeclqj7xjd0alc796ceuq7gqyskwnsnv5waw"
+        })),
+        getAddress: vi.fn(async () => "b5210lpeclqj7xjd0alc796ceuq7gqyskwnsnv5waw"),
+        importMnemonic: vi.fn(async () => "b5210lpeclqj7xjd0alc796ceuq7gqyskwnsnv5waw")
+    })
 }));
 vi.mock("../utils/cosmos/storage", () => ({
-    getCosmosMnemonic: vi.fn(() => null),
     getCosmosAddress: vi.fn(() => null),
-    setCosmosMnemonic: vi.fn(),
     setCosmosAddress: vi.fn()
 }));
 vi.mock("../hooks/useCosmosWallet", () => ({ useCosmosWallet: () => ({ address: null, balance: [], refreshBalance: vi.fn() }) }));
