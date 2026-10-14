@@ -18,7 +18,22 @@ The response is Alchemy's `getNFTsForOwner` JSON, which `src/utils/nftAvatar.ts`
 - Caches each answer for 60 seconds and never forwards upstream error bodies (they can contain the key).
 - Is open to anyone: the data is public on-chain data. Protect your quota with a rate limit (below).
 
-## Deploy
+## Deploy on Vercel
+
+Run these inside `tools/nft-proxy`; the Vercel project root is this folder.
+
+```bash
+npx vercel login
+npx vercel link --yes --project block52-nft-proxy
+npx vercel env add ALCHEMY_KEY production     # paste a dedicated key (Ethereum mainnet only enabled)
+npx vercel deploy --prod                      # prints https://block52-nft-proxy.vercel.app
+```
+
+The endpoint is `https://<project>.vercel.app/api/nfts?owner={owner}`. If a request returns an HTML sign-in page
+instead of JSON, turn off Vercel Authentication for production under Settings → Deployment Protection. Add a rate
+limit under the project's Firewall.
+
+## Deploy on Cloudflare
 
 ```bash
 cd tools/nft-proxy
@@ -35,7 +50,10 @@ minute per IP).
 Set a repository **variable** (not a secret, it is just a URL) for the release build:
 
 ```
+# Cloudflare
 VITE_PROFILE_NFT_INDEXER_URL=https://block52-nft-proxy.<you>.workers.dev/?owner={owner}
+# Vercel
+VITE_PROFILE_NFT_INDEXER_URL=https://block52-nft-proxy.vercel.app/api/nfts?owner={owner}
 ```
 
 Remove `VITE_MAINNET_RPC_URL` from the `release` environment so the key is in no installer. The app's CSP picks up
