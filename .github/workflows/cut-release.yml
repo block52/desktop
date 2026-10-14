@@ -27,6 +27,9 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: main
+          # A fine-grained token owned by a ruleset bypass actor lets the version bump reach a protected `main`.
+          # Without the secret this falls back to the workflow token, which works while `main` is unprotected.
+          token: ${{ secrets.RELEASE_PUSH_TOKEN || github.token }}
 
       - name: Bump version, commit and tag
         id: bump
