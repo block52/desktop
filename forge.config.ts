@@ -1,3 +1,6 @@
+import { execFileSync } from "node:child_process";
+import { readdirSync } from "node:fs";
+import path from "node:path";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
@@ -16,6 +19,21 @@ const config: ForgeConfig = {
     executableName: "block52",
   },
   rebuildConfig: {},
+  hooks: {
+    // Electron ships ad-hoc signed, and renaming the executable and editing Info.plist breaks that signature.
+    // On Apple Silicon a broken signature plus the download quarantine shows "is damaged and can't be opened",
+    // with no way to open it from the dialog. Re-signing ad hoc makes it the usual unsigned-app prompt instead
+    // (right-click > Open). A real Developer ID signature replaces this once the app is notarized.
+    postPackage: async (_config, options) => {
+      if (options.platform !== "darwin") return;
+      for (const outputPath of options.outputPaths) {
+        for (const entry of readdirSync(outputPath)) {
+          if (!entry.endsWith(".app")) continue;
+          execFileSync("codesign", ["--force", "--deep", "--sign", "-", path.join(outputPath, entry)], { stdio: "inherit" });
+        }
+      }
+    },
+  },
   makers: [
     new MakerSquirrel({}),
     new MakerZIP({}, ["darwin"]),
