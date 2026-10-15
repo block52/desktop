@@ -1,4 +1,5 @@
 import type { WalletBridge } from "./wallet/types";
+import type { UpdateInfo } from "./updates/updateCheck";
 
 declare global {
     interface Window {
@@ -6,6 +7,10 @@ declare global {
         electronAPI?: {
             openExternal: (url: string) => void;
             wallet: WalletBridge;
+            updates?: {
+                check: () => Promise<UpdateInfo | null>;
+                open: (version: string) => void;
+            };
         };
     }
 }

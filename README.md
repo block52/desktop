@@ -101,6 +101,13 @@ For a public repository, create it under Settings → Environments, restrict dep
 require a reviewer, and keep `VITE_MAINNET_RPC_URL` there as an environment secret so only approved release
 builds can read it. The secret is exposed to the `yarn make` step only, not to dependency install scripts.
 
+## Updates
+
+The app checks this repository's latest published release at start and every few hours. When a newer version
+exists it shows a notice with a **Download** button that opens the release page in the system browser; nothing is
+downloaded or installed by the app itself. The check needs the repository to be public (a private repository's
+releases need a token, which the app does not carry) and any failure simply shows no notice.
+
 ## Security notes
 
 - The wallet's seed phrase is encrypted on disk with your operating system's secure storage (macOS Keychain,

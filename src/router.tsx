@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import AppBackground from "./components/background/AppBackground";
 import Sidebar from "./components/sidebar/Sidebar";
+import UpdateBanner from "./components/update/UpdateBanner";
 import Dashboard from "./pages/dashboard/Dashboard";
 import HandHistory from "./pages/handHistory/HandHistory";
 import Players from "./pages/players/Players";
@@ -29,6 +30,7 @@ const Shell: React.FC = () => {
                     <Sidebar drawerOpen={drawerOpen} onCloseDrawer={closeDrawer} />
                 </div>
                 <div className={styles.rightCol}>
+                    {!isTable && <UpdateBanner />}
                     <main className={isTable ? styles.mainBare : `pane ${styles.mainPane}`}>
                         <Routes>
                             <Route path="/" element={<Dashboard />} />

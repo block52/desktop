@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { WalletBridge } from "./wallet/types";
+import type { UpdateInfo } from "./updates/updateCheck";
 
 const wallet: WalletBridge = {
     status: () => ipcRenderer.invoke("wallet:status"),
@@ -30,4 +31,8 @@ const wallet: WalletBridge = {
 contextBridge.exposeInMainWorld("electronAPI", {
     openExternal: (url: string) => ipcRenderer.send("open-external", url),
     wallet,
+    updates: {
+        check: (): Promise<UpdateInfo | null> => ipcRenderer.invoke("update:check"),
+        open: (version: string) => ipcRenderer.send("update:open", version),
+    },
 });
