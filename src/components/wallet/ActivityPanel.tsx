@@ -1,5 +1,8 @@
+import { useCallback, useState } from "react";
 import { useWithdrawalActivity, type WithdrawalActivityItem, type WithdrawalStatus } from "../../hooks/useWithdrawalActivity";
 import { useWalletTransfers, type WalletTransfer } from "../../hooks/useWalletTransfers";
+import { usePaidOutWithdrawals } from "../../hooks/usePaidOutWithdrawals";
+import PendingWithdrawals from "./PendingWithdrawals";
 import styles from "./ActivityPanel.module.css";
 
 interface ActivityPanelProps {
@@ -74,12 +77,31 @@ type FeedEntry =
     | { kind: "transfer"; key: string; time: number; transfer: WalletTransfer };
 
 const ActivityPanel: React.FC<ActivityPanelProps> = ({ address, refreshToken = 0 }) => {
-    const withdrawals = useWithdrawalActivity(address, undefined, refreshToken);
-    const transfers = useWalletTransfers(address, undefined, refreshToken);
+    const [completedCount, setCompletedCount] = useState(0);
+    const refresh = useCallback(() => setCompletedCount(count => count + 1), []);
+    const token = refreshToken + completedCount;
+    const withdrawals = useWithdrawalActivity(address, undefined, token);
+    const transfers = useWalletTransfers(address, undefined, token);
+
+    const paidOut = usePaidOutWithdrawals(withdrawals.items, token);
+    const settled = withdrawals.items.map(item => (paidOut.has(item.nonce) ? { ...item, status: "completed" as const } : item));
+    const inProgress = settled.filter(item => item.status !== "completed");
+    const history = settled.filter(item => item.status === "completed");
+
+    // Each withdrawal also shows up as a send to the bridge account at the same moment; it is the same event, so it is listed once.
+    const isWithdrawalSend = (transfer: WalletTransfer) =>
+        transfer.direction === "out" &&
+        withdrawals.items.some(
+            item =>
+                item.amountMicro === transfer.amountMicro &&
+                item.createdAt !== null &&
+                transfer.timestamp !== null &&
+                Math.abs(item.createdAt - transfer.timestamp) <= 120
+        );
 
     const entries: FeedEntry[] = [
-        ...withdrawals.items.map(item => ({ kind: "withdrawal" as const, key: `w-${item.nonce}`, time: item.createdAt ?? 0, item })),
-        ...transfers.transfers.map((transfer, i) => ({
+        ...history.map(item => ({ kind: "withdrawal" as const, key: `w-${item.nonce}`, time: item.createdAt ?? 0, item })),
+        ...transfers.transfers.filter(transfer => !isWithdrawalSend(transfer)).map((transfer, i) => ({
             kind: "transfer" as const,
             key: `t-${transfer.hash}-${i}`,
             time: transfer.timestamp ?? 0,
@@ -92,6 +114,8 @@ const ActivityPanel: React.FC<ActivityPanelProps> = ({ address, refreshToken = 0
     const showError = error !== "" && entries.length === 0;
 
     return (
+        <>
+        <PendingWithdrawals items={inProgress} onCompleted={refresh} />
         <div className={`pane-lite ${styles.panel}`}>
             <div className={styles.gridHeader}>
                 <span className="section-label">Type</span>
@@ -127,6 +151,7 @@ const ActivityPanel: React.FC<ActivityPanelProps> = ({ address, refreshToken = 0
                 )
             )}
         </div>
+        </>
     );
 };
 

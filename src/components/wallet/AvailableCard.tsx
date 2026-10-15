@@ -131,9 +131,20 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
 
             {isWeb3Connected && web3Address && (
                 <div className={styles.web3Row}>
-                    <span className={styles.web3Address}>{web3Short}</span>
-                    <button className={`btn-ghost ${styles.pill}`} onClick={onManageWeb3}>
-                        Manage
+                    <span className={styles.web3Dot} aria-hidden="true" />
+                    <div className={styles.web3Info}>
+                        <span className="section-label">Connected Web3 wallet</span>
+                        <span className={styles.web3Address} title={web3Address}>
+                            {web3Short}
+                            <CopyButton text={web3Address} message="Address copied" title="Copy Web3 address" />
+                        </span>
+                    </div>
+                    <button
+                        className={`btn-ghost ${styles.pill} ${styles.web3Manage}`}
+                        title="Switch network or disconnect this wallet"
+                        onClick={onManageWeb3}
+                    >
+                        Manage wallet
                     </button>
                 </div>
             )}

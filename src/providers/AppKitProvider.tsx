@@ -17,9 +17,9 @@ if (!projectId) {
 
 // 2. Create a metadata object - optional
 export const metadata = {
-  name: "AppKit",
-  description: "Block52 AppKit",
-  url: "https://app.block52.xyz/",
+  name: "Block52",
+  description: "Block52 poker",
+  url: window.location.origin,
   icons: ["https://avatars.githubusercontent.com/u/179229932"],
 };
 

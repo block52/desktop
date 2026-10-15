@@ -96,7 +96,7 @@ describe("AvailableCard", () => {
     it("shows the web3 address and Manage action when connected", () => {
         const props = renderCard({ isWeb3Connected: true, web3Address: "0x4f2a9C1e7b3D58aE06f1c29B7d4E8a35F0c6b91D" });
         expect(screen.getByText("0x4f2a…b91D")).toBeTruthy();
-        fireEvent.click(screen.getByRole("button", { name: "Manage" }));
+        fireEvent.click(screen.getByRole("button", { name: "Manage wallet" }));
         expect(props.onManageWeb3).toHaveBeenCalledTimes(1);
     });
 

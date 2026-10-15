@@ -15,9 +15,12 @@ import { useToast } from "../../context/ToastContext";
 import { useNetwork } from "../../context/NetworkContext";
 import { getSigningClient as getRemoteSigningClient } from "../../utils/cosmos/client";
 import { base64ToHex } from "../../utils/encodingUtils";
+import { fetchWithdrawalSignature } from "../../utils/withdrawalSignature";
 import { withdrawAbi, BRIDGE_ADDRESS } from "../../abis/contractABI";
 import { ETH_CHAIN_ID, ETH_USDC_ADDRESS, ETH_USDT_ADDRESS } from "../../config/constants";
 import CryptoDepositPanel from "../modal/CryptoDepositPanel";
+import EtherscanTxLink from "./EtherscanTxLink";
+import WithdrawSteps from "./WithdrawSteps";
 import styles from "./DepositWithdrawPanel.module.css";
 
 export type WalletTab = "deposit" | "withdraw";
@@ -135,7 +138,7 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
                 <div className={styles.alertSuccess}>
                     <p className={styles.alertTitle}>Deposit complete</p>
                     <p className={styles.alertText}>b52USDC has been deposited and will appear in your balance shortly.</p>
-                    {depositHash && <p className={styles.monoHash}>Tx: {depositHash.slice(0, 18)}…</p>}
+                    {depositHash && <EtherscanTxLink hash={depositHash} />}
                 </div>
                 <button
                     className={`btn-glow shimmer-hover ${styles.primaryButton}`}
@@ -336,13 +339,34 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
                             return (b.created_at ?? 0) - (a.created_at ?? 0);
                         })[0];
 
-                    if (match?.status === "signed" && match.signature) {
+                    if (match === undefined || match.status === "completed" || match.status === "claimed") {
+                        setPollCount(n => n + 1);
+                        return;
+                    }
+
+                    // The chain never stores the signature: a validator hands one out on request, so ask for it.
+                    let signature: string | null = null;
+                    if (match.status === "signed" && match.signature) {
+                        signature = base64ToHex(match.signature);
+                    } else {
+                        try {
+                            signature = await fetchWithdrawalSignature(currentNetwork.rest, {
+                                nonce: match.nonce,
+                                baseAddress: match.base_address,
+                                amount: match.amount
+                            });
+                        } catch {
+                            signature = null;
+                        }
+                    }
+
+                    if (signature !== null) {
                         clearPoll();
                         setWithdrawalInfo({
                             nonce: match.nonce,
                             baseAddress: match.base_address,
                             amount: match.amount,
-                            signature: match.signature
+                            signature
                         });
                         setStep("ready");
                     } else {
@@ -356,7 +380,7 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
             void poll();
             pollRef.current = setInterval(poll, POLL_MS);
         },
-        [getSigningClient]
+        [getSigningClient, currentNetwork.rest]
     );
 
     const reset = () => {
@@ -412,7 +436,7 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
                 BigInt(withdrawalInfo.amount),
                 withdrawalInfo.baseAddress as `0x${string}`,
                 withdrawalInfo.nonce as `0x${string}`,
-                base64ToHex(withdrawalInfo.signature) as `0x${string}`
+                withdrawalInfo.signature as `0x${string}`
             ],
             chainId: ETH_CHAIN_ID
         });
@@ -480,31 +504,48 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
                 </>
             )}
 
-            {step === "initiating" && (
-                <div className={styles.stepBox}>
-                    <div className={styles.spinner} />
-                    <p className={styles.stepTitle}>Initiating withdrawal</p>
-                    <p className={styles.stepText}>Signing request on the Block52 chain…</p>
-                </div>
-            )}
+            {step === "initiating" && <WithdrawSteps stage="initiating" />}
 
             {step === "waiting_sig" && (
-                <div className={styles.stepBox}>
-                    <div className={styles.spinner} />
-                    <p className={styles.stepTitle}>Waiting for validator signature</p>
-                    <p className={styles.stepText}>Checking… ({pollCount} {pollCount === 1 ? "attempt" : "attempts"})</p>
-                    {cosmosTxHash !== "" && <p className={styles.monoHash}>Cosmos tx: {cosmosTxHash.slice(0, 16)}…</p>}
-                    {pollCount > SLOW_THRESHOLD && (
-                        <p className={styles.hint}>Signing is taking longer than expected — it continues in the background.</p>
-                    )}
+                <>
+                    <WithdrawSteps stage="waiting_sig" />
+                    <div className={styles.progressSummary}>
+                        <div className={styles.balanceRow}>
+                            <span className={styles.balanceLabel}>Amount</span>
+                            <span className={styles.balanceValue}>${numericAmount.toFixed(2)} USDC</span>
+                        </div>
+                        {web3Address && (
+                            <div className={styles.balanceRow}>
+                                <span className={styles.balanceLabel}>To</span>
+                                <span className={styles.monoHash}>
+                                    {web3Address.slice(0, 10)}…{web3Address.slice(-8)}
+                                </span>
+                            </div>
+                        )}
+                        {cosmosTxHash !== "" && (
+                            <div className={styles.balanceRow}>
+                                <span className={styles.balanceLabel}>Block52 tx</span>
+                                <span className={styles.monoHash}>
+                                    {cosmosTxHash.slice(0, 8)}…{cosmosTxHash.slice(-6)}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    <p className={styles.hint}>
+                        {pollCount > SLOW_THRESHOLD
+                            ? "Signing is taking longer than usual. This screen updates when it is ready."
+                            : "This usually takes a minute or two. This screen updates when it is ready."}{" "}
+                        If you go back, the request is not cancelled: it stays on the chain and appears in Activity, where you can complete it once it is signed.
+                    </p>
                     <button className={`btn-ghost ${styles.copyPill}`} onClick={reset}>
-                        Start over
+                        Back to amount
                     </button>
-                </div>
+                </>
             )}
 
             {step === "ready" && withdrawalInfo && (
                 <>
+                    <WithdrawSteps stage="ready" />
                     <div className={styles.alertSuccess}>
                         <p className={styles.alertTitle}>Validator signature received</p>
                         <p className={styles.alertText}>Ready to complete the withdrawal on Ethereum.</p>
@@ -527,20 +568,14 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
                 </>
             )}
 
-            {step === "completing" && (
-                <div className={styles.stepBox}>
-                    <div className={styles.spinner} />
-                    <p className={styles.stepTitle}>Completing on Ethereum</p>
-                    <p className={styles.stepText}>Confirm the transaction in your wallet…</p>
-                </div>
-            )}
+            {step === "completing" && <WithdrawSteps stage="completing" />}
 
             {step === "done" && (
                 <>
                     <div className={styles.alertSuccess}>
                         <p className={styles.alertTitle}>Withdrawal complete</p>
                         <p className={styles.alertText}>USDC has been transferred to your Ethereum wallet.</p>
-                        {ethTxHash && <p className={styles.monoHash}>Tx: {ethTxHash.slice(0, 18)}…</p>}
+                        {ethTxHash && <EtherscanTxLink hash={ethTxHash} />}
                     </div>
                     <button className={`btn-glow shimmer-hover ${styles.primaryButton}`} onClick={reset}>
                         Done

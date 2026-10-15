@@ -32,6 +32,9 @@ const WALLET_CONNECT = [
     "https://rpc.wallet.coinbase.com"
 ];
 
+// WalletConnect Verify checks the app's origin through a hidden frame on these two hosts only.
+const WALLET_CONNECT_FRAMES = ["https://verify.walletconnect.org", "https://verify.walletconnect.com"];
+
 // Ethereum RPC used by wagmi/viem for reads (balances, allowances, receipts).
 const ETHEREUM_RPC = ["https://eth.merkle.io"];
 
@@ -72,6 +75,7 @@ export function buildContentSecurityPolicy(options: { isDev: boolean; extraConne
         "img-src 'self' data: https: blob:",
         "font-src 'self' data: https:",
         `connect-src ${connectSrc}`,
+        `frame-src ${WALLET_CONNECT_FRAMES.join(" ")}`,
         "worker-src 'self' blob:",
         "object-src 'none'",
         "base-uri 'self'",

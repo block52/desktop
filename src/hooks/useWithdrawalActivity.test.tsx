@@ -30,8 +30,8 @@ afterEach(() => {
 
 describe("normalizeWithdrawal", () => {
     it("maps a signed request", () => {
-        expect(normalizeWithdrawal({ nonce: "n1", base_address: "0xABC", amount: "5000000", status: "signed", created_at: 1700000000 })).toEqual({
-            nonce: "n1", toAddress: "0xABC", amountMicro: "5000000", status: "signed", createdAt: 1700000000
+        expect(normalizeWithdrawal({ nonce: "n1", base_address: "0xABC", amount: "5000000", status: "signed", created_at: 1700000000, signature: "c2ln" })).toEqual({
+            nonce: "n1", toAddress: "0xABC", amountMicro: "5000000", status: "signed", createdAt: 1700000000, signature: "c2ln"
         });
     });
 

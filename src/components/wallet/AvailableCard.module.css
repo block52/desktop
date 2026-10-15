@@ -113,10 +113,33 @@
     padding-top: 14px;
 }
 
+.web3Dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: hsl(142 70% 50%);
+    box-shadow: 0 0 0 3px hsl(142 70% 50% / 0.15);
+}
+
+.web3Info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
 .web3Address {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-family: var(--mono);
     font-size: 12px;
     color: rgb(148, 163, 184);
+}
+
+.web3Manage {
+    margin-left: auto;
 }
 
 .iconButton:disabled {

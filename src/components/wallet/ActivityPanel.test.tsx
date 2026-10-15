@@ -9,6 +9,14 @@ vi.mock("../../hooks/useWithdrawalActivity", () => ({
     useWithdrawalActivity: vi.fn()
 }));
 
+vi.mock("../../hooks/usePaidOutWithdrawals", () => ({
+    usePaidOutWithdrawals: () => new Set<string>()
+}));
+
+vi.mock("./CompleteWithdrawalButton", () => ({
+    default: () => <button type="button">Complete on Ethereum</button>
+}));
+
 vi.mock("../../hooks/useWalletTransfers", () => ({
     useWalletTransfers: vi.fn()
 }));
@@ -22,6 +30,7 @@ const ITEM = (over: Record<string, unknown> = {}) => ({
     amountMicro: "5000000",
     status: "completed" as const,
     createdAt: 1700000000,
+    signature: null as string | null,
     ...over
 });
 
@@ -45,16 +54,33 @@ describe("ActivityPanel", () => {
         expect(screen.getByText(/To 0x4f2a…/)).toBeTruthy();
     });
 
-    it("renders PENDING and READY pills for the other statuses", () => {
+    it("lists withdrawals still to complete apart from the history", () => {
         mockedUseWithdrawalActivity.mockReturnValue({
-            items: [ITEM({ nonce: "p1", status: "pending" }), ITEM({ nonce: "s1", status: "signed" })],
+            items: [ITEM({ nonce: "p1", status: "pending", amountMicro: "1000000" }), ITEM({ nonce: "s1", status: "signed", signature: "c2ln" }), ITEM({ nonce: "c1" })],
             isLoading: false,
             error: ""
         });
         render(<ActivityPanel address="b52addr" />);
 
-        expect(screen.getByText("PENDING")).toBeTruthy();
-        expect(screen.getByText("READY")).toBeTruthy();
+        expect(screen.getByLabelText("Withdrawals to complete")).toBeTruthy();
+        expect(screen.getAllByRole("button", { name: "Complete on Ethereum" })).toHaveLength(2);
+        expect(screen.getAllByText("COMPLETED")).toHaveLength(1);
+    });
+
+    it("hides the send that pairs with a withdrawal", () => {
+        mockedUseWithdrawalActivity.mockReturnValue({ items: [ITEM({ status: "pending", amountMicro: "500000", createdAt: 1700000000 })], isLoading: false, error: "" });
+        mockedUseWalletTransfers.mockReturnValue({
+            transfers: [
+                { hash: "h1", direction: "out", counterparty: "b521lwmodule", amountMicro: "500000", timestamp: 1700000001, success: true },
+                { hash: "h2", direction: "out", counterparty: "b521other", amountMicro: "700000", timestamp: 1700000001, success: true }
+            ],
+            isLoading: false,
+            error: ""
+        });
+        render(<ActivityPanel address="b52addr" />);
+
+        expect(screen.queryByText("-$0.50")).toBeNull();
+        expect(screen.getByText("-$0.70")).toBeTruthy();
     });
 
     it("shows an empty state when there is no activity", () => {

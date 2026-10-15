@@ -282,3 +282,22 @@
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+.progressSummary {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px 14px;
+    border: 1px solid hsl(245 22% 17%);
+    border-radius: 12px;
+}
+
+.progressSummary + .hint {
+    margin-top: 12px;
+}
+
+.hint + .copyPill {
+    margin-top: 14px;
+    align-self: flex-start;
+}

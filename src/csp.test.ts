@@ -18,6 +18,10 @@ describe("buildContentSecurityPolicy", () => {
         expect(connect).toContain("https://rpc.walletconnect.org");
     });
 
+    it("frames only the WalletConnect verify hosts", () => {
+        expect(directive(production, "frame-src")).toBe("frame-src https://verify.walletconnect.org https://verify.walletconnect.com");
+    });
+
     it("keeps analytics endpoints out of connect-src", () => {
         expect(production).not.toContain("pulse.walletconnect.org");
         expect(production).not.toContain("cca-lite.coinbase.com");

@@ -91,7 +91,7 @@ secret; leave a variable unset to use the app's default:
 
 | Variable | Purpose |
 |---|---|
-| `VITE_PROJECT_ID` | WalletConnect / Reown project id |
+| `VITE_PROJECT_ID` | WalletConnect / Reown project id. In its Reown dashboard allowed-domains list, add `app://block52` (installed app) and `localhost` (dev), or leave the list empty |
 | `VITE_INDEXER_URL` | Indexer (hands, players), default `https://indexer.block52.xyz` |
 | `VITE_PAYMENT_PROXY_URL` | Crypto deposit payment proxy |
 | `VITE_SNG_SCHEDULE_URL` | Sit & Go schedule JSON |

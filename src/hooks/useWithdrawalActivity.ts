@@ -9,6 +9,8 @@ export interface WithdrawalActivityItem {
     amountMicro: string;
     status: WithdrawalStatus;
     createdAt: number | null;
+    /** The validators' signature (base64) once the withdrawal can be completed on Ethereum. */
+    signature: string | null;
 }
 
 /** Nodes that answered 501 for the withdrawals endpoint; not asked again this session. */
@@ -41,7 +43,8 @@ export function normalizeWithdrawal(raw: unknown): WithdrawalActivityItem | null
         toAddress: r.base_address,
         amountMicro: r.amount,
         status,
-        createdAt: createdAt !== null && Number.isFinite(createdAt) ? createdAt : null
+        createdAt: createdAt !== null && Number.isFinite(createdAt) ? createdAt : null,
+        signature: typeof r.signature === "string" && r.signature !== "" ? r.signature : null
     };
 }
 
@@ -60,7 +63,7 @@ export function useWithdrawalActivity(
         let cancelled = false;
 
         const rest = currentNetwork.rest.replace(/\/+$/, "");
-        const url = `${rest}/block52/pokerchain/poker/v1/list_withdrawal_requests?cosmos_address=${encodeURIComponent(address)}`;
+        const url = `${rest}/block52/pokerchain/poker/v1/withdrawal_requests?cosmos_address=${encodeURIComponent(address)}`;
         if (unsupportedNodes.has(rest)) {
             setItems([]);
             setError("");

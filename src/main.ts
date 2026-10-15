@@ -1,6 +1,8 @@
-import { app, BrowserWindow, nativeImage, ipcMain, shell, session } from "electron";
+import { app, BrowserWindow, nativeImage, ipcMain, shell, session, protocol, net } from "electron";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import started from "electron-squirrel-startup";
+import { APP_ORIGIN, APP_SCHEME, isOwnResource, resolveAppFile } from "./appProtocol";
 import { buildContentSecurityPolicy, hostsFromUrls } from "./csp";
 import { registerWalletIpc } from "./wallet/walletIpc";
 
@@ -10,6 +12,12 @@ if (started) {
 }
 
 app.setName("Block52");
+
+// The packaged app is served from app://block52 rather than file://, so it has a real origin that the
+// WalletConnect relay can be told to allow.
+protocol.registerSchemesAsPrivileged([
+  { scheme: APP_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true } },
+]);
 
 const iconPath = path.join(__dirname, "../../assets/icon.png");
 
@@ -40,9 +48,7 @@ const createWindow = () => {
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
-    );
+    mainWindow.loadURL(`${APP_ORIGIN}/`);
   }
 
   // DevTools only when running from source (yarn start), never in a packaged build.
@@ -91,7 +97,25 @@ app.whenReady().then(() => {
     ]),
   });
 
+  if (!isDev) {
+    const rendererRoot = path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}`);
+    protocol.handle(APP_SCHEME, async (request) => {
+      const file = resolveAppFile(rendererRoot, request.url);
+      if (file === null) return new Response("Not found", { status: 404 });
+      const response = await net.fetch(pathToFileURL(file).toString());
+      const headers = new Headers(response.headers);
+      headers.set("Content-Security-Policy", csp);
+      return new Response(response.body, { status: response.status, headers });
+    });
+  }
+
+  // Only the app's own documents get the policy. Stamping it on a third-party response (the WalletConnect
+  // verify frame) would add frame-ancestors 'none' to it and stop it loading.
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    if (!isOwnResource(details.url, MAIN_WINDOW_VITE_DEV_SERVER_URL)) {
+      callback({ responseHeaders: details.responseHeaders });
+      return;
+    }
     callback({
       responseHeaders: {
         ...details.responseHeaders,
