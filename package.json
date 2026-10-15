@@ -1,7 +1,7 @@
 {
   "name": "poker-desktop",
   "productName": "Block52",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Block52 poker desktop app",
   "main": ".vite/build/main.js",
   "private": true,
