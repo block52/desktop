@@ -67,3 +67,18 @@ This project is part of the Block52 poker-vm monorepo. When integrating with the
 - **No defaults policy**: Never use `||` or `??` as fallbacks for SDK values — let missing data error loudly
 - **No `any` type**: Use SDK types; see [poker-vm CLAUDE.md](../poker-vm/CLAUDE.md) for full 12 Commandments
 - **Git workflow**: Always branch from `main`, never push directly — all changes via PRs
+
+## Sensitive information
+
+This repository is going public, and a pushed commit cannot be taken back. Never commit, push, or put in a PR description, issue, commit message or log output:
+
+- **Secrets**: API keys (Alchemy and the like), tokens (`RELEASE_PUSH_TOKEN`, GitHub PATs), signing certificates, passwords. Server-side keys belong behind a proxy (see `tools/nft-proxy`); repo **variables** are for public build settings only (`VITE_PROJECT_ID`, `VITE_PROFILE_NFT_INDEXER_URL`), and anything secret goes in repo or environment **secrets** that the owner sets.
+- **Wallet material**: seed phrases, mnemonics, private keys, vault files, and screenshots or logs that show them. Test fixtures use obviously fake values.
+- **`.env` files**: commit only `.env.example`, with placeholders or public values. Do not print the values of a real `.env`; if one must be inspected, redact it.
+- **Personal data**: personal email addresses, home-directory paths (`/Users/<name>`), machine names. Commits use the GitHub noreply address (`git config user.email` should be `<id>+<user>@users.noreply.github.com`).
+
+Before committing or pushing:
+
+- Look at `git diff --staged` for any of the above, and run `gitleaks detect --no-banner --redact` when it is installed.
+- When merging a PR on GitHub, check that the squash commit's author is the noreply address; GitHub uses the account's primary email otherwise, which is how a personal email reached `main`.
+- If something sensitive has already been committed: stop, do not push, and tell the owner. The credential must be rotated even if it is removed from history, and any history rewrite (`git filter-repo`, never `filter-branch`) is done only with the owner's approval.
