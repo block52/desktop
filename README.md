@@ -123,4 +123,4 @@ To report a vulnerability, please open a private security advisory on GitHub rat
 
 ## License
 
-[MIT](LICENSE)
+[CC0 1.0](LICENSE)
