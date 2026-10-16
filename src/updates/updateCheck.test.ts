@@ -33,6 +33,6 @@ describe("newerVersionFrom", () => {
 
 describe("releasePageUrl", () => {
     it("points at the tag on the project's own releases", () => {
-        expect(releasePageUrl("1.0.7")).toBe("https://github.com/xiangzhe0812/poker-desktop/releases/tag/v1.0.7");
+        expect(releasePageUrl("1.0.7")).toBe("https://github.com/block52/desktop/releases/tag/v1.0.7");
     });
 });
