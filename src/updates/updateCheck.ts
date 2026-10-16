@@ -1,4 +1,4 @@
-export const RELEASE_REPO = "xiangzhe0812/poker-desktop";
+export const RELEASE_REPO = "block52/desktop";
 
 export interface UpdateInfo {
     /** The newer version, without the leading "v". */

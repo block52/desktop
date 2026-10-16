@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { cleanup, renderHook, waitFor } from "@testing-library/react";
 
 const simulateContract = vi.fn();
 
@@ -35,6 +35,8 @@ function stubSignatureEndpoint() {
 
 describe("usePaidOutWithdrawals", () => {
     afterEach(() => {
+        // unmount first, so a check still running when the test ends cannot update state after the DOM is gone
+        cleanup();
         vi.unstubAllGlobals();
         simulateContract.mockReset();
     });
