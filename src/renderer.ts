@@ -27,6 +27,8 @@
  */
 
 import "./index.css";
+
+if (window.electronAPI?.platform !== undefined) document.documentElement.dataset.platform = window.electronAPI.platform;
 import "./app";
 
 console.log(

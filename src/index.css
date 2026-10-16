@@ -36,6 +36,7 @@
 }
 
 :root {
+    --titlebar-h: 0px;
   --text: hsl(210 40% 98%);
   --text-muted: hsl(215 20% 65%);
   --border: hsl(240 24% 15%);
@@ -273,4 +274,9 @@ body {
 
 .row-hover:hover {
   background-color: hsl(245 25% 14%);
+}
+
+/* The macOS window has no title bar; the app draws its own drag strip this tall. */
+:root[data-platform="darwin"] {
+    --titlebar-h: 32px;
 }

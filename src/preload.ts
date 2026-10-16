@@ -30,6 +30,7 @@ const wallet: WalletBridge = {
 
 contextBridge.exposeInMainWorld("electronAPI", {
     openExternal: (url: string) => ipcRenderer.send("open-external", url),
+    platform: process.platform,
     wallet,
     updates: {
         check: (): Promise<UpdateInfo | null> => ipcRenderer.invoke("update:check"),

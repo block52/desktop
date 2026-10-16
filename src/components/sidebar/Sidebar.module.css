@@ -3,9 +3,9 @@
 .sidebar {
     width: 232px;
     flex-shrink: 0;
-    height: calc(100vh - 20px);
+    height: calc(100vh - 20px - var(--titlebar-h));
     position: sticky;
-    top: 10px;
+    top: calc(10px + var(--titlebar-h));
     z-index: 20;
     display: flex;
     flex-direction: column;
@@ -337,7 +337,7 @@
 @media (max-width: 768px) {
     .sidebar {
         position: fixed;
-        top: 10px;
+        top: calc(10px + var(--titlebar-h));
         left: 10px;
         bottom: 10px;
         height: auto;

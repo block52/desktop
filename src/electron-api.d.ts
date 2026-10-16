@@ -6,6 +6,7 @@ declare global {
         /** Exposed by the preload script; absent when the renderer runs in a plain browser. */
         electronAPI?: {
             openExternal: (url: string) => void;
+            platform?: string;
             wallet: WalletBridge;
             updates?: {
                 check: () => Promise<UpdateInfo | null>;

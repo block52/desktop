@@ -4,7 +4,7 @@
     z-index: 1;
     display: flex;
     gap: 10px;
-    padding: 10px;
+    padding: calc(10px + var(--titlebar-h)) 10px 10px;
     min-height: 100vh;
     width: 100%;
 }
@@ -20,7 +20,7 @@
 .mainPane {
     flex: 1;
     min-width: 0;
-    min-height: calc(100vh - 20px);
+    min-height: calc(100vh - 20px - var(--titlebar-h));
     display: flex;
     flex-direction: column;
     padding: 24px 28px;
@@ -31,7 +31,7 @@
 .mainBare {
     flex: 1;
     min-width: 0;
-    min-height: calc(100vh - 20px);
+    min-height: calc(100vh - 20px - var(--titlebar-h));
     display: flex;
     flex-direction: column;
 }
@@ -57,13 +57,13 @@
 /* Mobile — sidebar becomes a drawer; hamburger floats top-left of the pane. */
 @media (max-width: 768px) {
     .shell {
-        padding: 8px;
+        padding: calc(8px + var(--titlebar-h)) 8px 8px;
         gap: 8px;
     }
 
     .mainPane {
         padding: 64px 16px 16px;
-        min-height: calc(100vh - 16px);
+        min-height: calc(100vh - 16px - var(--titlebar-h));
     }
 
     .menuButton {
@@ -71,7 +71,7 @@
         align-items: center;
         justify-content: center;
         position: fixed;
-        top: 18px;
+        top: calc(18px + var(--titlebar-h));
         left: 18px;
         z-index: 50;
         width: 38px;
@@ -79,4 +79,15 @@
         padding: 0;
         border-radius: 10px;
     }
+}
+
+/* macOS: the window has no title bar, so this strip lets the window be dragged and keeps the traffic lights clear. */
+.dragStrip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--titlebar-h);
+    z-index: 5;
+    -webkit-app-region: drag;
 }
