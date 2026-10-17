@@ -1,0 +1,29 @@
+.wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.tip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    translate: -50% 0;
+    z-index: 30;
+    padding: 5px 9px;
+    border: 1px solid hsl(245 22% 20%);
+    border-radius: 8px;
+    background: hsl(240 28% 9%);
+    color: hsl(210 40% 98%);
+    font: 500 11.5px/1.2 Inter, system-ui, sans-serif;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 8px 20px -8px hsl(263 60% 4% / 0.8);
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 12px;
+}

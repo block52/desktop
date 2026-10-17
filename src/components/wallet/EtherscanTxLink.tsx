@@ -1,4 +1,5 @@
 import React from "react";
+import Tooltip from "../tooltip/Tooltip";
 import styles from "./EtherscanTxLink.module.css";
 
 interface EtherscanTxLinkProps {
@@ -24,13 +25,26 @@ const EtherscanTxLink: React.FC<EtherscanTxLinkProps> = ({ hash }) => {
             <span className={styles.hash}>
                 Tx: {hash.slice(0, 10)}…{hash.slice(-6)}
             </span>
-            <button type="button" className={styles.link} onClick={() => openLink(`https://etherscan.io/tx/${hash}`)}>
-                View on Etherscan
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M7 17 17 7" />
-                    <path d="M8 7h9v9" />
-                </svg>
-            </button>
+            <Tooltip
+                card
+                content={
+                    <>
+                        <span className={styles.previewSite}>etherscan.io</span>
+                        <span className={styles.previewHash}>
+                            {hash.slice(0, 14)}…{hash.slice(-10)}
+                        </span>
+                        <span className={styles.previewNote}>Opens in your browser</span>
+                    </>
+                }
+            >
+                <button type="button" className={styles.link} onClick={() => openLink(`https://etherscan.io/tx/${hash}`)}>
+                    View on Etherscan
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M7 17 17 7" />
+                        <path d="M8 7h9v9" />
+                    </svg>
+                </button>
+            </Tooltip>
         </div>
     );
 };

@@ -79,3 +79,9 @@
         transform: rotate(360deg);
     }
 }
+
+.label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}

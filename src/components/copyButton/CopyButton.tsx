@@ -1,5 +1,6 @@
 import React from "react";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
+import Tooltip from "../tooltip/Tooltip";
 import styles from "./CopyButton.module.css";
 
 interface CopyButtonProps {
@@ -20,18 +21,19 @@ const CopyButton: React.FC<CopyButtonProps> = ({ text, message, title = "Copy", 
     const copy = useCopyToClipboard();
 
     return (
-        <button
-            type="button"
-            className={`${styles.copyButton}${className ? ` ${className}` : ""}`}
-            title={title}
-            aria-label={title}
-            onClick={e => {
-                e.stopPropagation();
-                void copy(text, message);
-            }}
-        >
-            <CopyIcon />
-        </button>
+        <Tooltip content={title}>
+            <button
+                type="button"
+                className={`${styles.copyButton}${className ? ` ${className}` : ""}`}
+                aria-label={title}
+                onClick={e => {
+                    e.stopPropagation();
+                    void copy(text, message);
+                }}
+            >
+                <CopyIcon />
+            </button>
+        </Tooltip>
     );
 };
 

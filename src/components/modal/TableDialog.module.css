@@ -1,5 +1,6 @@
 /* Table-flow dialogs (leave table, Sit & Go result): same shell as the wallet dialogs. */
 .overlay {
+    composes: overlayIn from "./modalMotion.module.css";
     position: fixed;
     inset: 0;
     z-index: 60;
@@ -12,6 +13,7 @@
 }
 
 .modal {
+    composes: dialogIn from "./modalMotion.module.css";
     width: 100%;
     max-width: 420px;
     background: hsl(240 26% 11%);
