@@ -8,6 +8,8 @@ import { microToDecimal, parseUsdcToMicro } from "../utils/currency";
 import { useNetwork } from "../context/NetworkContext";
 import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
 import { useWithdrawalActivity } from "../hooks/useWithdrawalActivity";
+import { usePaidOutWithdrawals } from "../hooks/usePaidOutWithdrawals";
+import { pendingWithdrawalMicro } from "../utils/pendingWithdrawals";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import AvailableCard from "../components/wallet/AvailableCard";
 import ActivityPanel from "../components/wallet/ActivityPanel";
@@ -66,10 +68,9 @@ const Wallet: React.FC = () => {
     const { items: activityItems } = useWithdrawalActivity(existingAddress, undefined, refreshToken);
     const onChainAvatar = useOnChainAvatar(existingAddress, avatarRefresh);
 
-    const pendingWithdrawalMicro = activityItems
-        .filter(i => i.status === "pending")
-        .reduce((sum, i) => sum + BigInt(i.amountMicro), 0n)
-        .toString();
+    // The chain keeps a paid-out withdrawal "pending", so ask Ethereum which ones are already paid.
+    const paidOut = usePaidOutWithdrawals(activityItems, refreshToken);
+    const pendingMicro = pendingWithdrawalMicro(activityItems, paidOut);
 
     const [newMnemonic, setNewMnemonic] = useState("");
     const [newAddress, setNewAddress] = useState("");
@@ -162,7 +163,7 @@ const Wallet: React.FC = () => {
                     <div className={styles.grid}>
                         <AvailableCard
                             usdcBalanceMicro={usdcBalanceAmount}
-                            pendingWithdrawalMicro={pendingWithdrawalMicro}
+                            pendingWithdrawalMicro={pendingMicro}
                             address={existingAddress}
                             web3Address={web3Address === undefined ? null : web3Address}
                             isWeb3Connected={isWeb3Connected}
