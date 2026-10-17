@@ -106,6 +106,7 @@ const NetworkSwitcher: React.FC = () => {
     const { currentNetwork, setNetwork, availableNetworks, discoveredNetworks } = useNetwork();
     const [isOpen, setIsOpen] = useState(false);
     const [latestBlockHeight, setLatestBlockHeight] = useState<string | null>(null);
+    const [link, setLink] = useState<"connecting" | "up" | "down">("connecting");
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -121,12 +122,15 @@ const NetworkSwitcher: React.FC = () => {
                 const blocks = await cosmosClient.getLatestBlocks(1);
                 if (blocks.length > 0) {
                     setLatestBlockHeight(blocks[0].block.header.height);
+                    setLink("up");
                 }
             } catch {
                 setLatestBlockHeight(null);
+                setLink("down");
             }
         };
 
+        setLink("connecting");
         fetchBlockHeight();
         const interval = setInterval(fetchBlockHeight, 10000);
 
@@ -191,12 +195,15 @@ const NetworkSwitcher: React.FC = () => {
                 onClick={() => setIsOpen(open => !open)}
                 title="Switch network"
             >
-                <span className={styles.statusDot} />
+                <span className={`${styles.statusDot} ${styles[link]}`} />
                 <span className={styles.statusStack}>
                     <span className={styles.statusName}>{currentNetwork.name}</span>
                     {latestBlockHeight !== null && (
-                        <span className={styles.statusBlock}>Block #{Number(latestBlockHeight).toLocaleString()}</span>
+                        <span className={styles.statusBlock}>
+                            Block #<span key={latestBlockHeight} className={styles.blockTick}>{Number(latestBlockHeight).toLocaleString()}</span>
+                        </span>
                     )}
+                    {link === "down" && <span className={styles.statusBlock}>Not reachable</span>}
                 </span>
                 <span className={styles.statusChevron}>
                     <ChevronUpIcon />

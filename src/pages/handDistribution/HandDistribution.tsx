@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import EquityCalculator from "./EquityCalculator";
 import FairnessAudit from "./FairnessAudit";
+import SlidingTabs from "../../components/slidingTabs/SlidingTabs";
 import styles from "./HandDistribution.module.css";
 
 type Tab = "fairness" | "equity";
@@ -20,13 +21,16 @@ const HandDistribution: React.FC = () => {
                 <p className={styles.subtitle}>{SUBTITLES[tab]}</p>
             </div>
 
-            <div className="segmented" role="tablist" style={{ alignSelf: "flex-start" }}>
-                <button type="button" role="tab" aria-selected={tab === "fairness"} className={tab === "fairness" ? "seg on" : "seg"} onClick={() => setTab("fairness")}>
-                    Fairness audit
-                </button>
-                <button type="button" role="tab" aria-selected={tab === "equity"} className={tab === "equity" ? "seg on" : "seg"} onClick={() => setTab("equity")}>
-                    Equity calculator
-                </button>
+            <div style={{ alignSelf: "flex-start" }}>
+                <SlidingTabs
+                    label="Hand distribution view"
+                    options={[
+                        { value: "fairness", label: "Fairness audit" },
+                        { value: "equity", label: "Equity calculator" }
+                    ]}
+                    value={tab}
+                    onChange={setTab}
+                />
             </div>
 
             {tab === "fairness" ? <FairnessAudit /> : <EquityCalculator />}

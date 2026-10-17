@@ -16,6 +16,7 @@ import AddressLookupTab from "../../components/explorer/AddressLookupTab";
 import PlayersTab from "../../components/explorer/PlayersTab";
 import Pagination, { PAGE_SIZES } from "../../components/pagination/Pagination";
 import { pageInfo, paginate } from "../../utils/paginate";
+import SlidingTabs from "../../components/slidingTabs/SlidingTabs";
 import styles from "./BlockExplorer.module.css";
 
 /* getTx is untyped in the SDK (returns response.data of /cosmos/tx/v1beta1/txs/{hash});
@@ -370,21 +371,7 @@ const BlockExplorer: React.FC = () => {
                 </div>
             )}
 
-            <div className="segmented" role="tablist" style={{ display: "flex", width: "100%", overflowX: "auto" }}>
-                {TABS.map(t => (
-                    <button
-                        key={t.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={tab === t.id}
-                        className={tab === t.id ? "seg on" : "seg"}
-                        style={{ flex: 1, textAlign: "center", justifyContent: "center", whiteSpace: "nowrap" }}
-                        onClick={() => setTab(t.id)}
-                    >
-                        {t.label}
-                    </button>
-                ))}
-            </div>
+            <SlidingTabs label="Explorer view" options={TABS.map(t => ({ value: t.id, label: t.label }))} value={tab} onChange={setTab} fill />
 
             {tab === "blocks" && (
                 <div className={styles.columns}>
