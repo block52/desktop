@@ -18,8 +18,6 @@ vi.mock("../utils/cosmos/storage", () => ({
 }));
 vi.mock("../hooks/useCosmosWallet", () => ({ useCosmosWallet: () => ({ address: null, balance: [], refreshBalance: vi.fn() }) }));
 vi.mock("../context/NetworkContext", () => ({ useNetwork: () => ({ currentNetwork: { rpc: "", rest: "" } }) }));
-vi.mock("../hooks/useWithdrawalActivity", () => ({ useWithdrawalActivity: () => ({ items: [] }) }));
-vi.mock("../hooks/usePaidOutWithdrawals", () => ({ usePaidOutWithdrawals: () => new Set<string>() }));
 vi.mock("../hooks/useOnChainAvatar", () => ({ useOnChainAvatar: () => null }));
 vi.mock("../hooks/useCopyToClipboard", () => ({ useCopyToClipboard: () => vi.fn() }));
 vi.mock("@reown/appkit/react", () => ({

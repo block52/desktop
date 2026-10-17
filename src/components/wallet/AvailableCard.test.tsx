@@ -7,7 +7,6 @@ import type { WalletTab } from "./DepositWithdrawPanel";
 
 const BASE_PROPS = {
     usdcBalanceMicro: "12300000",
-    pendingWithdrawalMicro: "5000000",
     address: "b52abc123def",
     web3Address: null as string | null,
     isWeb3Connected: false,
@@ -39,17 +38,6 @@ describe("AvailableCard", () => {
     it("renders the balance formatted as dollars", () => {
         renderCard();
         expect(screen.getByText("$12.30")).toBeTruthy();
-    });
-
-    it("renders the pending withdrawal amount", () => {
-        renderCard();
-        expect(screen.getByText("Pending withdrawal")).toBeTruthy();
-        expect(screen.getByText("-$5.00")).toBeTruthy();
-    });
-
-    it("hides the pending withdrawal row when nothing is pending", () => {
-        renderCard({ pendingWithdrawalMicro: "0" });
-        expect(screen.queryByText("Pending withdrawal")).toBeNull();
     });
 
     it("shows the short b52 address in the card header", () => {

@@ -7,7 +7,6 @@ import styles from "./AvailableCard.module.css";
 
 interface AvailableCardProps {
     usdcBalanceMicro: string;
-    pendingWithdrawalMicro: string;
     address: string;
     web3Address: string | null;
     isWeb3Connected: boolean;
@@ -26,7 +25,6 @@ function microToUsd(micro: string): string {
 
 const AvailableCard: React.FC<AvailableCardProps> = ({
     usdcBalanceMicro,
-    pendingWithdrawalMicro,
     address,
     web3Address,
     isWeb3Connected,
@@ -88,15 +86,6 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
                 <img src={usdcUrl} alt="USDC" className={styles.usdcIcon} />
                 <span className={styles.balanceAmount}>${microToUsd(usdcBalanceMicro)}</span>
             </div>
-
-            {BigInt(pendingWithdrawalMicro) > 0n && (
-                <div className={styles.breakdown}>
-                    <div className={styles.breakdownRow}>
-                        <span>Pending withdrawal</span>
-                        <span className={styles.breakdownValue}>-${microToUsd(pendingWithdrawalMicro)}</span>
-                    </div>
-                </div>
-            )}
 
             <div className={styles.actionsRow}>
                 <SlidingTabs
