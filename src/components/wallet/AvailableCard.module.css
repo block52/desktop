@@ -64,28 +64,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-.breakdown {
-    border-top: 1px solid hsl(245 22% 17%);
-    padding-top: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.breakdownRow {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    line-height: 1;
-    font-weight: 400;
-    color: rgb(148, 163, 184);
-}
-
-.breakdownValue {
-    font-family: var(--mono);
-    color: var(--text);
-}
-
 .actionsRow {
     display: flex;
     align-items: center;
