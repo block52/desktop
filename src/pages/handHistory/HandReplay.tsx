@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { GameFormat, isTournamentFormat } from "@block52/poker-vm-sdk";
 import { useHandReplay } from "../../hooks/useHandReplay";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
@@ -60,99 +61,121 @@ const HandReplay: React.FC<HandReplayProps> = ({ gameId, handNumber }) => {
         .filter(entry => entry.cards.length > 0);
 
     return (
-        <div className={styles.replay}>
-            <div className={styles.replayHead}>
-                <div className={styles.replayTitle}>
-                    <span className={styles.replayName}>Hand #{handNumber}</span>
-                    <span className={styles.mono}>{gameId}</span>
+        <MotionConfig reducedMotion="user">
+            <div className={styles.replay}>
+                <div className={styles.replayHead}>
+                    <div className={styles.replayTitle}>
+                        <span className={styles.replayName}>Hand #{handNumber}</span>
+                        <span className={styles.mono}>{gameId}</span>
+                    </div>
+                    <button
+                        type="button"
+                        className={`btn-ghost ${styles.pill}`}
+                        onClick={() => void copy(`${WEB_APP_ORIGIN}/table/${gameId}?hand=${handNumber}`, "Replay link copied")}
+                    >
+                        Copy link
+                    </button>
                 </div>
-                <button
-                    type="button"
-                    className={`btn-ghost ${styles.pill}`}
-                    onClick={() => void copy(`${WEB_APP_ORIGIN}/table/${gameId}?hand=${handNumber}`, "Replay link copied")}
-                >
-                    Copy link
-                </button>
-            </div>
 
-            <div className={styles.felt}>
-                {isFinal && <span className={styles.pot}>Pot {formatAmount(state.totalPot)}</span>}
-                <div className={styles.board}>
-                    {Array.from({ length: BOARD_SIZE }, (_, i) => {
-                        const code = step.board[i];
-                        return code === undefined ? (
-                            <div key={i} className={styles.emptyCard} />
-                        ) : (
-                            <PlayingCard key={i} code={code} className={styles.boardCard} />
-                        );
-                    })}
-                </div>
-                {isFinal && revealed.length > 0 && (
-                    <div className={styles.hands}>
-                        {revealed.map(({ player, cards }) => (
-                            <div key={player.address} className={styles.handGroup}>
-                                <div className={styles.holeCards}>
-                                    {cards.map((code, i) => (
-                                        <PlayingCard key={i} code={code} className={styles.holeCard} />
-                                    ))}
+                <div className={styles.felt}>
+                    {isFinal && <span className={styles.pot}>Pot {formatAmount(state.totalPot)}</span>}
+                    <div className={styles.board}>
+                        {Array.from({ length: BOARD_SIZE }, (_, i) => {
+                            const code = step.board[i];
+                            return code === undefined ? (
+                                <div key={i} className={styles.emptyCard} />
+                            ) : (
+                                <PlayingCard key={i} code={code} className={styles.boardCard} />
+                            );
+                        })}
+                    </div>
+                    {isFinal && revealed.length > 0 && (
+                        <div className={styles.hands}>
+                            {revealed.map(({ player, cards }) => (
+                                <div key={player.address} className={styles.handGroup}>
+                                    <div className={styles.holeCards}>
+                                        {cards.map((code, i) => (
+                                            <PlayingCard key={i} code={code} className={styles.holeCard} />
+                                        ))}
+                                    </div>
+                                    <span className={styles.handLabel}>{actorLabel(player.address)}</span>
                                 </div>
-                                <span className={styles.handLabel}>{actorLabel(player.address)}</span>
-                            </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className={styles.stepper}>
+                    <button type="button" className={`btn-ghost ${styles.pill}`} disabled={current === 0} onClick={() => setStepIndex(current - 1)}>
+                        ‹ Prev
+                    </button>
+                    <div className={styles.dots}>
+                        {steps.map((_, i) => (
+                            <button
+                                key={i}
+                                type="button"
+                                aria-label={`Step ${i + 1}`}
+                                className={`${styles.dot} ${i === current ? styles.dotActive : i < current ? styles.dotDone : ""}`}
+                                onClick={() => setStepIndex(i)}
+                            />
+                        ))}
+                    </div>
+                    <button
+                        type="button"
+                        className={`btn-ghost ${styles.pill}`}
+                        disabled={current === steps.length - 1}
+                        onClick={() => setStepIndex(current + 1)}
+                    >
+                        Next ›
+                    </button>
+                </div>
+
+                <div className={styles.progress} aria-hidden="true">
+                    <motion.div
+                        className={styles.progressFill}
+                        initial={false}
+                        animate={{ width: steps.length > 1 ? `${(current / (steps.length - 1)) * 100}%` : "100%" }}
+                        transition={{ type: "spring", stiffness: 220, damping: 28 }}
+                    />
+                </div>
+
+                <div className={styles.stepInfo}>
+                    <span className="section-label">{step.street}</span>
+                    <AnimatePresence mode="wait" initial={false}>
+                        <motion.span
+                            key={current}
+                            className={styles.stepText}
+                            initial={{ opacity: 0, x: 8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -8 }}
+                            transition={{ duration: 0.14 }}
+                        >
+                            {stepText()}
+                        </motion.span>
+                    </AnimatePresence>
+                    <span className={styles.stepPos}>
+                        {current + 1} / {steps.length}
+                    </span>
+                </div>
+
+                {isFinal && state.winners.length > 0 && (
+                    <div className={styles.winners}>
+                        <span className="section-label">Winners</span>
+                        {state.winners.map((winner, i) => (
+                            <span key={i}>
+                                {actorLabel(winner.address)} won {formatAmount(winner.amount)}
+                                {winner.description !== undefined && winner.description !== "" ? ` · ${winner.description}` : ""}
+                            </span>
                         ))}
                     </div>
                 )}
-            </div>
 
-            <div className={styles.stepper}>
-                <button type="button" className={`btn-ghost ${styles.pill}`} disabled={current === 0} onClick={() => setStepIndex(current - 1)}>
-                    ‹ Prev
-                </button>
-                <div className={styles.dots}>
-                    {steps.map((_, i) => (
-                        <button
-                            key={i}
-                            type="button"
-                            aria-label={`Step ${i + 1}`}
-                            className={`${styles.dot} ${i === current ? styles.dotActive : i < current ? styles.dotDone : ""}`}
-                            onClick={() => setStepIndex(i)}
-                        />
-                    ))}
+                <div className={styles.footer}>
+                    <span>{isChips ? "Chips" : "USDC"} table</span>
+                    {deckSeed !== null && <span className={styles.mono}>seed {deckSeed.slice(0, 10)}…{deckSeed.slice(-6)}</span>}
                 </div>
-                <button
-                    type="button"
-                    className={`btn-ghost ${styles.pill}`}
-                    disabled={current === steps.length - 1}
-                    onClick={() => setStepIndex(current + 1)}
-                >
-                    Next ›
-                </button>
             </div>
-
-            <div className={styles.stepInfo}>
-                <span className="section-label">{step.street}</span>
-                <span className={styles.stepText}>{stepText()}</span>
-                <span className={styles.stepPos}>
-                    {current + 1} / {steps.length}
-                </span>
-            </div>
-
-            {isFinal && state.winners.length > 0 && (
-                <div className={styles.winners}>
-                    <span className="section-label">Winners</span>
-                    {state.winners.map((winner, i) => (
-                        <span key={i}>
-                            {actorLabel(winner.address)} won {formatAmount(winner.amount)}
-                            {winner.description !== undefined && winner.description !== "" ? ` · ${winner.description}` : ""}
-                        </span>
-                    ))}
-                </div>
-            )}
-
-            <div className={styles.footer}>
-                <span>{isChips ? "Chips" : "USDC"} table</span>
-                {deckSeed !== null && <span className={styles.mono}>seed {deckSeed.slice(0, 10)}…{deckSeed.slice(-6)}</span>}
-            </div>
-        </div>
+        </MotionConfig>
     );
 };
 

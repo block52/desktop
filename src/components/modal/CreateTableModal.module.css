@@ -1,5 +1,6 @@
 /* Create table modal — DepositModal structure with the redesign pane styling */
 .overlay {
+    composes: overlayIn from "./modalMotion.module.css";
     position: fixed;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
@@ -12,6 +13,7 @@
 }
 
 .modal {
+    composes: dialogIn from "./modalMotion.module.css";
     background: linear-gradient(180deg, hsl(240 28% 9.5%) 0%, hsl(240 26% 11%) 100%);
     border: 1px solid hsl(245 22% 17%);
     padding: 24px;

@@ -322,3 +322,16 @@
         max-height: 320px;
     }
 }
+
+.progress {
+    height: 3px;
+    border-radius: 2px;
+    background: hsl(245 22% 17%);
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, hsl(263 83% 58%), hsl(280 75% 62%));
+}

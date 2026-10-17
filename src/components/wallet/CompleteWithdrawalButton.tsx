@@ -7,6 +7,7 @@ import { describeWithdrawError, fetchWithdrawalSignature } from "../../utils/wit
 import { withdrawAbi, BRIDGE_ADDRESS } from "../../abis/contractABI";
 import { ETH_CHAIN_ID } from "../../config/constants";
 import type { WithdrawalActivityItem } from "../../hooks/useWithdrawalActivity";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import EtherscanTxLink from "./EtherscanTxLink";
 import styles from "./CompleteWithdrawalButton.module.css";
 
@@ -19,7 +20,7 @@ interface CompleteWithdrawalButtonProps {
 
 const Tick: React.FC = () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M5 12.5 10 17.5 19 7" />
+        <motion.path d="M5 12.5 10 17.5 19 7" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4 }} />
     </svg>
 );
 
@@ -42,23 +43,33 @@ const CompleteWithdrawalButton: React.FC<CompleteWithdrawalButtonProps> = ({ ite
 
     if (txHash !== undefined && !reverted) {
         return (
-            <div className={styles.box}>
-                {confirmed ? (
-                    <span className={`${styles.status} ${styles.statusDone}`}>
-                        <Tick />
-                        Withdrawal complete
-                    </span>
-                ) : (
-                    <>
-                        <span className={styles.status} role="status">
-                            <span className={styles.spinner} aria-hidden="true" />
-                            Confirming on Ethereum…
-                        </span>
-                        <span className={styles.note}>Usually under a minute. You can leave this page.</span>
-                    </>
-                )}
-                <EtherscanTxLink hash={txHash} />
-            </div>
+            <MotionConfig reducedMotion="user">
+                <div className={styles.box}>
+                    <AnimatePresence mode="wait" initial={false}>
+                        {confirmed ? (
+                            <motion.span
+                                key="done"
+                                className={`${styles.status} ${styles.statusDone}`}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ type: "spring", stiffness: 380, damping: 20 }}
+                            >
+                                <Tick />
+                                Withdrawal complete
+                            </motion.span>
+                        ) : (
+                            <motion.div key="confirming" className={styles.box} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -4 }}>
+                                <span className={styles.status} role="status">
+                                    <span className={styles.spinner} aria-hidden="true" />
+                                    Confirming on Ethereum…
+                                </span>
+                                <span className={styles.note}>Usually under a minute. You can leave this page.</span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                    <EtherscanTxLink hash={txHash} />
+                </div>
+            </MotionConfig>
         );
     }
 
@@ -98,8 +109,19 @@ const CompleteWithdrawalButton: React.FC<CompleteWithdrawalButtonProps> = ({ ite
     return (
         <div className={styles.box}>
             <button type="button" className={`btn-glow ${styles.button}`} onClick={() => void complete()} disabled={busyLabel !== null}>
-                {busyLabel !== null && <span className={styles.spinner} aria-hidden="true" />}
-                {busyLabel ?? "Complete on Ethereum"}
+                <AnimatePresence mode="wait" initial={false}>
+                    <motion.span
+                        key={busyLabel ?? "idle"}
+                        className={styles.label}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.15 }}
+                    >
+                        {busyLabel !== null && <span className={styles.spinner} aria-hidden="true" />}
+                        {busyLabel ?? "Complete on Ethereum"}
+                    </motion.span>
+                </AnimatePresence>
             </button>
             {isPending && <span className={styles.note}>Open your wallet app and approve the request.</span>}
             {reverted && <span className={styles.error}>The Ethereum transaction was reverted. Try again.</span>}
