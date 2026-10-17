@@ -54,13 +54,13 @@ describe("AvailableCard", () => {
 
     it("fires onTabChange with deposit when the Deposit segment is clicked", () => {
         const props = renderCard();
-        fireEvent.click(screen.getByRole("button", { name: "Deposit" }));
+        fireEvent.click(screen.getByRole("tab", { name: "Deposit" }));
         expect(props.onTabChange).toHaveBeenCalledWith("deposit");
     });
 
     it("fires onTabChange with withdraw when the Withdraw segment is clicked", () => {
         const props = renderCard();
-        fireEvent.click(screen.getByRole("button", { name: "Withdraw" }));
+        fireEvent.click(screen.getByRole("tab", { name: "Withdraw" }));
         expect(props.onTabChange).toHaveBeenCalledWith("withdraw");
     });
 

@@ -21,6 +21,7 @@ import { ETH_CHAIN_ID, ETH_USDC_ADDRESS, ETH_USDT_ADDRESS } from "../../config/c
 import CryptoDepositPanel from "../modal/CryptoDepositPanel";
 import EtherscanTxLink from "./EtherscanTxLink";
 import WithdrawSteps from "./WithdrawSteps";
+import SlidingTabs from "../slidingTabs/SlidingTabs";
 import styles from "./DepositWithdrawPanel.module.css";
 
 export type WalletTab = "deposit" | "withdraw";
@@ -154,14 +155,15 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
     }
 
     const methodSwitch = (
-        <div className="segmented" role="tablist" aria-label="Deposit method">
-            <button type="button" role="tab" aria-selected={method === "web3"} className={method === "web3" ? "seg on" : "seg"} onClick={() => setMethod("web3")}>
-                Web3 wallet
-            </button>
-            <button type="button" role="tab" aria-selected={method === "qr"} className={method === "qr" ? "seg on" : "seg"} onClick={() => setMethod("qr")}>
-                QR · BTC, ETH, USDT, USDC
-            </button>
-        </div>
+        <SlidingTabs
+            label="Deposit method"
+            options={[
+                { value: "web3", label: "Web3 wallet" },
+                { value: "qr", label: "QR · BTC, ETH, USDT, USDC" }
+            ]}
+            value={method}
+            onChange={setMethod}
+        />
     );
 
     if (method === "qr") {

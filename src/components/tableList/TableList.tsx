@@ -14,6 +14,7 @@ import { useToast } from "../../context/ToastContext";
 import { deleteTable, forceCloseTable } from "../../hooks/playerActions/closeTable";
 import CopyButton from "../copyButton/CopyButton";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
+import SlidingTabs from "../slidingTabs/SlidingTabs";
 import styles from "./TableList.module.css";
 
 function microToUsdc(micro: string): string {
@@ -140,45 +141,20 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
         <div className={styles.headerRow}>
             <h2 className={styles.title}>Tables</h2>
             <div className={styles.segmentedWrap}>
-                <div className="segmented">
-                    <button
-                        className={formatFilter === "all" ? "seg on" : "seg"}
-                        onClick={() => setFormatFilter("all")}
-                    >
-                        All <span className="seg-count">{rawGames.length}</span>
-                    </button>
-                    <button
-                        className={formatFilter === "cash" ? "seg on" : "seg"}
-                        onClick={() => setFormatFilter("cash")}
-                    >
-                        Cash <span className="seg-count">{cashCount}</span>
-                    </button>
-                    <button
-                        className={formatFilter === "sit-and-go" ? "seg on" : "seg"}
-                        onClick={() => setFormatFilter("sit-and-go")}
-                    >
-                        Sit &amp; Go <span className="seg-count">{sngCount}</span>
-                    </button>
-                    <button
-                        className={formatFilter === "mine" ? "seg on" : "seg"}
-                        onClick={() => setFormatFilter("mine")}
-                    >
-                        Mine <span className="seg-count">{mineCount}</span>
-                    </button>
-                </div>
+                <SlidingTabs
+                    label="Table format"
+                    options={[
+                        { value: "all", label: "All", count: rawGames.length },
+                        { value: "cash", label: "Cash", count: cashCount },
+                        { value: "sit-and-go", label: "Sit & Go", count: sngCount },
+                        { value: "mine", label: "Mine", count: mineCount }
+                    ]}
+                    value={formatFilter}
+                    onChange={setFormatFilter}
+                />
             </div>
             <div className={styles.segmentedWrap}>
-                <div className="segmented" role="group" aria-label="Filter by status">
-                    {STATUS_FILTERS.map(option => (
-                        <button
-                            key={option.value}
-                            className={statusFilter === option.value ? "seg on" : "seg"}
-                            onClick={() => setStatusFilter(option.value)}
-                        >
-                            {option.label}
-                        </button>
-                    ))}
-                </div>
+                <SlidingTabs label="Filter by status" options={STATUS_FILTERS} value={statusFilter} onChange={setStatusFilter} />
             </div>
             <button className={`btn-ghost ${styles.createButton}`} onClick={() => setShowCreateModal(true)}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

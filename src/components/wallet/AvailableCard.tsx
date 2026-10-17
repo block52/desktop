@@ -1,5 +1,6 @@
 import { QRCodeSVG } from "qrcode.react";
 import usdcUrl from "../../assets/lobby/usdc.svg";
+import SlidingTabs from "../slidingTabs/SlidingTabs";
 import CopyButton from "../copyButton/CopyButton";
 import type { WalletTab } from "./DepositWithdrawPanel";
 import styles from "./AvailableCard.module.css";
@@ -96,20 +97,15 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
             </div>
 
             <div className={styles.actionsRow}>
-                <div className="segmented">
-                    <button
-                        className={tab === "deposit" ? "seg on" : "seg"}
-                        onClick={() => onTabChange("deposit")}
-                    >
-                        Deposit
-                    </button>
-                    <button
-                        className={tab === "withdraw" ? "seg on" : "seg"}
-                        onClick={() => onTabChange("withdraw")}
-                    >
-                        Withdraw
-                    </button>
-                </div>
+                <SlidingTabs
+                    label="Wallet action"
+                    options={[
+                        { value: "deposit", label: "Deposit" },
+                        { value: "withdraw", label: "Withdraw" }
+                    ]}
+                    value={tab}
+                    onChange={onTabChange}
+                />
                 <button className={`btn-ghost ${styles.pill}`} onClick={onSend}>
                     Send
                 </button>

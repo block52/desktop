@@ -5,6 +5,7 @@ import { useRecentHands } from "../../hooks/useRecentHands";
 import { useGameHands } from "../../hooks/useGameHands";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import { describeHandOutcome } from "../../utils/handOutcome";
+import SlidingTabs from "../../components/slidingTabs/SlidingTabs";
 import HandReplay from "./HandReplay";
 import styles from "./HandHistory.module.css";
 
@@ -65,19 +66,16 @@ const HandHistory: React.FC = () => {
                     <h1 className={styles.title}>Hand history</h1>
                     <p className={styles.subtitle}>Replay any hand from chain state. Share the link, verify the deck.</p>
                 </div>
-                <div className="segmented" role="tablist">
-                    {tableGameId !== null && (
-                        <button type="button" role="tab" aria-selected={scope === "table"} className={scope === "table" ? "seg on" : "seg"} onClick={() => switchScope("table")}>
-                            This table
-                        </button>
-                    )}
-                    <button type="button" role="tab" aria-selected={scope === "mine"} className={scope === "mine" ? "seg on" : "seg"} onClick={() => switchScope("mine")}>
-                        My hands
-                    </button>
-                    <button type="button" role="tab" aria-selected={scope === "all"} className={scope === "all" ? "seg on" : "seg"} onClick={() => switchScope("all")}>
-                        All tables
-                    </button>
-                </div>
+                <SlidingTabs
+                    label="Hand scope"
+                    options={[
+                        ...(tableGameId !== null ? [{ value: "table" as const, label: "This table" }] : []),
+                        { value: "mine" as const, label: "My hands" },
+                        { value: "all" as const, label: "All tables" }
+                    ]}
+                    value={scope}
+                    onChange={switchScope}
+                />
             </div>
 
             <div className={styles.layout}>

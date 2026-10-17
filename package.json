@@ -57,6 +57,7 @@
     "bigunit": "^1.2.5",
     "electron-squirrel-startup": "^1.0.1",
     "ethers": "^6.15.0",
+    "motion": "^14.3.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
