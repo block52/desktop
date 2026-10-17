@@ -89,12 +89,14 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
                 <span className={styles.balanceAmount}>${microToUsd(usdcBalanceMicro)}</span>
             </div>
 
-            <div className={styles.breakdown}>
-                <div className={styles.breakdownRow}>
-                    <span>Pending withdrawal</span>
-                    <span className={styles.breakdownValue}>-${microToUsd(pendingWithdrawalMicro)}</span>
+            {BigInt(pendingWithdrawalMicro) > 0n && (
+                <div className={styles.breakdown}>
+                    <div className={styles.breakdownRow}>
+                        <span>Pending withdrawal</span>
+                        <span className={styles.breakdownValue}>-${microToUsd(pendingWithdrawalMicro)}</span>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className={styles.actionsRow}>
                 <SlidingTabs

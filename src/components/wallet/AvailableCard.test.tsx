@@ -47,6 +47,11 @@ describe("AvailableCard", () => {
         expect(screen.getByText("-$5.00")).toBeTruthy();
     });
 
+    it("hides the pending withdrawal row when nothing is pending", () => {
+        renderCard({ pendingWithdrawalMicro: "0" });
+        expect(screen.queryByText("Pending withdrawal")).toBeNull();
+    });
+
     it("shows the short b52 address in the card header", () => {
         renderCard();
         expect(screen.getByText("b52…3def")).toBeTruthy();
