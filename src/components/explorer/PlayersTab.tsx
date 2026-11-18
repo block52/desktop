@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { usePlayersDirectory } from "../../hooks/usePlayersDirectory";
 import { formatMicroUsd } from "../../utils/currency";
 import type { PlayerSortField } from "../../utils/indexer";
-import CopyButton from "../copyButton/CopyButton";
-import Pagination, { PAGE_SIZES } from "../pagination/Pagination";
-import { pageInfo } from "../../utils/paginate";
+import { CopyButton } from "@block52/ui-sdk";
+import { Pagination, PAGE_SIZES } from "@block52/ui-sdk";
+import { pageInfo } from "@block52/ui-sdk";
 import styles from "./ExplorerTabs.module.css";
 
 function truncate(address: string): string {

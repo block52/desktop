@@ -1,7 +1,7 @@
 import { QRCodeSVG } from "qrcode.react";
 import usdcUrl from "../../assets/lobby/usdc.svg";
-import SlidingTabs from "../slidingTabs/SlidingTabs";
-import CopyButton from "../copyButton/CopyButton";
+import { SlidingTabs } from "@block52/ui-sdk";
+import { CopyButton } from "@block52/ui-sdk";
 import type { WalletTab } from "./DepositWithdrawPanel";
 import styles from "./AvailableCard.module.css";
 

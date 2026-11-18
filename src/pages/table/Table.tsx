@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { COSMOS_CONSTANTS, PlayerActionType, NonPlayerActionType, TexasHoldemRound, GameVariant, PlayerStatus, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
 import { useGameState } from "../../context/GameStateContext";
-import { useToast } from "../../context/ToastContext";
+import { useToast } from "@block52/ui-sdk";
 import { useNetwork } from "../../context/NetworkContext";
 import { useCosmosWallet } from "../../hooks/useCosmosWallet";
 import { usePlayerLegalActions } from "../../hooks/playerActions/usePlayerLegalActions";

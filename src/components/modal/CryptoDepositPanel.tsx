@@ -12,7 +12,7 @@ import {
     type PaymentStatus
 } from "../../utils/cryptoPayment";
 import { assertAddressMatchesWallet } from "../../utils/cosmos/verifiedAddress";
-import CopyButton from "../copyButton/CopyButton";
+import { CopyButton } from "@block52/ui-sdk";
 import dialog from "./TableDialog.module.css";
 import styles from "./CryptoDepositPanel.module.css";
 

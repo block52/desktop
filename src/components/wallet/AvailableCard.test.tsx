@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import AvailableCard from "./AvailableCard";
-import { ToastProvider } from "../../context/ToastContext";
+import { ToastProvider } from "@block52/ui-sdk";
 import type { WalletTab } from "./DepositWithdrawPanel";
 
 const BASE_PROPS = {

@@ -5,7 +5,7 @@ import { useRecentHands } from "../../hooks/useRecentHands";
 import { useGameHands } from "../../hooks/useGameHands";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import { describeHandOutcome } from "../../utils/handOutcome";
-import SlidingTabs from "../../components/slidingTabs/SlidingTabs";
+import { SlidingTabs } from "@block52/ui-sdk";
 import HandReplay from "./HandReplay";
 import styles from "./HandHistory.module.css";
 

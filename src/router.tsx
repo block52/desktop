@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import AppBackground from "./components/background/AppBackground";
+import { AnimatedBackground as AppBackground } from "@block52/ui-sdk";
 import Sidebar from "./components/sidebar/Sidebar";
 import UpdateBanner from "./components/update/UpdateBanner";
 import Dashboard from "./pages/dashboard/Dashboard";

@@ -1,5 +1,5 @@
 import React from "react";
-import Tooltip from "../tooltip/Tooltip";
+import { Tooltip } from "@block52/ui-sdk";
 import styles from "./EtherscanTxLink.module.css";
 
 interface EtherscanTxLinkProps {

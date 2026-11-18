@@ -5,16 +5,16 @@ import { useFindGames } from "../../hooks/useFindGames";
 import type { GameWithFormat } from "../../hooks/useFindGames";
 import { useTablesStatus, type TableLiveStatus } from "../../hooks/useTablesStatus";
 import { sortGamesNewestFirst } from "../../utils/convertUtils";
-import { paginate } from "../../utils/paginate";
-import Pagination, { PAGE_SIZES } from "../pagination/Pagination";
+import { paginate } from "@block52/ui-sdk";
+import { Pagination, PAGE_SIZES } from "@block52/ui-sdk";
 import CreateTableModal from "../modal/CreateTableModal";
 import CloseTableModal from "../modal/CloseTableModal";
 import { useNetwork } from "../../context/NetworkContext";
-import { useToast } from "../../context/ToastContext";
+import { useToast } from "@block52/ui-sdk";
 import { deleteTable, forceCloseTable } from "../../hooks/playerActions/closeTable";
-import CopyButton from "../copyButton/CopyButton";
+import { CopyButton } from "@block52/ui-sdk";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
-import SlidingTabs from "../slidingTabs/SlidingTabs";
+import { SlidingTabs } from "@block52/ui-sdk";
 import styles from "./TableList.module.css";
 
 function microToUsdc(micro: string): string {

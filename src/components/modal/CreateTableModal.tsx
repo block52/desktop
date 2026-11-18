@@ -15,7 +15,7 @@ import {
     SNG_STARTING_STACKS,
     validateBuyInBB
 } from "../../config/tableOptions";
-import Dropdown, { type DropdownOption } from "../dropdown/Dropdown";
+import { Dropdown, type DropdownOption } from "@block52/ui-sdk";
 import styles from "./CreateTableModal.module.css";
 
 /** Matches the chain's default action timeout used by existing tables. */

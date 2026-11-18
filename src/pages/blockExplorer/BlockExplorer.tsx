@@ -9,14 +9,14 @@ import { useValidatorCount } from "../../hooks/useValidatorCount";
 import { useAccountsList } from "../../hooks/useAccountsList";
 import { useAccountTransactions } from "../../hooks/useAccountTransactions";
 import { getCosmosClient } from "../../utils/cosmos/client";
-import CopyButton from "../../components/copyButton/CopyButton";
+import { CopyButton } from "@block52/ui-sdk";
 import ExplorerStats from "../../components/explorer/ExplorerStats";
 import AccountsColumn, { type AccountSortField } from "../../components/explorer/AccountsColumn";
 import AddressLookupTab from "../../components/explorer/AddressLookupTab";
 import PlayersTab from "../../components/explorer/PlayersTab";
-import Pagination, { PAGE_SIZES } from "../../components/pagination/Pagination";
-import { pageInfo, paginate } from "../../utils/paginate";
-import SlidingTabs from "../../components/slidingTabs/SlidingTabs";
+import { Pagination, PAGE_SIZES } from "@block52/ui-sdk";
+import { pageInfo, paginate } from "@block52/ui-sdk";
+import { SlidingTabs } from "@block52/ui-sdk";
 import styles from "./BlockExplorer.module.css";
 
 /* getTx is untyped in the SDK (returns response.data of /cosmos/tx/v1beta1/txs/{hash});

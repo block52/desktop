@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { usePlayerProfile } from "../../hooks/usePlayerProfile";
 import { formatMicroUsd } from "../../utils/currency";
-import CopyButton from "../../components/copyButton/CopyButton";
+import { CopyButton } from "@block52/ui-sdk";
 import { playerInitials } from "./Players";
 import styles from "./Players.module.css";
 

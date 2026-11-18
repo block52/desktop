@@ -17,7 +17,8 @@ vi.mock("../../context/NetworkContext", () => ({
         currentNetwork: { name: "Test", rpc: "http://rpc", rest: "http://rest", grpc: "http://grpc", ws: "ws://ws" }
     })
 }));
-vi.mock("../../context/ToastContext", () => ({
+vi.mock("@block52/ui-sdk", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("@block52/ui-sdk")>()),
     useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() })
 }));
 vi.mock("../../hooks/useCosmosWallet", () => ({

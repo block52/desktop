@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type { NetworkEndpoints } from "../../context/NetworkContext";
 import { fetchNodeStatus, formatSince, type NodeStatus } from "../../utils/nodeStatus";
-import CopyButton from "../copyButton/CopyButton";
+import { CopyButton } from "@block52/ui-sdk";
 import styles from "./NodeDetailsModal.module.css";
 
 const POLL_MS = 15000;

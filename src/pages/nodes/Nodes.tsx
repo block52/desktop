@@ -4,7 +4,7 @@ import { useNetwork } from "../../context/NetworkContext";
 import type { NetworkEndpoints } from "../../context/NetworkContext";
 import { useNodeRegistry, useValidatorEarnings } from "../../hooks/useNodeRegistry";
 import { useCosmosWallet } from "../../hooks/useCosmosWallet";
-import { useToast } from "../../context/ToastContext";
+import { useToast } from "@block52/ui-sdk";
 import { getCosmosClient, getSigningClient } from "../../utils/cosmos/client";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import NodeStats from "../../components/nodes/NodeStats";

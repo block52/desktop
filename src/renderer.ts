@@ -26,6 +26,7 @@
  * ```
  */
 
+import "@block52/ui-sdk/styles.css";
 import "./index.css";
 
 if (window.electronAPI?.platform !== undefined) document.documentElement.dataset.platform = window.electronAPI.platform;
