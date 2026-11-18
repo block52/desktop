@@ -2,6 +2,7 @@ import { NonPlayerActionType } from "@block52/poker-vm-sdk";
 import type { NetworkEndpoints } from "../../context/NetworkContext";
 import type { LeaveTableResult } from "../../types";
 import { withMoneyMoverRetry } from "../../utils/cosmos/client";
+import { goSignerEnabled, goBroadcast } from "./goSigner";
 
 /**
  * Leave a poker table by broadcasting MsgLeaveGame.
@@ -17,6 +18,8 @@ import { withMoneyMoverRetry } from "../../utils/cosmos/client";
 export async function leaveTable(tableId: string, network: NetworkEndpoints): Promise<LeaveTableResult> {
     // Broadcast MsgLeaveGame chain-direct. LEAVE is an ordered money-mover, so
     // retry once on a sequence mismatch from a still-pending prior money-mover.
-    const hash = await withMoneyMoverRetry(network, ({ signingClient }) => signingClient.leaveGame(tableId));
+    const hash = goSignerEnabled()
+        ? await goBroadcast(network, { kind: "leave", gameId: tableId })
+        : await withMoneyMoverRetry(network, ({ signingClient }) => signingClient.leaveGame(tableId));
     return { hash, gameId: tableId, action: NonPlayerActionType.LEAVE };
 }

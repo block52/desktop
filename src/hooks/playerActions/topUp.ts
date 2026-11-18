@@ -1,5 +1,6 @@
 import type { NetworkEndpoints } from "../../context/NetworkContext";
 import { withMoneyMoverRetry } from "../../utils/cosmos/client";
+import { goSignerEnabled, goBroadcast } from "./goSigner";
 
 export interface TopUpResult {
     hash: string;
@@ -18,6 +19,8 @@ export async function topUpTable(tableId: string, network: NetworkEndpoints, amo
         throw new Error("Top-up amount must be greater than zero");
     }
     // An ordered money-mover: retry once on a sequence mismatch from a still-pending prior money-mover.
-    const hash = await withMoneyMoverRetry(network, ({ signingClient }) => signingClient.topUp(tableId, amountMicro));
+    const hash = goSignerEnabled()
+        ? await goBroadcast(network, { kind: "topUp", gameId: tableId, amount: amountMicro })
+        : await withMoneyMoverRetry(network, ({ signingClient }) => signingClient.topUp(tableId, amountMicro));
     return { hash, gameId: tableId, amount: amountMicro.toString() };
 }

@@ -3,6 +3,7 @@ import type { NetworkEndpoints } from "../../context/NetworkContext";
 import type { JoinTableResult } from "../../types";
 import type { JoinTableOptions } from "./types";
 import { withMoneyMoverRetry } from "../../utils/cosmos/client";
+import { goSignerEnabled, goBroadcast } from "./goSigner";
 import { parseUsdcToMicro } from "../../utils/currency";
 import { hasValue, isNullish } from "../../utils/guards";
 
@@ -70,7 +71,9 @@ export async function joinTable(
     // carries the account sequence), so retry once on a sequence mismatch
     // caused by a still-pending prior money-mover — otherwise a wedged
     // sequence blocks every join.
-    const transactionHash = await withMoneyMoverRetry(network, ({ signingClient }) => signingClient.joinGame(tableId, seat, buyInAmount));
+    const transactionHash = goSignerEnabled()
+        ? await goBroadcast(network, { kind: "join", gameId: tableId, seat, buyIn: buyInAmount })
+        : await withMoneyMoverRetry(network, ({ signingClient }) => signingClient.joinGame(tableId, seat, buyInAmount));
 
     return {
         hash: transactionHash,
