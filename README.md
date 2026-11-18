@@ -54,6 +54,7 @@ noted. **They are baked into the shipped bundle, so never put a secret you are n
 | `VITE_TREASURY_WALLET_ADDRESS` | Treasury wallet address |
 | `VITE_PROFILE_NFT_INDEXER_URL` | NFT listing for the avatar picker: URL template with `{owner}` / `{chainId}` |
 | `VITE_MAINNET_RPC_URL` | Alternative NFT source: an Alchemy mainnet RPC URL (ships the key in the app; prefer the proxy in [`tools/nft-proxy`](tools/nft-proxy)) |
+| `VITE_GO_SIGNER` | `true` routes game actions (bet/call/raise/join/leave/top-up) through the Go wallet sidecar instead of the TypeScript SDK. Default off. See [Architecture](#architecture). |
 
 ## Project layout
 
@@ -65,12 +66,75 @@ src/pages/             Route pages (lobby, table, wallet, history, explorer, ...
 src/components/        UI grouped by domain (table, wallet, modal, nodes, ...)
 src/hooks/             Data and game hooks (player actions live in hooks/playerActions)
 src/context/           Network, wallet, toast and game-state providers
+src/wallet/            Main-process wallet: sealed vault, signer, Go-sidecar client (goSidecar.ts)
 src/utils/             Pure helpers (currency, tournament state, cosmos client, ...)
+sidecar/               Go wallet sidecar (see Architecture); built to sidecar/dist/b52-wallet
 ```
 
 Three Vite configs build the three Electron contexts (`vite.main.config.ts`, `vite.preload.config.ts`,
 `vite.renderer.config.ts`). Code that uses Node or Electron APIs must stay in the main process and be exposed
 through `preload.ts`. See [`CLAUDE.md`](CLAUDE.md) for conventions and the design-reference notes.
+
+## Architecture
+
+The app is Electron + React. Presentational UI primitives come from the shared
+[`@block52/ui-sdk`](https://github.com/block52/ui-sdk) package; the wallet and chain crypto run in a **Go
+sidecar** rather than in the renderer.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Electron                                                                  │
+│                                                                           │
+│  Renderer (React, sandboxed)          Main process (Node)                 │
+│   • pages / components                 • window, CSP, IPC handlers         │
+│   • @block52/ui-sdk primitives         • src/wallet: sealed vault + signer │
+│   • NO keys, NO Node APIs   ──IPC──►    • spawns the Go sidecar ──────────┐│
+└──────────────────────────────────────────────────────────────────────────┘│
+                                                                             ▼
+                                   ┌──────────────────────────────────────────┐
+                                   │ Go sidecar  (sidecar/ → b52-wallet)        │
+                                   │  github.com/block52/pokerchain-go-client   │
+                                   │  • wallet: BIP39/BIP44 generate + derive   │
+                                   │  • keys:   address, Sign64, EIP-191 sign   │
+                                   │  • chain:  reads + sign/broadcast (gRPC)   │
+                                   │  • lightnode: last-1000-blocks window      │
+                                   │  JSON over stdin/stdout — no network port  │
+                                   └──────────────────────────────────────────┘
+                                                                             │ gRPC / Tendermint RPC
+                                                                             ▼
+                                                                     pokerchain node
+```
+
+**The Go sidecar is real and already wired.** `src/wallet/goSidecar.ts` (main process) spawns the
+`sidecar/dist/b52-wallet` binary and talks to it as line-delimited JSON over stdin/stdout — it never opens a
+network port and never persists anything. The binary is a thin `main.go` over the shared
+[`pokerchain-go-client`](https://github.com/block52/pokerchain-go-client) module (packages `wallet`, `keys`,
+`chain`, `lightnode`). Its output matches the TypeScript SDK / ethers byte-for-byte (address derivation and the
+EIP-191 table-query signature are golden-tested against the SDK).
+
+What runs in Go today:
+
+- **Wallet** — generate (BIP39), derive the key at `m/44'/118'/0'/0/0`, address, and the `pokerchain-query`
+  signature. These are the default (`src/wallet/walletIpc.ts` routes `generate` / `import` / `get-address` /
+  `sign-query` to the sidecar).
+- **Recent blocks** — a rolling 1000-block window polled from Tendermint RPC (`recentBlocks`).
+- **Game actions** — bet/call/raise/join/leave/top-up sign + broadcast via the sidecar as ordered
+  (account-sequence) transactions, **behind `VITE_GO_SIGNER=true`**; the TypeScript SDK path is the default
+  until the Go path is validated against a live node.
+
+The sealed seed vault and the OS keychain stay in the Electron main process (`src/wallet/vault.ts`); a mnemonic
+only crosses to the sidecar in memory, per call. Forge builds the binary in `generateAssets` and bundles it via
+`extraResource`, so it ships inside the packaged app.
+
+### Build the sidecar for local dev
+
+`yarn start` does not build the Go binary. Build it once (and after any `sidecar/` change):
+
+```bash
+cd sidecar && go build -o dist/b52-wallet .
+```
+
+Requires Go (see `sidecar/go.mod`). In a packaged build Forge handles this automatically.
 
 ## CI/CD
 
