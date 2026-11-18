@@ -2,7 +2,7 @@ module github.com/block52/desktop/sidecar
 
 go 1.26.0
 
-require github.com/block52/pokerchain-go-client v0.2.0
+require github.com/block52/pokerchain-go-client v0.3.0
 
 require (
 	github.com/btcsuite/btcd v0.24.2 // indirect

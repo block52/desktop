@@ -1,5 +1,5 @@
-github.com/block52/pokerchain-go-client v0.2.0 h1:sKgxhkKWvWHmSuUL6pcNSsvfDkuqbuMh187iO5B1dqk=
-github.com/block52/pokerchain-go-client v0.2.0/go.mod h1:enHLMuy6XH7BLNYtXSFCyxnrgrMnjV0thYek8iisi1A=
+github.com/block52/pokerchain-go-client v0.3.0 h1:pdjOpnRyt9MZ74HfGz2kpzOV+fB0Ah34HbUkG6nBPc0=
+github.com/block52/pokerchain-go-client v0.3.0/go.mod h1:enHLMuy6XH7BLNYtXSFCyxnrgrMnjV0thYek8iisi1A=
 github.com/btcsuite/btcd v0.24.2 h1:aLmxPguqxza+4ag8R1I2nnJjSu2iFn/kqtHTIImswcY=
 github.com/btcsuite/btcd v0.24.2/go.mod h1:5C8ChTkl5ejr3WHj8tkQSCmydiMEPB0ZhQhehpq7Dgg=
 github.com/btcsuite/btcd/btcec/v2 v2.3.5 h1:dpAlnAwmT1yIBm3exhT1/8iUSD98RDJM5vqJVQDQLiU=

@@ -24,10 +24,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/block52/pokerchain-go-client/chain"
 	"github.com/block52/pokerchain-go-client/keys"
+	"github.com/block52/pokerchain-go-client/lightnode"
 	"github.com/block52/pokerchain-go-client/wallet"
 	"github.com/block52/pokerchain-go-client/wire"
 )
@@ -52,6 +54,10 @@ type request struct {
 	Data    string `json:"data"`
 	Seat    uint64 `json:"seat"`
 	BuyIn   uint64 `json:"buyIn"`
+
+	// recentBlocks: the last-N-blocks window, polled from Tendermint RPC.
+	RPC   string `json:"rpc"`
+	Count int    `json:"count"`
 }
 
 type response struct {
@@ -123,9 +129,46 @@ func handle(req request) response {
 	case "broadcast":
 		return broadcast(req)
 
+	case "recentBlocks":
+		return recentBlocks(req)
+
 	default:
 		return response{ID: req.ID, Error: fmt.Sprintf("unknown method %q", req.Method)}
 	}
+}
+
+// blockWindows holds one rolling last-1000-blocks window per RPC endpoint, kept
+// across calls (that is the point of the in-memory ring) so repeat queries are
+// served locally after the first refresh.
+var (
+	windowsMu    sync.Mutex
+	blockWindows = map[string]*lightnode.Window{}
+)
+
+func recentBlocks(req request) response {
+	if req.RPC == "" {
+		return response{ID: req.ID, Error: "rpc is required"}
+	}
+	windowsMu.Lock()
+	win, ok := blockWindows[req.RPC]
+	if !ok {
+		win = lightnode.NewWindow(req.RPC, 1000, nil)
+		blockWindows[req.RPC] = win
+	}
+	windowsMu.Unlock()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	if err := win.Refresh(ctx); err != nil {
+		// Serve what is cached even if a refresh failed (e.g. a transient node hiccup).
+		if len(win.Blocks(0)) == 0 {
+			return response{ID: req.ID, Error: err.Error()}
+		}
+	}
+	return response{ID: req.ID, Result: map[string]any{
+		"latest": win.Latest(),
+		"blocks": win.Blocks(req.Count),
+	}}
 }
 
 // broadcast signs one game action as an ordered (account-sequence) transaction

@@ -21,6 +21,15 @@ interface SidecarResponse {
     error?: string;
 }
 
+/** One recent block from the light-node window. */
+export interface SidecarBlock {
+    height: number;
+    time: string;
+    hash: string;
+    proposer: string;
+    numTxs: number;
+}
+
 function binaryName(): string {
     return process.platform === "win32" ? "b52-wallet.exe" : "b52-wallet";
 }
@@ -117,6 +126,15 @@ export class WalletSidecar {
         buyIn?: number;
     }): Promise<{ txHash: string; gameId: string }> {
         return (await this.call("broadcast", params)) as { txHash: string; gameId: string };
+    }
+
+    /**
+     * The most recent `count` blocks from the Go sidecar's in-memory window
+     * (last 1000, polled from the node's Tendermint RPC). Served locally after
+     * the first refresh, so it is cheap to poll.
+     */
+    async recentBlocks(rpc: string, count: number): Promise<{ latest: number; blocks: SidecarBlock[] }> {
+        return (await this.call("recentBlocks", { rpc, count })) as { latest: number; blocks: SidecarBlock[] };
     }
 
     stop(): void {
