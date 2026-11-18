@@ -17,9 +17,17 @@ const config: ForgeConfig = {
     // The executable inside every package. Without it the packager names it after productName while the
     // deb/rpm makers look for the package.json name, which fails the Linux build.
     executableName: "block52",
+    // The Go wallet sidecar binary, bundled next to the app (process.resourcesPath). Built by the
+    // generateAssets hook below. src/wallet/goSidecar.ts resolves it there when packaged.
+    extraResource: ["./sidecar/dist/b52-wallet"],
   },
   rebuildConfig: {},
   hooks: {
+    // Build the Go wallet sidecar for the host platform before packaging, so extraResource finds it.
+    // Cross-building for other targets is done in CI with GOOS/GOARCH; this covers a local `yarn make`.
+    generateAssets: async () => {
+      execFileSync("go", ["build", "-o", "dist/b52-wallet", "."], { cwd: path.join(__dirname, "sidecar"), stdio: "inherit" });
+    },
     // Electron ships ad-hoc signed, and renaming the executable and editing Info.plist breaks that signature.
     // On Apple Silicon a broken signature plus the download quarantine shows "is damaged and can't be opened",
     // with no way to open it from the dialog. Re-signing ad hoc makes it the usual unsigned-app prompt instead

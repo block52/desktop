@@ -12,6 +12,7 @@ const wallet: WalletBridge = {
     importMnemonic: mnemonic => ipcRenderer.invoke("wallet:import", mnemonic),
     revealMnemonic: () => ipcRenderer.invoke("wallet:reveal-mnemonic"),
     signQuery: timestamp => ipcRenderer.invoke("wallet:sign-query", timestamp),
+    broadcastAction: (grpc, chainId, params) => ipcRenderer.invoke("wallet:broadcast-action", grpc, chainId, params),
     signingCall: (network, method, args) => ipcRenderer.invoke("wallet:signing-call", network, method, args),
     resetSigner: () => ipcRenderer.invoke("wallet:reset-signer"),
     clear: () => ipcRenderer.invoke("wallet:clear"),
