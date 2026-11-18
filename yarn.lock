@@ -192,10 +192,10 @@
     viem "^2.31.7"
     zustand "5.0.3"
 
-"@block52/poker-vm-sdk@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@block52/poker-vm-sdk/-/poker-vm-sdk-1.8.0.tgz#8582d459717114735d43c8f588c82b3d66824824"
-  integrity sha512-aHnq9k/wZyBmRuFEUMAwwnqFRFgVLl5lOdvQw88NI6hGcDe7CCYkYIntaa1ds54A0g6ob5sc5lhg26kR9V2BEw==
+"@block52/poker-vm-sdk@1.25.0":
+  version "1.25.0"
+  resolved "https://registry.yarnpkg.com/@block52/poker-vm-sdk/-/poker-vm-sdk-1.25.0.tgz#8dff4a31b58efa3d9ed499a8ca3acca4a4a7c7b1"
+  integrity sha512-0tPwCy3RVCJw4zAM39ve1B/E+zxMT4BH19d2nVCyq/QVsAyP5chsGhc5maJkdf7F4RDjB/QROdaix1EhmtGSJg==
   dependencies:
     "@bufbuild/protobuf" "^2.10.0"
     "@cosmjs/amino" "^0.32.4"
