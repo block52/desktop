@@ -14,6 +14,7 @@ import {
     clearSigningClientCache,
     SEQUENCE_RETRY_DELAY_MS,
 } from "../../utils/cosmos/client";
+import { goSignerEnabled, goBroadcast } from "./goSigner";
 
 /**
  * The engine keys replay protection on the action index and rejects a
@@ -39,8 +40,9 @@ async function broadcastAction(
     network: NetworkEndpoints,
     data?: string
 ): Promise<PlayerActionResult> {
-    const { signingClient } = await getSigningClient(network);
-    const transactionHash = await signingClient.performActionSync(tableId, action, amount, data);
+    const transactionHash = goSignerEnabled()
+        ? await goBroadcast(network, { kind: "action", gameId: tableId, action, amount, data })
+        : await (await getSigningClient(network)).signingClient.performActionSync(tableId, action, amount, data);
     return {
         hash: transactionHash,
         gameId: tableId,
