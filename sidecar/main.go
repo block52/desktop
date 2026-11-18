@@ -17,14 +17,19 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
+	"time"
 
+	"github.com/block52/pokerchain-go-client/chain"
 	"github.com/block52/pokerchain-go-client/keys"
 	"github.com/block52/pokerchain-go-client/wallet"
+	"github.com/block52/pokerchain-go-client/wire"
 )
 
 const addressPrefix = "b52"
@@ -35,6 +40,18 @@ type request struct {
 	Mnemonic  string `json:"mnemonic"`
 	Bits      int    `json:"bits"`
 	Timestamp int64  `json:"timestamp"`
+
+	// broadcast: a game action signed as an ordered (account-sequence) tx and
+	// sent to the node over gRPC. Kind is action|join|leave|topUp.
+	GRPC    string `json:"grpc"`
+	ChainID string `json:"chainId"`
+	Kind    string `json:"kind"`
+	GameID  string `json:"gameId"`
+	Action  string `json:"action"`
+	Amount  uint64 `json:"amount"`
+	Data    string `json:"data"`
+	Seat    uint64 `json:"seat"`
+	BuyIn   uint64 `json:"buyIn"`
 }
 
 type response struct {
@@ -103,8 +120,77 @@ func handle(req request) response {
 		sig := keys.PersonalSign(priv, "pokerchain-query:"+strconv.FormatInt(req.Timestamp, 10))
 		return response{ID: req.ID, Result: map[string]string{"signature": "0x" + hex.EncodeToString(sig)}}
 
+	case "broadcast":
+		return broadcast(req)
+
 	default:
 		return response{ID: req.ID, Error: fmt.Sprintf("unknown method %q", req.Method)}
+	}
+}
+
+// broadcast signs one game action as an ordered (account-sequence) transaction
+// — byte-for-byte the SDK's performActionSync model — and sends it to the node
+// over gRPC. The caller (Electron main) owns the code-32 sequence-retry policy;
+// this just reports a rejection.
+func broadcast(req request) response {
+	if req.GRPC == "" || req.ChainID == "" {
+		return response{ID: req.ID, Error: "grpc and chainId are required"}
+	}
+	priv, err := wallet.PrivateKey(req.Mnemonic)
+	if err != nil {
+		return response{ID: req.ID, Error: err.Error()}
+	}
+	defer priv.Zero()
+	address, err := keys.Address(addressPrefix, priv.PubKey().SerializeCompressed())
+	if err != nil {
+		return response{ID: req.ID, Error: err.Error()}
+	}
+
+	var msg []byte
+	switch req.Kind {
+	case "action":
+		msg = wire.PerformAction(address, req.GameID, req.Action, req.Amount, req.Data)
+	case "join":
+		msg = wire.JoinGame(address, req.GameID, req.Seat, req.BuyIn)
+	case "leave":
+		msg = wire.LeaveGame(address, req.GameID)
+	case "topUp":
+		msg = wire.TopUp(address, req.GameID, req.Amount)
+	default:
+		return response{ID: req.ID, Error: fmt.Sprintf("unknown action kind %q", req.Kind)}
+	}
+
+	// gRPC endpoints are grpc:// (plaintext) or grpcs:// (TLS); strip the scheme
+	// for the Go client's host:port target and use it to pick TLS.
+	target, useTLS := parseGRPC(req.GRPC)
+	c := chain.New(target, req.ChainID, useTLS)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	hash, err := c.BroadcastOrdered(ctx, priv, address, msg)
+	if err != nil {
+		return response{ID: req.ID, Error: err.Error(), Result: map[string]any{
+			"rejected":         chain.IsRejected(err),
+			"sequenceMismatch": chain.IsSequenceMismatch(err),
+		}}
+	}
+	return response{ID: req.ID, Result: map[string]string{"txHash": hash, "gameId": req.GameID}}
+}
+
+// parseGRPC turns grpc://host:port / grpcs://host:port (or a bare host:port)
+// into a dial target and a TLS flag.
+func parseGRPC(endpoint string) (target string, useTLS bool) {
+	switch {
+	case strings.HasPrefix(endpoint, "grpcs://"):
+		return strings.TrimPrefix(endpoint, "grpcs://"), true
+	case strings.HasPrefix(endpoint, "grpc://"):
+		return strings.TrimPrefix(endpoint, "grpc://"), false
+	case strings.HasPrefix(endpoint, "https://"):
+		return strings.TrimPrefix(endpoint, "https://"), true
+	case strings.HasPrefix(endpoint, "http://"):
+		return strings.TrimPrefix(endpoint, "http://"), false
+	default:
+		return endpoint, false
 	}
 }
 

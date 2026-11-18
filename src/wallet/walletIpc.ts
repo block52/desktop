@@ -156,6 +156,30 @@ export function registerWalletIpc(): void {
         return vault.getMnemonic();
     });
 
+    // A game action (performAction / join / leave / topUp) signed and broadcast
+    // in Go as an ordered (account-sequence) transaction — the same on-chain
+    // model as the SDK's performActionSync. Money-moving methods (sendTokens,
+    // initiateWithdrawal) stay on the SDK signer for now.
+    handle("wallet:broadcast-action", async (grpc: unknown, chainId: unknown, params: unknown) => {
+        if (typeof grpc !== "string" || typeof chainId !== "string") throw new Error("Invalid network.");
+        if (typeof params !== "object" || params === null) throw new Error("Invalid action.");
+        const p = params as Record<string, unknown>;
+        const kind = p.kind;
+        if (kind !== "action" && kind !== "join" && kind !== "leave" && kind !== "topUp") throw new Error("Invalid action kind.");
+        return sidecar.broadcast({
+            mnemonic: await requireMnemonic(),
+            grpc,
+            chainId,
+            kind,
+            gameId: String(p.gameId ?? ""),
+            action: typeof p.action === "string" ? p.action : undefined,
+            amount: typeof p.amount === "number" ? p.amount : undefined,
+            data: typeof p.data === "string" ? p.data : undefined,
+            seat: typeof p.seat === "number" ? p.seat : undefined,
+            buyIn: typeof p.buyIn === "number" ? p.buyIn : undefined,
+        });
+    });
+
     handle("wallet:sign-query", async (timestamp: unknown) => {
         if (typeof timestamp !== "number") throw new Error("Invalid timestamp.");
         return sidecar.signQuery(await requireMnemonic(), timestamp);

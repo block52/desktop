@@ -40,6 +40,17 @@ export interface SignerNetwork {
 
 export type WalletCredential = { password: string } | { touchId: true };
 
+/** A game action signed and broadcast in Go. Amounts are micro-USDC as numbers (within JS safe-int range). */
+export interface BroadcastActionParams {
+    kind: "action" | "join" | "leave" | "topUp";
+    gameId: string;
+    action?: string;
+    amount?: number;
+    data?: string;
+    seat?: number;
+    buyIn?: number;
+}
+
 /** What the preload script exposes to the page. The seed phrase only leaves the main process through `getMnemonic`. */
 export interface WalletBridge {
     status: () => Promise<WalletStatus>;
@@ -57,6 +68,8 @@ export interface WalletBridge {
     revealMnemonic: () => Promise<string | null>;
     /** Signs the table-subscription message `pokerchain-query:<timestamp>`. */
     signQuery: (timestamp: number) => Promise<string>;
+    /** Signs and broadcasts a game action (performAction/join/leave/topUp) in Go as an ordered tx over gRPC. */
+    broadcastAction: (grpc: string, chainId: string, params: BroadcastActionParams) => Promise<{ txHash: string; gameId: string }>;
     /** Runs one allow-listed SDK signing-client method in the main process. */
     signingCall: (network: SignerNetwork, method: SigningMethod, args: unknown[]) => Promise<unknown>;
     resetSigner: () => Promise<void>;

@@ -98,6 +98,27 @@ export class WalletSidecar {
         return ((await this.call("signQuery", { mnemonic, timestamp })) as { signature: string }).signature;
     }
 
+    /**
+     * Signs a game action as an ordered (account-sequence) transaction and
+     * broadcasts it over gRPC — the same tx model as the SDK's performActionSync.
+     * Rejects with an Error whose .sequenceMismatch is true for a code-32 so the
+     * caller can run its existing retry.
+     */
+    async broadcast(params: {
+        mnemonic: string;
+        grpc: string;
+        chainId: string;
+        kind: "action" | "join" | "leave" | "topUp";
+        gameId: string;
+        action?: string;
+        amount?: number;
+        data?: string;
+        seat?: number;
+        buyIn?: number;
+    }): Promise<{ txHash: string; gameId: string }> {
+        return (await this.call("broadcast", params)) as { txHash: string; gameId: string };
+    }
+
     stop(): void {
         if (this.proc !== null) {
             this.proc.kill();
