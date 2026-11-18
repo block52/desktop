@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { ToastProvider } from "../../context/ToastContext";
+import { ToastProvider } from "@block52/ui-sdk";
 import RunNodeGuide, {
     appToml,
     buildSeeds,

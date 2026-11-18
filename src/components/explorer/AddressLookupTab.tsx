@@ -3,9 +3,9 @@ import { useNetwork } from "../../context/NetworkContext";
 import { useAccountTransactions } from "../../hooks/useAccountTransactions";
 import { getCosmosClient } from "../../utils/cosmos/client";
 import { microToDecimal } from "../../utils/currency";
-import CopyButton from "../copyButton/CopyButton";
-import Pagination, { PAGE_SIZES } from "../pagination/Pagination";
-import { paginate } from "../../utils/paginate";
+import { CopyButton } from "@block52/ui-sdk";
+import { Pagination, PAGE_SIZES } from "@block52/ui-sdk";
+import { paginate } from "@block52/ui-sdk";
 import styles from "./ExplorerTabs.module.css";
 
 interface Coin {

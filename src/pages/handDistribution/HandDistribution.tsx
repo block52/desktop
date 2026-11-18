@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import EquityCalculator from "./EquityCalculator";
 import FairnessAudit from "./FairnessAudit";
-import SlidingTabs from "../../components/slidingTabs/SlidingTabs";
+import { SlidingTabs } from "@block52/ui-sdk";
 import styles from "./HandDistribution.module.css";
 
 type Tab = "fairness" | "equity";

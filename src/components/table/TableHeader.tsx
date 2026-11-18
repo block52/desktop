@@ -3,7 +3,7 @@ import { useNetwork } from "../../context/NetworkContext";
 import { getCosmosClient } from "../../utils/cosmos/client";
 import { TABLE_THEMES, type TableTheme } from "../../config/tableTheme";
 import type { GameSettingKey, GameSettings } from "../../hooks/useGameSettings";
-import CopyButton from "../copyButton/CopyButton";
+import { CopyButton } from "@block52/ui-sdk";
 import styles from "./TableHeader.module.css";
 
 export interface TableHeaderProps {

@@ -6,7 +6,7 @@ import { clearCosmosClient, clearSigningClientCache, getSigningClient } from "..
 import { useCosmosWallet } from "../hooks/useCosmosWallet";
 import { microToDecimal, parseUsdcToMicro } from "../utils/currency";
 import { useNetwork } from "../context/NetworkContext";
-import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
+import { useCopyToClipboard } from "@block52/ui-sdk";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import AvailableCard from "../components/wallet/AvailableCard";
 import ActivityPanel from "../components/wallet/ActivityPanel";

@@ -1,4 +1,4 @@
-import CopyButton from "../copyButton/CopyButton";
+import { CopyButton } from "@block52/ui-sdk";
 import type { AccountListItem } from "../../hooks/useAccountsList";
 import type { AccountTx } from "../../hooks/useAccountTransactions";
 import styles from "./AccountsColumn.module.css";

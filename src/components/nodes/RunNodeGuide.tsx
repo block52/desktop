@@ -1,4 +1,4 @@
-import CopyButton from "../copyButton/CopyButton";
+import { CopyButton } from "@block52/ui-sdk";
 import styles from "./RunNodeGuide.module.css";
 
 export interface RunNodeGuideProps {

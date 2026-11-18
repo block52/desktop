@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { ToastProvider } from "../../context/ToastContext";
+import { ToastProvider } from "@block52/ui-sdk";
 import DepositWithdrawPanel, { WalletTab } from "./DepositWithdrawPanel";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import useWalletBalance from "../../hooks/wallet/useWalletBalance";

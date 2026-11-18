@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { GameFormat, isTournamentFormat } from "@block52/poker-vm-sdk";
 import { useHandReplay } from "../../hooks/useHandReplay";
-import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
+import { useCopyToClipboard } from "@block52/ui-sdk";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import { microToDecimal } from "../../utils/currency";
 import { buildReplaySteps } from "../../utils/handReplay";

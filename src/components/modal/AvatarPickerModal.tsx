@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useSignMessage } from "wagmi";
 import { useNetwork } from "../../context/NetworkContext";
-import { useToast } from "../../context/ToastContext";
+import { useToast } from "@block52/ui-sdk";
 import {
     assertNftAuthorizationSigner,
     buildNftAuthorizationMessage,

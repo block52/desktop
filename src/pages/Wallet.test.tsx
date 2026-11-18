@@ -19,7 +19,10 @@ vi.mock("../utils/cosmos/storage", () => ({
 vi.mock("../hooks/useCosmosWallet", () => ({ useCosmosWallet: () => ({ address: null, balance: [], refreshBalance: vi.fn() }) }));
 vi.mock("../context/NetworkContext", () => ({ useNetwork: () => ({ currentNetwork: { rpc: "", rest: "" } }) }));
 vi.mock("../hooks/useOnChainAvatar", () => ({ useOnChainAvatar: () => null }));
-vi.mock("../hooks/useCopyToClipboard", () => ({ useCopyToClipboard: () => vi.fn() }));
+vi.mock("@block52/ui-sdk", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("@block52/ui-sdk")>()),
+    useCopyToClipboard: () => vi.fn()
+}));
 vi.mock("@reown/appkit/react", () => ({
     useAppKit: () => ({ open: vi.fn() }),
     useAppKitAccount: () => ({ address: undefined, isConnected: false })

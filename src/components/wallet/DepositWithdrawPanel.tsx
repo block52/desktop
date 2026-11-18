@@ -11,7 +11,7 @@ import useApprove from "../../hooks/wallet/useApprove";
 import useDepositUSDC from "../../hooks/wallet/useDepositUSDC";
 import { convertAmountToBigInt, parseUsdcToMicro } from "../../utils/currency";
 import { assertAddressMatchesWallet } from "../../utils/cosmos/verifiedAddress";
-import { useToast } from "../../context/ToastContext";
+import { useToast } from "@block52/ui-sdk";
 import { useNetwork } from "../../context/NetworkContext";
 import { getSigningClient as getRemoteSigningClient } from "../../utils/cosmos/client";
 import { base64ToHex } from "../../utils/encodingUtils";
@@ -21,7 +21,7 @@ import { ETH_CHAIN_ID, ETH_USDC_ADDRESS, ETH_USDT_ADDRESS } from "../../config/c
 import CryptoDepositPanel from "../modal/CryptoDepositPanel";
 import EtherscanTxLink from "./EtherscanTxLink";
 import WithdrawSteps from "./WithdrawSteps";
-import SlidingTabs from "../slidingTabs/SlidingTabs";
+import { SlidingTabs } from "@block52/ui-sdk";
 import styles from "./DepositWithdrawPanel.module.css";
 
 export type WalletTab = "deposit" | "withdraw";

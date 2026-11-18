@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { ToastProvider } from "../../context/ToastContext";
+import { ToastProvider } from "@block52/ui-sdk";
 import type { WalletBridge, WalletStatus } from "../../wallet/types";
 import WalletKeysModal from "./WalletKeysModal";
 

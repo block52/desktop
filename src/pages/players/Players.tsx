@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import CopyButton from "../../components/copyButton/CopyButton";
+import { CopyButton } from "@block52/ui-sdk";
 import { usePlayersDirectory } from "../../hooks/usePlayersDirectory";
 import { formatMicroUsd } from "../../utils/currency";
 import type { PlayerSortField } from "../../utils/indexer";
