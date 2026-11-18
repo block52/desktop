@@ -12,7 +12,8 @@
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "sync:ui-sdk": "node tools/sync-ui-sdk.mjs"
   },
   "engines": {
     "node": ">=24"
