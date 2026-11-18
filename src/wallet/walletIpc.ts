@@ -1,9 +1,9 @@
 import { app, BrowserWindow, dialog, ipcMain, powerMonitor, safeStorage, systemPreferences } from "electron";
 import type { IpcMainEvent, IpcMainInvokeEvent } from "electron";
 import path from "node:path";
-import { COSMOS_CONSTANTS, createWalletFromMnemonic, generateWallet, isValidMnemonic } from "@block52/poker-vm-sdk";
 import { WalletVault } from "./vault";
 import { WalletSigner } from "./signer";
+import { WalletSidecar } from "./goSidecar";
 import type { SignerNetwork, WalletCredential, WalletStatus } from "./types";
 
 const MINUTE_MS = 60_000;
@@ -58,6 +58,7 @@ export function registerWalletIpc(): void {
     };
 
     const signer = new WalletSigner({ readMnemonic: () => vault.getMnemonic(), confirm: confirmInNativeDialog });
+    const sidecar = new WalletSidecar();
 
     const trusted = (event: IpcMainEvent | IpcMainInvokeEvent): boolean => {
         const sender = BrowserWindow.fromWebContents(event.sender);
@@ -115,21 +116,34 @@ export function registerWalletIpc(): void {
 
     handle("wallet:lock", async () => lockNow());
 
-    handle("wallet:get-address", () => signer.address());
+    // Pure wallet crypto — generate, derive the address, validate and the
+    // table-query signature — runs in the Go sidecar (github.com/block52/pokerchain-go-client),
+    // which matches the SDK/ethers output byte for byte. The sealed vault and
+    // the OS keychain stay here; the sidecar only ever sees a mnemonic in memory.
+    const requireMnemonic = async (): Promise<string> => {
+        const mnemonic = await vault.getMnemonic();
+        if (mnemonic === null) throw new Error("Block52 wallet not initialized. Please create or import a Block52 wallet first.");
+        return mnemonic;
+    };
+
+    handle("wallet:get-address", async () => sidecar.address(await requireMnemonic()));
 
     handle("wallet:generate", async () => {
-        const created = await generateWallet(COSMOS_CONSTANTS.ADDRESS_PREFIX, SEED_WORDS);
+        const created = await sidecar.generate(SEED_WORDS === 24 ? 256 : 128);
         await vault.saveMnemonic(created.mnemonic);
         signer.reset();
-        return { mnemonic: created.mnemonic, address: created.address };
+        return created;
     });
 
     handle("wallet:import", async (mnemonic: unknown) => {
-        if (typeof mnemonic !== "string" || !isValidMnemonic(mnemonic.trim())) throw new Error("Invalid seed phrase. Must be 12, 15, 18, 21, or 24 words.");
-        const imported = await createWalletFromMnemonic(mnemonic.trim(), COSMOS_CONSTANTS.ADDRESS_PREFIX);
-        await vault.saveMnemonic(mnemonic.trim());
+        if (typeof mnemonic !== "string" || !(await sidecar.validateMnemonic(mnemonic.trim()))) {
+            throw new Error("Invalid seed phrase. Must be 12, 15, 18, 21, or 24 words.");
+        }
+        const trimmed = mnemonic.trim();
+        const address = await sidecar.address(trimmed);
+        await vault.saveMnemonic(trimmed);
         signer.reset();
-        return imported.address;
+        return address;
     });
 
     handle("wallet:reveal-mnemonic", async () => {
@@ -142,9 +156,9 @@ export function registerWalletIpc(): void {
         return vault.getMnemonic();
     });
 
-    handle("wallet:sign-query", (timestamp: unknown) => {
+    handle("wallet:sign-query", async (timestamp: unknown) => {
         if (typeof timestamp !== "number") throw new Error("Invalid timestamp.");
-        return signer.signQuery(timestamp);
+        return sidecar.signQuery(await requireMnemonic(), timestamp);
     });
 
     handle("wallet:signing-call", (network: unknown, method: unknown, args: unknown) => {

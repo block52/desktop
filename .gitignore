@@ -100,3 +100,6 @@ out/
 
 # Generated code-review reports
 .reviews/
+
+# Go wallet sidecar build output
+sidecar/dist/
