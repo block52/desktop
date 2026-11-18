@@ -45,14 +45,15 @@ jobs:
   # Reports known vulnerabilities in production dependencies; informational, never blocks a merge.
   audit:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: ./.github/actions/setup
-      # yarn's exit code is a bitmask (2 low, 4 moderate, 8 high, 16 critical). Fail on moderate and above only,
-      # so an advisory with no upstream patch at low severity does not turn CI red.
+      # yarn 1.x has no --exclude, so we parse the JSON and ignore specific advisory ids ourselves.
+      # Known advisories with no action available to us (reinstate by removing the id once upstream ships a fix):
+      #   1247710  picomatch ReDoS — no patch exists upstream (dev tooling: micromatch/anymatch)
+      #   1243066  zod memory exhaustion — fixed in >=4.6.6, but @reown/appkit-wallet pins zod 3.x; cannot bump
       - run: |
-          set +e
-          yarn audit --groups dependencies
-          code=$?
-          [ $((code & 28)) -eq 0 ]
+          # Report everything for visibility.
+          yarn audit --groups dependencies || true
+          # Fail only on NEW moderate+ advisories (not the known-unfixable ids above).
+          yarn audit --groups dependencies --json | node .github/scripts/audit-gate.mjs 1247710 1243066
