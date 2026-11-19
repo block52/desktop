@@ -26,7 +26,7 @@ const Shell: React.FC = () => {
     return (
         <>
             <div className={styles.dragStrip} aria-hidden="true" />
-            <div className={styles.shell}>
+            <div className={isTable ? `${styles.shell} ${styles.shellTable}` : styles.shell}>
                 <div className={styles.sidebarSlot} data-hidden={sidebarHidden ? "true" : undefined}>
                     <Sidebar drawerOpen={drawerOpen} onCloseDrawer={closeDrawer} />
                 </div>
