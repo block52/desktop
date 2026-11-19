@@ -44,7 +44,7 @@ type request struct {
 	Timestamp int64  `json:"timestamp"`
 
 	// broadcast: a game action signed as an ordered (account-sequence) tx and
-	// sent to the node over gRPC. Kind is action|join|leave|topUp.
+	// sent to the node over gRPC. Kind is action|join|leave|topUp|send.
 	GRPC    string `json:"grpc"`
 	ChainID string `json:"chainId"`
 	Kind    string `json:"kind"`
@@ -56,6 +56,12 @@ type request struct {
 	BuyIn   uint64 `json:"buyIn"`
 	// FinishingOrder is a Sit & Go claim's place-1-first player addresses (leave only).
 	FinishingOrder []string `json:"finishingOrder"`
+
+	// send (a bank transfer): Amount is in the denom's smallest unit. From is optional and, when given, must be
+	// this wallet's own address; the sidecar only ever signs as the wallet it was given.
+	From  string `json:"from"`
+	To    string `json:"to"`
+	Denom string `json:"denom"`
 
 	// recentBlocks: the last-N-blocks window, polled from Tendermint RPC.
 	RPC   string `json:"rpc"`
@@ -195,7 +201,7 @@ func chainClient(target, chainID string, useTLS bool) *chain.Client {
 //
 //   - action: UNORDERED (no account sequence, the chain de-duplicates on signer + timeout), like performActionSync.
 //     Returns once the node accepts it (CheckTx); the outcome arrives over the table's WebSocket.
-//   - join, leave, topUp: ORDERED (account sequence, 1,000,000 gas like the SDK), then waits until the chain has
+//   - join, leave, topUp and send (a bank transfer): ORDERED (account sequence, 1,000,000 gas like the SDK), then waits until the chain has
 //     committed the tx and reports a failed execution, like the SDK's signAndBroadcast with assertExecuted.
 //     leave can carry the Sit & Go finishing order.
 //
@@ -224,6 +230,11 @@ func broadcast(req request) response {
 		msg = leaveGameMsg(address, req.GameID, req.FinishingOrder)
 	case "topUp":
 		msg = wire.TopUp(address, req.GameID, req.Amount)
+	case "send":
+		if err := validateSend(address, req.From, req.To, req.Denom, req.Amount); err != nil {
+			return response{ID: req.ID, Error: err.Error()}
+		}
+		msg = sendMsg(address, req.To, req.Denom, req.Amount)
 	default:
 		return response{ID: req.ID, Error: fmt.Sprintf("unknown action kind %q", req.Kind)}
 	}

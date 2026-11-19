@@ -45,7 +45,7 @@ describe("getSigningClient", () => {
 
         expect(userAddress).toBe("b52addr1");
         expect(hash).toBe("0xhash");
-        expect(bridge.signingCall).toHaveBeenCalledWith({ rpc: "http://rpc-a", rest: "http://rest-a" }, "joinGame", ["table-1", 3, 500n]);
+        expect(bridge.signingCall).toHaveBeenCalledWith({ rpc: "http://rpc-a", rest: "http://rest-a", grpc: "http://grpc-a" }, "joinGame", ["table-1", 3, 500n]);
     });
 
     it("exposes nothing that would hand out the key", async () => {

@@ -125,6 +125,10 @@ What runs in Go today:
   - join/leave/top-up are **ordered** (account sequence, 1,000,000 gas like the SDK), then the sidecar waits until
     the chain has committed the tx and reports a failed execution. A Sit & Go claim sends its finishing order with
     the leave so the chain can work out payouts.
+  - **sendTokens** (a bank transfer) is signed by the sidecar the same ordered, confirmed way, under the same flag. The
+    main process still asks in a native confirmation dialog first, and the sidecar only signs as its own wallet: it
+    refuses another sender, a zero amount, a malformed denom and any recipient that is not a valid `b52` address.
+    It is deliberately not reachable through the game-action IPC channel, which has no confirmation.
 
 The sealed seed vault and the OS keychain stay in the Electron main process (`src/wallet/vault.ts`); a mnemonic
 only crosses to the sidecar in memory, per call. Forge builds the binary in `generateAssets` and bundles it via

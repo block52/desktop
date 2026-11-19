@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"google.golang.org/protobuf/encoding/protowire"
 
 	"github.com/block52/pokerchain-go-client/wire"
@@ -28,6 +30,27 @@ func leaveGameMsg(creator, gameID string, finishingOrder []string) []byte {
 	}
 	var a []byte
 	a = appendString(a, 1, typeLeaveGame)
+	a = protowire.AppendTag(a, 2, protowire.BytesType)
+	return protowire.AppendBytes(a, m)
+}
+
+const typeSend = "/cosmos.bank.v1beta1.MsgSend"
+
+// sendMsg is cosmos.bank.v1beta1.MsgSend{from_address, to_address, amount: [Coin{denom, amount}]} as a
+// google.protobuf.Any. The coin amount is a decimal string, as in the cosmos proto.
+func sendMsg(from, to, denom string, amount uint64) []byte {
+	var coin []byte
+	coin = appendString(coin, 1, denom)
+	coin = appendString(coin, 2, strconv.FormatUint(amount, 10))
+
+	var m []byte
+	m = appendString(m, 1, from)
+	m = appendString(m, 2, to)
+	m = protowire.AppendTag(m, 3, protowire.BytesType)
+	m = protowire.AppendBytes(m, coin)
+
+	var a []byte
+	a = appendString(a, 1, typeSend)
 	a = protowire.AppendTag(a, 2, protowire.BytesType)
 	return protowire.AppendBytes(a, m)
 }

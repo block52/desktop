@@ -141,7 +141,7 @@ export interface SigningClientResult {
 function remoteSigningClient(network: NetworkEndpoints): RemoteSigningClient {
   const bridge = requireWalletBridge();
   const { rpcEndpoint, restEndpoint } = getCosmosUrls(network);
-  const endpoints = { rpc: rpcEndpoint, rest: restEndpoint };
+  const endpoints = { rpc: rpcEndpoint, rest: restEndpoint, grpc: network.grpc };
   const methods = SIGNING_METHODS.map((method) => [
     method,
     (...args: unknown[]) => bridge.signingCall(endpoints, method, args),
