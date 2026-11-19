@@ -1,6 +1,7 @@
 import type { WalletBridge } from "./wallet/types";
 import type { UpdateInfo } from "./updates/updateCheck";
 import type { HandSearchResult } from "./indexer/handSearch";
+import type { PlayersBridge } from "./players/types";
 
 declare global {
     interface Window {
@@ -23,6 +24,8 @@ declare global {
                 /** Hands whose table id or a player's address contains `text`, through the indexer's GraphQL API. */
                 searchHands: (text: string, limit: number, offset: number) => Promise<HandSearchResult>;
             };
+            /** Local, private player notes/nicknames/tags (SQLite in the main process). */
+            players?: PlayersBridge;
         };
     }
 }
