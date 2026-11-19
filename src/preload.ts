@@ -57,4 +57,19 @@ contextBridge.exposeInMainWorld("electronAPI", {
         searchHands: (text: string, limit: number, offset: number): Promise<HandSearchResult> =>
             ipcRenderer.invoke("indexer:search-hands", text, limit, offset),
     },
+    players: {
+        get: (address: string) => ipcRenderer.invoke("players:get", address),
+        getMany: (addresses: string[]) => ipcRenderer.invoke("players:get-many", addresses),
+        setNickname: (address: string, nickname: string | null) => ipcRenderer.invoke("players:set-nickname", address, nickname),
+        setNotes: (address: string, notes: string | null) => ipcRenderer.invoke("players:set-notes", address, notes),
+        addTag: (address: string, name: string) => ipcRenderer.invoke("players:add-tag", address, name),
+        removeTag: (address: string, tagId: number) => ipcRenderer.invoke("players:remove-tag", address, tagId),
+        listTags: () => ipcRenderer.invoke("players:list-tags"),
+        renameTag: (id: number, name: string) => ipcRenderer.invoke("players:rename-tag", id, name),
+        deleteTag: (id: number) => ipcRenderer.invoke("players:delete-tag", id),
+        search: (text: string) => ipcRenderer.invoke("players:search", text),
+        export: () => ipcRenderer.invoke("players:export"),
+        import: (data: unknown) => ipcRenderer.invoke("players:import", data),
+        deleteAll: () => ipcRenderer.invoke("players:delete-all"),
+    },
 });

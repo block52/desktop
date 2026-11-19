@@ -5,6 +5,7 @@ import started from "electron-squirrel-startup";
 import { APP_ORIGIN, APP_SCHEME, isOwnResource, resolveAppFile } from "./appProtocol";
 import { buildContentSecurityPolicy, hostsFromUrls } from "./csp";
 import { registerIndexerIpc } from "./indexer/indexerIpc";
+import { registerPlayerNotesIpc } from "./players/playerNotesIpc";
 import { registerWalletIpc } from "./wallet/walletIpc";
 import { checkForUpdatesFromMenu, registerUpdateIpc } from "./updates/updateIpc";
 import { buildMenuTemplate } from "./appMenu";
@@ -80,6 +81,9 @@ ipcMain.on("open-external", (_event, url: unknown) => {
 
 // Indexer search over GraphQL; the API key stays in this process.
 registerIndexerIpc();
+
+// Local player notes/nicknames/tags (SQLite in this process).
+registerPlayerNotesIpc();
 
 app.whenReady().then(() => {
   const { lockWallet } = registerWalletIpc();
