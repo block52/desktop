@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import started from "electron-squirrel-startup";
 import { APP_ORIGIN, APP_SCHEME, isOwnResource, resolveAppFile } from "./appProtocol";
 import { buildContentSecurityPolicy, hostsFromUrls } from "./csp";
+import { registerIndexerIpc } from "./indexer/indexerIpc";
 import { registerWalletIpc } from "./wallet/walletIpc";
 import { registerUpdateIpc } from "./updates/updateIpc";
 
@@ -75,6 +76,9 @@ ipcMain.on("open-external", (_event, url: unknown) => {
     void shell.openExternal(url);
   }
 });
+
+// Indexer search over GraphQL; the API key stays in this process.
+registerIndexerIpc();
 
 app.whenReady().then(() => {
   registerWalletIpc();

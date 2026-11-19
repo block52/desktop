@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { WalletBridge } from "./wallet/types";
 import type { UpdateInfo } from "./updates/updateCheck";
+import type { HandSearchResult } from "./indexer/handSearch";
 
 const wallet: WalletBridge = {
     status: () => ipcRenderer.invoke("wallet:status"),
@@ -36,5 +37,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
     updates: {
         check: (): Promise<UpdateInfo | null> => ipcRenderer.invoke("update:check"),
         open: (version: string) => ipcRenderer.send("update:open", version),
+    },
+    indexer: {
+        isSearchAvailable: (): Promise<boolean> => ipcRenderer.invoke("indexer:search-available"),
+        searchHands: (text: string, limit: number, offset: number): Promise<HandSearchResult> =>
+            ipcRenderer.invoke("indexer:search-hands", text, limit, offset),
     },
 });
