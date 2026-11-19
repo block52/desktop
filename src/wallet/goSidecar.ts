@@ -118,7 +118,7 @@ export class WalletSidecar {
         mnemonic: string;
         grpc: string;
         chainId: string;
-        kind: "action" | "join" | "leave" | "topUp";
+        kind: "action" | "join" | "leave" | "topUp" | "send";
         gameId: string;
         action?: string;
         amount?: number;
@@ -126,6 +126,10 @@ export class WalletSidecar {
         seat?: number;
         buyIn?: number;
         finishingOrder?: string[];
+        /** send (a bank transfer): the amount is in the denom's smallest unit. The sidecar only signs as its own wallet. */
+        from?: string;
+        to?: string;
+        denom?: string;
     }): Promise<{ txHash: string; gameId: string }> {
         return (await this.call("broadcast", params)) as { txHash: string; gameId: string };
     }

@@ -36,6 +36,8 @@ export type SigningMethod = (typeof SIGNING_METHODS)[number];
 export interface SignerNetwork {
     rpc: string;
     rest: string;
+    /** The node's gRPC endpoint. Needed when a method is signed in the Go sidecar. */
+    grpc?: string;
 }
 
 export type WalletCredential = { password: string } | { touchId: true };

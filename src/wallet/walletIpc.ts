@@ -57,8 +57,17 @@ export function registerWalletIpc(): void {
         return result.response === 1;
     };
 
-    const signer = new WalletSigner({ readMnemonic: () => vault.getMnemonic(), confirm: confirmInNativeDialog });
     const sidecar = new WalletSidecar();
+    // With the Go signer on (VITE_GO_SIGNER), sendTokens is signed in the sidecar. WalletSigner still asks the user in
+    // a native dialog first; sending never goes through "wallet:broadcast-action", which has no such confirmation.
+    const goSignerOn = import.meta.env.VITE_GO_SIGNER === "true";
+    const signer = new WalletSigner({
+        readMnemonic: () => vault.getMnemonic(),
+        confirm: confirmInNativeDialog,
+        sendTokensInGo: goSignerOn
+            ? async request => (await sidecar.broadcast({ ...request, kind: "send", mnemonic: await requireMnemonic(), gameId: "" })).txHash
+            : undefined,
+    });
 
     const trusted = (event: IpcMainEvent | IpcMainInvokeEvent): boolean => {
         const sender = BrowserWindow.fromWebContents(event.sender);
@@ -158,7 +167,7 @@ export function registerWalletIpc(): void {
 
     // A game action (performAction / join / leave / topUp) signed and broadcast in Go the way the
     // SDK does it: actions unordered (performActionSync), join/leave/topUp ordered and confirmed
-    // on-chain. Money-moving methods (sendTokens, initiateWithdrawal) stay on the SDK signer for now.
+    // on-chain. Bank sends are not accepted here (see sendTokensInGo above); withdrawals stay on the SDK signer for now.
     handle("wallet:broadcast-action", async (grpc: unknown, chainId: unknown, params: unknown) => {
         if (typeof grpc !== "string" || typeof chainId !== "string") throw new Error("Invalid network.");
         if (typeof params !== "object" || params === null) throw new Error("Invalid action.");
@@ -190,7 +199,11 @@ export function registerWalletIpc(): void {
         if (typeof endpoints !== "object" || endpoints === null || typeof endpoints.rpc !== "string" || typeof endpoints.rest !== "string") {
             throw new Error("Invalid network.");
         }
-        return signer.call({ rpc: endpoints.rpc, rest: endpoints.rest }, method, Array.isArray(args) ? args : []);
+        return signer.call(
+            { rpc: endpoints.rpc, rest: endpoints.rest, ...(typeof endpoints.grpc === "string" ? { grpc: endpoints.grpc } : {}) },
+            method,
+            Array.isArray(args) ? args : []
+        );
     });
 
     handle("wallet:reset-signer", async () => signer.reset());

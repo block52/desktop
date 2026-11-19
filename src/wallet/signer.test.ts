@@ -127,3 +127,63 @@ describe("WalletSigner", () => {
         expect(confirm).not.toHaveBeenCalled();
     });
 });
+
+describe("WalletSigner sending in the Go sidecar", () => {
+    const GO_NETWORK = { ...NETWORK, grpc: "grpcs://node:9443" };
+
+    function newGoSigner(options: { confirm?: boolean; chain?: string } = {}) {
+        const sendTokensInGo = vi.fn(async () => "0xgosend");
+        const confirm = vi.fn(async () => options.confirm ?? true);
+        const fetchNodeInfo = vi.fn(async () => ({ default_node_info: { network: options.chain ?? "pokerchain" } }));
+        const signer = new WalletSigner({ readMnemonic: async () => MNEMONIC, confirm, fetchNodeInfo, sendTokensInGo });
+        return { signer, sendTokensInGo, confirm };
+    }
+
+    it("sends through the sidecar after the user confirms, never creating the SDK client", async () => {
+        const { signer, sendTokensInGo, confirm } = newGoSigner();
+        await expect(signer.call(GO_NETWORK, "sendTokens", ["b52from", "b52to", 2_500_000n, "usdc"])).resolves.toBe("0xgosend");
+        expect(confirm).toHaveBeenCalledOnce();
+        expect(sendTokensInGo).toHaveBeenCalledWith({ grpc: "grpcs://node:9443", chainId: "pokerchain", from: "b52from", to: "b52to", amount: 2_500_000, denom: "usdc" });
+        expect(mockCreateSigningClient).not.toHaveBeenCalled();
+    });
+
+    it("never reaches the sidecar when the user cancels the dialog", async () => {
+        const { signer, sendTokensInGo } = newGoSigner({ confirm: false });
+        await expect(signer.call(GO_NETWORK, "sendTokens", ["b52from", "b52to", 1_000_000n, "usdc"])).rejects.toThrow("Cancelled");
+        expect(sendTokensInGo).not.toHaveBeenCalled();
+    });
+
+    it("defaults the denom to USDC", async () => {
+        const { signer, sendTokensInGo } = newGoSigner();
+        await signer.call(GO_NETWORK, "sendTokens", ["b52from", "b52to", 1_000_000n]);
+        expect(sendTokensInGo).toHaveBeenCalledWith(expect.objectContaining({ denom: "usdc" }));
+    });
+
+    it("refuses malformed arguments", async () => {
+        const { signer, sendTokensInGo } = newGoSigner();
+        for (const args of [["b52from", "b52to", 5], ["b52from", "b52to", 0n], ["b52from", "b52to", -1n], ["b52from", 7, 1n], ["b52from", "b52to", 1n, 9]]) {
+            await expect(signer.call(GO_NETWORK, "sendTokens", args)).rejects.toThrow(/Invalid arguments/);
+        }
+        await expect(signer.call(GO_NETWORK, "sendTokens", ["b52from", "b52to", BigInt(Number.MAX_SAFE_INTEGER) + 1n])).rejects.toThrow(/Invalid arguments/);
+        expect(sendTokensInGo).not.toHaveBeenCalled();
+    });
+
+    it("refuses a node that is not Block52 before sending", async () => {
+        const { signer, sendTokensInGo } = newGoSigner({ chain: "evil" });
+        await expect(signer.call(GO_NETWORK, "sendTokens", ["b52from", "b52to", 1_000_000n, "usdc"])).rejects.toThrow(/Refusing to sign/);
+        expect(sendTokensInGo).not.toHaveBeenCalled();
+    });
+
+    it("needs the node's gRPC endpoint", async () => {
+        const { signer, sendTokensInGo } = newGoSigner();
+        await expect(signer.call(NETWORK, "sendTokens", ["b52from", "b52to", 1_000_000n, "usdc"])).rejects.toThrow(/Invalid network endpoint/);
+        expect(sendTokensInGo).not.toHaveBeenCalled();
+    });
+
+    it("keeps every other method on the SDK client", async () => {
+        const { signer, sendTokensInGo } = newGoSigner();
+        await signer.call(GO_NETWORK, "joinGame", ["table", 1, 100n]);
+        expect(mockCreateSigningClient).toHaveBeenCalledOnce();
+        expect(sendTokensInGo).not.toHaveBeenCalled();
+    });
+});
