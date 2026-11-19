@@ -72,26 +72,6 @@
     padding: 16px 10px 6px;
 }
 
-/* Disabled nav items replicate .nav-item base styles (module scope) without hover/active. */
-.navItemDisabled {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 10px;
-    border: 0;
-    font-size: 13.5px;
-    font-weight: 500;
-    font-family: Inter, system-ui, sans-serif;
-    color: hsl(215 20% 65%);
-    background: transparent;
-    opacity: 0.4;
-    cursor: not-allowed;
-    text-align: left;
-    width: 100%;
-}
-
 /* ── Footer ── */
 .spacer {
     flex: 1;
@@ -378,11 +358,6 @@
         padding: 8px 0;
     }
 
-    .navItemDisabled {
-        justify-content: center;
-        padding: 8px 0;
-    }
-
     .statusChip {
         justify-content: center;
         padding: 10px 0;
@@ -448,11 +423,6 @@
     }
 
     .sidebar :global(.nav-item) {
-        justify-content: flex-start;
-        padding: 8px 10px;
-    }
-
-    .navItemDisabled {
         justify-content: flex-start;
         padding: 8px 10px;
     }
