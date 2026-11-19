@@ -11,11 +11,27 @@ const MICRO = 1_000_000n;
 /** Methods that move the user's own funds out. The user is asked in a native dialog the page cannot draw or click. */
 const CONFIRMED_METHODS = new Set<SigningMethod>(["sendTokens", "initiateWithdrawal", "createValidator"]);
 
+/** What the Go sidecar needs to sign and send a bank transfer. */
+export interface GoSendRequest {
+    grpc: string;
+    chainId: string;
+    from: string;
+    to: string;
+    /** In the denom's smallest unit; a safe integer. */
+    amount: number;
+    denom: string;
+}
+
 interface SignerDeps {
     /** Returns the decrypted seed phrase, or throws while the wallet is locked. */
     readMnemonic: () => Promise<string | null>;
     confirm: (title: string, detail: string) => Promise<boolean>;
     fetchNodeInfo?: (restEndpoint: string) => Promise<unknown>;
+    /**
+     * Signs and sends sendTokens in the Go sidecar instead of the SDK client. Only set when the Go signer is turned on.
+     * It runs after the native confirmation dialog, which this class always shows first.
+     */
+    sendTokensInGo?: (request: GoSendRequest) => Promise<string>;
 }
 
 function isSigningMethod(value: unknown): value is SigningMethod {
@@ -81,6 +97,7 @@ export class WalletSigner {
             const { title, detail } = describeCall(method, args);
             if (!(await this.deps.confirm(title, detail))) throw new Error("Cancelled.");
         }
+        if (method === "sendTokens" && this.deps.sendTokensInGo !== undefined) return this.sendTokensInGo(this.deps.sendTokensInGo, network, args);
         const client = await this.client(network);
         const run = (client as unknown as Record<string, (...callArgs: unknown[]) => Promise<unknown>>)[method];
         return run.apply(client, args);
@@ -92,6 +109,24 @@ export class WalletSigner {
         for (const pending of previous) {
             pending.then(client => client.disconnect()).catch(() => undefined);
         }
+    }
+
+    /** sendTokens(from, to, amount, denom?) through the Go sidecar, once the user has confirmed it. */
+    private async sendTokensInGo(send: (request: GoSendRequest) => Promise<string>, network: SignerNetwork, args: unknown[]): Promise<string> {
+        const [from, to, amount, denom] = args;
+        if (typeof from !== "string" || typeof to !== "string") throw new Error("Invalid arguments.");
+        if (typeof amount !== "bigint" || amount <= 0n || amount > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error("Invalid arguments.");
+        if (denom !== undefined && typeof denom !== "string") throw new Error("Invalid arguments.");
+        await this.assertServesBlock52(assertEndpoint(network.rest));
+        if (typeof network.grpc !== "string" || network.grpc === "") throw new Error("Invalid network endpoint.");
+        return send({
+            grpc: network.grpc,
+            chainId: COSMOS_CONSTANTS.CHAIN_ID,
+            from,
+            to,
+            amount: Number(amount),
+            denom: denom ?? COSMOS_CONSTANTS.TOKEN_DENOM,
+        });
     }
 
     private async requireMnemonic(): Promise<string> {
