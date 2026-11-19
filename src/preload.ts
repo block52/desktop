@@ -33,6 +33,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
     openExternal: (url: string) => ipcRenderer.send("open-external", url),
     platform: process.platform,
     wallet,
+    menu: {
+        onNavigate: (listener: (route: string) => void) => {
+            const handler = (_event: unknown, route: unknown) => {
+                if (typeof route === "string") listener(route);
+            };
+            ipcRenderer.on("menu:navigate", handler);
+            return () => ipcRenderer.removeListener("menu:navigate", handler);
+        },
+    },
     updates: {
         check: (): Promise<UpdateInfo | null> => ipcRenderer.invoke("update:check"),
         open: (version: string) => ipcRenderer.send("update:open", version),

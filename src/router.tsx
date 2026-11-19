@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { AnimatedBackground as AppBackground } from "@block52/ui-sdk";
 import Sidebar from "./components/sidebar/Sidebar";
 import UpdateBanner from "./components/update/UpdateBanner";
@@ -13,7 +13,19 @@ import Nodes from "./pages/nodes/Nodes";
 import TechNotes from "./pages/techNotes/TechNotes";
 import Table from "./pages/table/Table";
 import Wallet from "./pages/Wallet";
+import { isMenuRoute } from "./menuRoutes";
 import styles from "./router.module.css";
+
+/** Opens the screen the window menu picked. Anything that is not one of its own routes is ignored. */
+const MenuNavigation: React.FC = () => {
+    const navigate = useNavigate();
+    React.useEffect(() => {
+        return window.electronAPI?.menu?.onNavigate(route => {
+            if (isMenuRoute(route)) navigate(route);
+        });
+    }, [navigate]);
+    return null;
+};
 
 const Shell: React.FC = () => {
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -67,6 +79,7 @@ const Shell: React.FC = () => {
 const Router: React.FC = () => {
     return (
         <MemoryRouter initialEntries={["/"]}>
+            <MenuNavigation />
             <AppBackground />
             <Shell />
         </MemoryRouter>
