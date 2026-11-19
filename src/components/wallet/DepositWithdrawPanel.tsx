@@ -22,6 +22,7 @@ import EthDepositPanel from "./EthDepositPanel";
 import EtherscanTxLink from "./EtherscanTxLink";
 import WithdrawSteps from "./WithdrawSteps";
 import { SlidingTabs } from "@block52/ui-sdk";
+import type { EthAccount } from "../../hooks/wallet/useEthAccount";
 import styles from "./DepositWithdrawPanel.module.css";
 
 export type WalletTab = "deposit" | "withdraw";
@@ -29,6 +30,8 @@ export type WalletTab = "deposit" | "withdraw";
 interface DepositWithdrawPanelProps {
     tab: WalletTab;
     cosmosAddress: string;
+    /** The Ethereum wallet derived from the seed phrase, shared with the wallet card. */
+    eth: EthAccount;
     usdcBalanceMicro: string;
     onBalanceRefresh: () => Promise<void> | void;
 }
@@ -47,7 +50,7 @@ const TOKEN_ICONS: Record<DepositToken, string> = {
     USDT: usdtUrl
 };
 
-const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<void> | void }> = ({ cosmosAddress, onConfirmed }) => {
+const DepositCard: React.FC<{ cosmosAddress: string; eth: EthAccount; onConfirmed: () => Promise<void> | void }> = ({ cosmosAddress, eth, onConfirmed }) => {
     const { open: openAppKit } = useAppKit();
     const { isConnected: isWeb3Connected } = useAppKitAccount();
 
@@ -58,7 +61,8 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
     const [approvedAmount, setApprovedAmount] = useState<bigint>(0n);
     const [error, setError] = useState("");
     const [isDone, setIsDone] = useState(false);
-    const [method, setMethod] = useState<"web3" | "qr">("web3");
+    // Bridging into Block52: from the Ethereum wallet derived from the seed (default), or from an external Web3 wallet.
+    const [method, setMethod] = useState<"eth" | "web3">("eth");
 
     const { decimals } = useDecimals(tokenAddress);
     const { balance } = useWalletBalance(tokenAddress);
@@ -158,20 +162,20 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
         <SlidingTabs
             label="Deposit method"
             options={[
-                { value: "web3", label: "Web3 wallet" },
-                { value: "qr", label: "ETH deposit" }
+                { value: "eth", label: "Ethereum wallet" },
+                { value: "web3", label: "External Web3 wallet" }
             ]}
             value={method}
             onChange={setMethod}
         />
     );
 
-    if (method === "qr") {
+    if (method === "eth") {
         return (
             <div className={`pane-lite ${styles.card}`}>
                 <div className={styles.title}>Deposit</div>
                 {methodSwitch}
-                <EthDepositPanel onCompleted={() => void onConfirmed()} />
+                <EthDepositPanel eth={eth} onCompleted={() => void onConfirmed()} />
             </div>
         );
     }
@@ -588,10 +592,10 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
     );
 };
 
-const DepositWithdrawPanel: React.FC<DepositWithdrawPanelProps> = ({ tab, cosmosAddress, usdcBalanceMicro, onBalanceRefresh }) => (
+const DepositWithdrawPanel: React.FC<DepositWithdrawPanelProps> = ({ tab, cosmosAddress, eth, usdcBalanceMicro, onBalanceRefresh }) => (
     <>
         {tab === "deposit" ? (
-            <DepositCard cosmosAddress={cosmosAddress} onConfirmed={onBalanceRefresh} />
+            <DepositCard cosmosAddress={cosmosAddress} eth={eth} onConfirmed={onBalanceRefresh} />
         ) : (
             <WithdrawCard usdcBalanceMicro={usdcBalanceMicro} onDone={onBalanceRefresh} />
         )}

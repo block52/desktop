@@ -6,6 +6,7 @@ import DepositWithdrawPanel, { WalletTab } from "./DepositWithdrawPanel";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import useWalletBalance from "../../hooks/wallet/useWalletBalance";
 import useAllowance from "../../hooks/wallet/useAllowance";
+import type { EthAccount } from "../../hooks/wallet/useEthAccount";
 
 vi.mock("@reown/appkit/react", () => ({ useAppKit: vi.fn(), useAppKitAccount: vi.fn() }));
 vi.mock("../../context/NetworkContext", () => ({
@@ -30,9 +31,19 @@ const mockedUseAppKitAccount = vi.mocked(useAppKitAccount);
 const mockedUseWalletBalance = vi.mocked(useWalletBalance);
 const mockedUseAllowance = vi.mocked(useAllowance);
 
+const ETH: EthAccount = {
+    available: true,
+    address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    balances: { eth: 10n ** 16n, usdc: 25_500_000n, usdt: 0n, wbtc: 0n },
+    isLoading: false,
+    error: "",
+    refresh: vi.fn(async () => undefined)
+};
+
 const BASE = {
     tab: "deposit" as WalletTab,
     cosmosAddress: "b52walletaddress",
+    eth: ETH,
     usdcBalanceMicro: "12300000",
     onBalanceRefresh: vi.fn()
 };
@@ -43,6 +54,11 @@ function renderPanel(overrides: Partial<typeof BASE> = {}) {
             <DepositWithdrawPanel {...BASE} {...overrides} />
         </ToastProvider>
     );
+}
+
+/** The external Web3 wallet is the second deposit source now; the Ethereum wallet is the default. */
+function openExternalWallet() {
+    fireEvent.click(screen.getByRole("tab", { name: "External Web3 wallet" }));
 }
 
 function mockWeb3(connected: boolean, address: string | undefined = undefined) {
@@ -56,11 +72,29 @@ afterEach(() => {
 });
 
 describe("DepositWithdrawPanel", () => {
+    it("opens on the Ethereum wallet: a deposit form from it, with no address or QR code", () => {
+        mockWeb3(false);
+        mockedUseWalletBalance.mockReturnValue({ balance: 0n } as never);
+        mockedUseAllowance.mockReturnValue({ allowance: 0n } as never);
+        window.electronAPI = { openExternal: vi.fn(), wallet: { ethDeposit: vi.fn() } as never };
+        try {
+            renderPanel();
+            expect(screen.getByRole("tab", { name: "Ethereum wallet" })).toBeTruthy();
+            expect(screen.getByRole("tab", { name: "External Web3 wallet" })).toBeTruthy();
+            expect(screen.getByText("From your Ethereum wallet")).toBeTruthy();
+            expect(screen.getByRole("button", { name: "Deposit to Block52" })).toBeTruthy();
+            expect(screen.queryByText(ETH.address as string)).toBeNull();
+        } finally {
+            window.electronAPI = undefined;
+        }
+    });
+
     it("shows the deposit card with chips, amount, address, and warning note", () => {
         mockWeb3(true, "0xABC");
         mockedUseWalletBalance.mockReturnValue({ balance: 5000000n } as never);
         mockedUseAllowance.mockReturnValue({ allowance: 0n } as never);
         renderPanel();
+        openExternalWallet();
 
         expect(screen.getByText("Deposit")).toBeTruthy();
         expect(screen.getByRole("button", { name: "USDC" }).getAttribute("aria-pressed")).toBe("true");
@@ -73,6 +107,7 @@ describe("DepositWithdrawPanel", () => {
     it("prompts to connect web3 when disconnected", () => {
         mockWeb3(false);
         renderPanel();
+        openExternalWallet();
         expect(screen.getByRole("button", { name: "Connect Web3 Wallet" })).toBeTruthy();
     });
 
@@ -81,6 +116,7 @@ describe("DepositWithdrawPanel", () => {
         mockedUseWalletBalance.mockReturnValue({ balance: 5000000n } as never);
         mockedUseAllowance.mockReturnValue({ allowance: 0n } as never);
         renderPanel();
+        openExternalWallet();
 
         fireEvent.click(screen.getByRole("button", { name: "MAX" }));
         expect(screen.getByPlaceholderText("0.00")).toHaveProperty("value", "5");
@@ -91,6 +127,7 @@ describe("DepositWithdrawPanel", () => {
         mockedUseWalletBalance.mockReturnValue({ balance: 5000000n } as never);
         mockedUseAllowance.mockReturnValue({ allowance: undefined } as never);
         const utils = renderPanel();
+        openExternalWallet();
 
         fireEvent.change(screen.getByPlaceholderText("0.00"), { target: { value: "1" } });
         expect(screen.getByRole("button", { name: "Approve" })).toBeTruthy();
