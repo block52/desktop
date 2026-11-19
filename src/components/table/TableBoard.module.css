@@ -4,7 +4,7 @@
     position: relative;
     flex: 1;
     min-width: 0;
-    min-height: 420px;
+    min-height: 0;
     overflow: hidden;
     background: radial-gradient(ellipse 70% 60% at 50% 45%, hsl(158 30% 10%), hsl(240 28% 9.5%) 72%);
 }
