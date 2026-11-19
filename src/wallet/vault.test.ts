@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { WalletVault } from "./vault";
 import type { OsKeyStore } from "./vault";
+import type { PgpTool } from "./pgp";
 
 const MNEMONIC = "alpha bravo charlie delta echo foxtrot golf hotel india juliett kilo lima";
 
@@ -14,12 +15,19 @@ const fakeKeychain: OsKeyStore = {
     decrypt: cipher => cipher.toString("utf8").replace("keychain:", ""),
 };
 
+// Stand-in for gpg: "encrypting" tags the plaintext, and only the matching tag decrypts.
+const fakePgp: PgpTool = {
+    isAvailable: async () => true,
+    encryptTo: async (publicKey, plaintext) => ({ fingerprint: "ABCD".repeat(10), armored: `pgp:${publicKey}:${plaintext}` }),
+    decrypt: async armored => armored.split(":")[2],
+};
+
 let dir: string;
 let filePath: string;
 let clock = 1_000_000;
 
 function newVault(): WalletVault {
-    return new WalletVault({ filePath, osKeys: fakeKeychain, scryptCost: 1024, now: () => clock });
+    return new WalletVault({ filePath, osKeys: fakeKeychain, scryptCost: 1024, now: () => clock, pgp: fakePgp });
 }
 
 beforeEach(async () => {
@@ -153,5 +161,75 @@ describe("WalletVault", () => {
         vault.lock();
 
         await expect(vault.getMnemonic()).rejects.toThrow("locked");
+    });
+
+    it("opens with a PGP key after a restart, and the key is not stored in the clear", async () => {
+        const first = newVault();
+        await first.saveMnemonic(MNEMONIC);
+        await first.setPgpKey("PUBKEY");
+        const raw = await readFile(filePath, "utf8");
+
+        const second = newVault();
+        expect((await second.status()).pgpFingerprint).toBe("ABCD".repeat(10));
+        await second.openWithKeychainIfPasswordless();
+        expect((await second.status()).locked).toBe(true);
+        expect(await second.unlockWithPgp()).toBe(true);
+        expect(await second.getMnemonic()).toBe(MNEMONIC);
+        expect(raw).not.toContain("alpha");
+    });
+
+    it("keeps the password working alongside the PGP key", async () => {
+        const first = newVault();
+        await first.saveMnemonic(MNEMONIC);
+        await first.setPassword("correct horse");
+        await first.setPgpKey("PUBKEY");
+
+        const viaPassword = newVault();
+        expect(await viaPassword.unlockWithPassword("correct horse")).toBe(true);
+        const viaPgp = newVault();
+        expect(await viaPgp.unlockWithPgp()).toBe(true);
+        expect(await viaPgp.getMnemonic()).toBe(MNEMONIC);
+    });
+
+    it("refuses a PGP unlock that returns the wrong key", async () => {
+        const first = newVault();
+        await first.saveMnemonic(MNEMONIC);
+        await first.setPgpKey("PUBKEY");
+        const other = new WalletVault({ filePath, osKeys: fakeKeychain, scryptCost: 1024, now: () => clock, pgp: { ...fakePgp, decrypt: async () => "cd".repeat(32) } });
+        expect(await other.unlockWithPgp()).toBe(false);
+        expect((await other.status()).locked).toBe(true);
+    });
+
+    it("goes back to the keychain when the PGP key is removed from a passwordless wallet", async () => {
+        const first = newVault();
+        await first.saveMnemonic(MNEMONIC);
+        await first.setPgpKey("PUBKEY");
+        await first.removePgpKey();
+
+        const second = newVault();
+        await second.openWithKeychainIfPasswordless();
+        expect((await second.status()).locked).toBe(false);
+        expect((await second.status()).pgpFingerprint).toBeNull();
+    });
+
+    it("keeps PGP as the way in when the password is removed", async () => {
+        const first = newVault();
+        await first.saveMnemonic(MNEMONIC);
+        await first.setPassword("correct horse");
+        await first.setPgpKey("PUBKEY");
+        await first.removePassword("correct horse");
+
+        const second = newVault();
+        await second.openWithKeychainIfPasswordless();
+        expect((await second.status()).locked).toBe(true);
+        expect(await second.unlockWithPgp()).toBe(true);
+    });
+
+    it("needs the wallet unlocked to add a PGP key", async () => {
+        const first = newVault();
+        await first.saveMnemonic(MNEMONIC);
+        await first.setPassword("correct horse");
+        const locked = newVault();
+        await expect(locked.setPgpKey("PUBKEY")).rejects.toThrow(/locked/);
     });
 });

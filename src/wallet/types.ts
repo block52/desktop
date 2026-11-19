@@ -6,12 +6,16 @@ export interface VaultStatus {
     touchIdEnabled: boolean;
     /** 0 means never. */
     autoLockMinutes: number;
+    /** The PGP key (fingerprint) that can also unlock the wallet, or null. */
+    pgpFingerprint: string | null;
     /** False when the OS can only obfuscate (a Linux machine without a keyring), so the seed is not truly protected. */
     osProtected: boolean;
 }
 
 export interface WalletStatus extends VaultStatus {
     touchIdAvailable: boolean;
+    /** GnuPG is installed, so a PGP key can be used. */
+    pgpAvailable: boolean;
 }
 
 /** The only SDK signing-client methods the page may invoke. */
@@ -40,7 +44,7 @@ export interface SignerNetwork {
     grpc?: string;
 }
 
-export type WalletCredential = { password: string } | { touchId: true };
+export type WalletCredential = { password: string } | { touchId: true } | { pgp: true };
 
 /** A game action signed and broadcast in Go. Amounts are micro-USDC as numbers (within JS safe-int range). */
 export interface BroadcastActionParams {
@@ -81,6 +85,9 @@ export interface WalletBridge {
     setPassword: (password: string) => Promise<void>;
     changePassword: (current: string, next: string) => Promise<void>;
     removePassword: (current: string) => Promise<void>;
+    /** Also lets this PGP public key (armored) unlock the wallet. Without a password it becomes the only way in. */
+    setPgpKey: (publicKey: string) => Promise<void>;
+    removePgpKey: () => Promise<void>;
     setTouchId: (enabled: boolean) => Promise<void>;
     setAutoLock: (minutes: number) => Promise<void>;
     /** Tells the main process the user is still here, so the auto-lock timer restarts. */
