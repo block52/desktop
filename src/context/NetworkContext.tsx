@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
 
 /**
  * NetworkEndpoints describes all endpoints for a given network.
@@ -42,7 +43,7 @@ export interface NetworkEndpoints {
 // Same pattern applies to all validator domains (block52.xyz, texashodl.net, etc.)
 //
 // NETWORK STATUS (Last tested: 2026-03-23):
-// ✅ Block52 (node1.block52.xyz) - Official production node (default)
+// ✅ Block52 (node1.block52.xyz) - Official production node (first-run fallback when no local node answers)
 // ✅ Localhost - Works with `ignite chain serve`
 // ✅ Texas Hodl (node.texashodl.net) - Working, use for production testing
 //
@@ -74,7 +75,7 @@ export interface NetworkEndpoints {
  *   wss://node.texashodl.net/ws (production via nginx proxy)
  */
 export const NETWORK_PRESETS: NetworkEndpoints[] = [
-    // [0] ✅ Block52 - Official node (default)
+    // [0] ✅ Block52 - Official node (first-run fallback; a reachable local pokerchain node is preferred)
     // Using HTTPS endpoints via NGINX reverse proxy to avoid mixed content errors
     // NOTE: /rpc/ requires trailing slash due to nginx location block configuration
     {
@@ -135,25 +136,25 @@ const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 const DISCOVERED_NETWORKS_KEY = "discoveredNetworks";
 
 export const NetworkProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    // Initialize network from localStorage or default to Block52
+    // Initialize network from localStorage. A saved choice always wins. On a first
+    // run we start on Block52 and let the probe below upgrade to Localhost if a
+    // local pokerchain node is reachable.
     const [currentNetwork, setCurrentNetwork] = useState<NetworkEndpoints>(() => {
-        // Try to load user's saved network preference from localStorage
         const saved = localStorage.getItem("selectedNetwork");
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
                 // Validate that the parsed object has the ws property (for backward compatibility)
                 if (!parsed.ws) {
-                    return NETWORK_PRESETS[0]; // Block52
+                    return NETWORK_PRESETS[0]; // Block52 (probe may switch to Localhost)
                 }
                 return parsed;
             } catch {
-                // If localStorage is corrupted, default to Block52
-                return NETWORK_PRESETS[0]; // Block52
+                // Corrupted value — treat as a first run.
+                return NETWORK_PRESETS[0];
             }
         }
-        // First time user - default to Block52
-        return NETWORK_PRESETS[0]; // Block52
+        return NETWORK_PRESETS[0];
     });
 
     // Initialize discovered networks from localStorage
@@ -173,6 +174,46 @@ export const NetworkProvider: React.FC<{ children: ReactNode }> = ({ children })
     useEffect(() => {
         localStorage.setItem("selectedNetwork", JSON.stringify(currentNetwork));
     }, [currentNetwork]);
+
+    // First run only: prefer a local pokerchain node when one is actually running,
+    // otherwise stay on Block52 (so a packaged build with no local chain doesn't
+    // start on a node that never answers). A choice the user already saved skips
+    // this — a first run is "nothing saved, or a legacy value with no ws".
+    useEffect(() => {
+        const saved = localStorage.getItem("selectedNetwork");
+        let isFirstRun = saved === null;
+        if (saved !== null) {
+            try {
+                isFirstRun = !(JSON.parse(saved) as { ws?: unknown }).ws;
+            } catch {
+                isFirstRun = true;
+            }
+        }
+        if (!isFirstRun) return;
+
+        const localhost = NETWORK_PRESETS.find(p => p.name === "Localhost");
+        if (localhost === undefined) return;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 2000);
+        void fetch(`${localhost.rest}/cosmos/base/tendermint/v1beta1/node_info`, { signal: controller.signal })
+            .then(res => (res.ok ? res.json() : null))
+            .then(info => {
+                const network = (info as { default_node_info?: { network?: unknown } } | null)?.default_node_info?.network;
+                // Switch only if the local node is up and reports the pokerchain, and
+                // the user hasn't picked something else since mount.
+                if (network === COSMOS_CONSTANTS.CHAIN_ID && localStorage.getItem("selectedNetwork") === JSON.stringify(NETWORK_PRESETS[0])) {
+                    setCurrentNetwork(localhost);
+                }
+            })
+            .catch(() => undefined) // no local node: stay on Block52
+            .finally(() => clearTimeout(timer));
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+        // Runs once on mount.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Save discovered networks to localStorage
     useEffect(() => {
