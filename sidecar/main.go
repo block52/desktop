@@ -54,6 +54,8 @@ type request struct {
 	Data    string `json:"data"`
 	Seat    uint64 `json:"seat"`
 	BuyIn   uint64 `json:"buyIn"`
+	// FinishingOrder is a Sit & Go claim's place-1-first player addresses (leave only).
+	FinishingOrder []string `json:"finishingOrder"`
 
 	// recentBlocks: the last-N-blocks window, polled from Tendermint RPC.
 	RPC   string `json:"rpc"`
@@ -171,10 +173,33 @@ func recentBlocks(req request) response {
 	}}
 }
 
-// broadcast signs one game action as an ordered (account-sequence) transaction
-// — byte-for-byte the SDK's performActionSync model — and sends it to the node
-// over gRPC. The caller (Electron main) owns the code-32 sequence-retry policy;
-// this just reports a rejection.
+// chainClients keeps one gRPC client per node so repeat requests reuse a connection instead of dialling a new one.
+var (
+	clientsMu    sync.Mutex
+	chainClients = map[string]*chain.Client{}
+)
+
+func chainClient(target, chainID string, useTLS bool) *chain.Client {
+	key := fmt.Sprintf("%s|%s|%t", target, chainID, useTLS)
+	clientsMu.Lock()
+	defer clientsMu.Unlock()
+	if c, ok := chainClients[key]; ok {
+		return c
+	}
+	c := chain.New(target, chainID, useTLS)
+	chainClients[key] = c
+	return c
+}
+
+// broadcast signs one transaction and sends it to the node over gRPC, the way the SDK does for each kind:
+//
+//   - action: UNORDERED (no account sequence, the chain de-duplicates on signer + timeout), like performActionSync.
+//     Returns once the node accepts it (CheckTx); the outcome arrives over the table's WebSocket.
+//   - join, leave, topUp: ORDERED (account sequence, 1,000,000 gas like the SDK), then waits until the chain has
+//     committed the tx and reports a failed execution, like the SDK's signAndBroadcast with assertExecuted.
+//     leave can carry the Sit & Go finishing order.
+//
+// The caller (Electron main) owns the code-32 sequence-retry policy; this reports a rejection with the node's log.
 func broadcast(req request) response {
 	if req.GRPC == "" || req.ChainID == "" {
 		return response{ID: req.ID, Error: "grpc and chainId are required"}
@@ -196,7 +221,7 @@ func broadcast(req request) response {
 	case "join":
 		msg = wire.JoinGame(address, req.GameID, req.Seat, req.BuyIn)
 	case "leave":
-		msg = wire.LeaveGame(address, req.GameID)
+		msg = leaveGameMsg(address, req.GameID, req.FinishingOrder)
 	case "topUp":
 		msg = wire.TopUp(address, req.GameID, req.Amount)
 	default:
@@ -206,11 +231,25 @@ func broadcast(req request) response {
 	// gRPC endpoints are grpc:// (plaintext) or grpcs:// (TLS); strip the scheme
 	// for the Go client's host:port target and use it to pick TLS.
 	target, useTLS := parseGRPC(req.GRPC)
-	c := chain.New(target, req.ChainID, useTLS)
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
 
-	hash, err := c.BroadcastOrdered(ctx, priv, address, msg)
+	var hash string
+	if req.Kind == "action" {
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+		c := chainClient(target, req.ChainID, useTLS)
+		var number uint64
+		if number, err = c.AccountNumber(ctx, address); err == nil {
+			hash, err = c.Broadcast(ctx, priv, address, number, msg)
+		}
+	} else {
+		// A money mover waits for the chain to commit, which takes longer than a CheckTx.
+		ctx, cancel := context.WithTimeout(context.Background(), inclusionTimeout+20*time.Second)
+		defer cancel()
+		var node *txNode
+		if node, err = newTxNode(target, req.ChainID, useTLS); err == nil {
+			hash, err = node.sendAndConfirm(ctx, priv, address, msg)
+		}
+	}
 	if err != nil {
 		return response{ID: req.ID, Error: err.Error(), Result: map[string]any{
 			"rejected":         chain.IsRejected(err),

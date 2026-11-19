@@ -118,9 +118,13 @@ What runs in Go today:
   signature. These are the default (`src/wallet/walletIpc.ts` routes `generate` / `import` / `get-address` /
   `sign-query` to the sidecar).
 - **Recent blocks** — a rolling 1000-block window polled from Tendermint RPC (`recentBlocks`).
-- **Game actions** — bet/call/raise/join/leave/top-up sign + broadcast via the sidecar as ordered
-  (account-sequence) transactions, **behind `VITE_GO_SIGNER=true`**; the TypeScript SDK path is the default
-  until the Go path is validated against a live node.
+- **Game actions** — signed and broadcast via the sidecar **behind `VITE_GO_SIGNER=true`**; the TypeScript SDK
+  path is the default until the Go path is validated against a live node. It follows the SDK's own models:
+  - bet/call/raise/fold/deal/… (`action`) are **unordered** transactions, like `performActionSync` (no account
+    sequence; the chain de-duplicates on signer + timeout). They return once the node accepts them (CheckTx).
+  - join/leave/top-up are **ordered** (account sequence, 1,000,000 gas like the SDK), then the sidecar waits until
+    the chain has committed the tx and reports a failed execution. A Sit & Go claim sends its finishing order with
+    the leave so the chain can work out payouts.
 
 The sealed seed vault and the OS keychain stay in the Electron main process (`src/wallet/vault.ts`); a mnemonic
 only crosses to the sidecar in memory, per call. Forge builds the binary in `generateAssets` and bundles it via
