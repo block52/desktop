@@ -8,8 +8,8 @@ import { ETH_ASSETS, formatUnits, parseUnits } from "../../config/ethTokens";
 import type { EthAssetSymbol } from "../../config/ethTokens";
 import { ETH_DEPOSIT_TOKENS } from "../../wallet/types";
 import type { EthBalances, EthDepositToken } from "../../wallet/types";
-import { CopyButton } from "@block52/ui-sdk";
 import dialog from "../modal/TableDialog.module.css";
+import AddressPill from "./AddressPill";
 import styles from "./EthDepositPanel.module.css";
 
 const LOGOS: Record<EthAssetSymbol, string> = { ETH: ethLogo, USDC: usdcLogo, USDT: usdtLogo, wBTC: wbtcLogo };
@@ -107,10 +107,7 @@ const EthDepositPanel: React.FC<EthDepositPanelProps> = ({ onCompleted }) => {
                     <div className={styles.qr}>
                         <QRCodeSVG value={address} size={176} level="M" marginSize={2} />
                     </div>
-                    <div className={styles.address}>
-                        <code>{address}</code>
-                        <CopyButton text={address} message="Ethereum address copied" title="Copy Ethereum address" />
-                    </div>
+                    <AddressPill address={address} copyMessage="Ethereum address copied" copyTitle="Copy Ethereum address" />
                 </>
             )}
 

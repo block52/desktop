@@ -5,6 +5,7 @@ import { clearCosmosData } from "../../utils/cosmos/storage";
 import { clearCosmosClient, clearSigningClientCache } from "../../utils/cosmos/client";
 import { useCopyToClipboard } from "@block52/ui-sdk";
 import SeedPhraseGrid from "./SeedPhraseGrid";
+import AddressPill from "./AddressPill";
 import ReauthPrompt from "./ReauthPrompt";
 import WalletSecurityPanel from "./WalletSecurityPanel";
 import styles from "./WalletKeysModal.module.css";
@@ -96,12 +97,7 @@ const WalletKeysModal: React.FC<WalletKeysModalProps> = ({ address, onClose, onC
 
                 <div className={styles.field}>
                     <span className={styles.fieldLabel}>Address</span>
-                    <div className={styles.fieldRow}>
-                        <input type="text" value={address} readOnly className={styles.input} />
-                        <button onClick={() => void copy(address, "Address copied")} className={`btn-ghost ${styles.ghostAction}`}>
-                            Copy
-                        </button>
-                    </div>
+                    <AddressPill address={address} />
                 </div>
 
                 {bridge !== undefined && (
