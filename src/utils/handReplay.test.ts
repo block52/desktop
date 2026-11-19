@@ -26,6 +26,17 @@ describe("handReplay queries", () => {
         expect(() => handEndedQuery("0xabc", 0)).toThrow();
     });
 
+    it("accepts a tournament table id with a -t<N> suffix", () => {
+        const id = "0x522af6f3faa14816649c2e24a6ab3b951d56b5e85f7cb8803fe72f1a0127a80b-t1";
+        expect(handEndedQuery(id, 29)).toBe(`hand_ended.game_id='${id}' AND hand_ended.hand_number='29'`);
+    });
+
+    it("still refuses quotes, whitespace and injection characters", () => {
+        for (const bad of ["0xabc'", "0x abc", "0xabc;SELECT", "0xabc)", "0xabc OR 1=1", "0x\tabc"]) {
+            expect(() => handEndedQuery(bad, 1)).toThrow(/Invalid table id/);
+        }
+    });
+
     it("reads the height of the first tx_search result", () => {
         expect(parseTxSearchHeight({ result: { txs: [{ height: "42" }] } })).toBe(42);
         expect(parseTxSearchHeight({ result: { txs: [] } })).toBeNull();
