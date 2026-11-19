@@ -17,6 +17,7 @@ import SeedPhraseGrid from "../components/wallet/SeedPhraseGrid";
 import SendModal from "../components/modal/SendModal";
 import AvatarPickerModal from "../components/modal/AvatarPickerModal";
 import { useOnChainAvatar } from "../hooks/useOnChainAvatar";
+import { useEthAccount } from "../hooks/wallet/useEthAccount";
 import styles from "./Wallet.module.css";
 
 const Wallet: React.FC = () => {
@@ -31,15 +32,19 @@ const Wallet: React.FC = () => {
     const [refreshToken, setRefreshToken] = useState(0);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
+    // The Ethereum wallet derived from the seed: one instance, shared by the wallet card and the deposit form.
+    const eth = useEthAccount();
+    const refreshEth = eth.refresh;
+
     const handleRefresh = useCallback(async () => {
         setIsRefreshing(true);
         setRefreshToken(t => t + 1);
         try {
-            await refreshBalance();
+            await Promise.all([refreshBalance(), refreshEth()]);
         } finally {
             setIsRefreshing(false);
         }
-    }, [refreshBalance]);
+    }, [refreshBalance, refreshEth]);
 
     const usdcBalanceAmount =
         balance.find(b => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)?.amount ?? "0";
@@ -149,7 +154,7 @@ const Wallet: React.FC = () => {
             <div className={styles.inner}>
                 <div className={styles.header}>
                     <h1 className={styles.pageTitle}>Wallet</h1>
-                    <p className={styles.pageSubtitle}>Your on-chain USDC balance. Deposit from your Web3 wallet, withdraw any time.</p>
+                    <p className={styles.pageSubtitle}>Your Block52 and Ethereum wallets. Move USDC into Block52 from either, withdraw any time.</p>
                 </div>
 
                 {existingAddress && (
@@ -157,6 +162,7 @@ const Wallet: React.FC = () => {
                         <AvailableCard
                             usdcBalanceMicro={usdcBalanceAmount}
                             address={existingAddress}
+                            eth={eth}
                             web3Address={web3Address === undefined ? null : web3Address}
                             isWeb3Connected={isWeb3Connected}
                             tab={walletTab}
@@ -170,6 +176,7 @@ const Wallet: React.FC = () => {
                         <DepositWithdrawPanel
                             tab={walletTab}
                             cosmosAddress={existingAddress}
+                            eth={eth}
                             usdcBalanceMicro={usdcBalanceAmount}
                             onBalanceRefresh={refreshBalance}
                         />

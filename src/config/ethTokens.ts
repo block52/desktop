@@ -1,4 +1,5 @@
 import { ETH_USDC_ADDRESS, ETH_USDT_ADDRESS, ETH_WBTC_ADDRESS } from "./constants";
+import type { EthBalances } from "../wallet/types";
 
 export type EthAssetSymbol = "ETH" | "USDC" | "USDT" | "wBTC";
 
@@ -34,4 +35,34 @@ export function parseUnits(text: string, decimals: number): bigint | null {
     if (fraction.length > decimals) return null;
     const padded = fraction.padEnd(decimals, "0");
     return BigInt(match[1]) * 10n ** BigInt(decimals) + (padded === "" ? 0n : BigInt(padded));
+}
+
+/**
+ * A short form for a glance: at most `maxDecimals` decimals, cut rather than rounded so it never shows more than is
+ * held, and "<0.0001" (for 4 decimals) for a non-zero amount that would otherwise read as 0.
+ */
+export function formatShort(amount: bigint, decimals: number, maxDecimals: number): string {
+    if (amount === 0n) return "0";
+    const [whole, fraction = ""] = formatUnits(amount, decimals).split(".");
+    const cut = fraction.slice(0, maxDecimals).replace(/0+$/, "");
+    if (whole === "0" && cut === "") return `<0.${"0".repeat(Math.max(0, maxDecimals - 1))}1`;
+    return cut === "" ? whole : `${whole}.${cut}`;
+}
+
+const HOLDING_DECIMALS: Record<"ETH" | "USDT" | "wBTC", number> = { ETH: 4, USDT: 2, wBTC: 6 };
+
+/** What the Ethereum wallet holds besides USDC, non-zero amounts only, e.g. ["0.02 ETH", "10 USDT"]. */
+export function otherHoldings(balances: EthBalances): string[] {
+    const amounts: Array<["ETH" | "USDT" | "wBTC", bigint]> = [
+        ["ETH", balances.eth],
+        ["USDT", balances.usdt],
+        ["wBTC", balances.wbtc],
+    ];
+    return amounts
+        .filter(([, amount]) => amount > 0n)
+        .map(([symbol, amount]) => {
+            const asset = ETH_ASSETS.find(entry => entry.symbol === symbol);
+            if (asset === undefined) throw new Error(`Unknown asset ${symbol}`);
+            return `${formatShort(amount, asset.decimals, HOLDING_DECIMALS[symbol])} ${symbol}`;
+        });
 }
