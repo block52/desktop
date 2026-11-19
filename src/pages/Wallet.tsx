@@ -12,6 +12,7 @@ import AvailableCard from "../components/wallet/AvailableCard";
 import ActivityPanel from "../components/wallet/ActivityPanel";
 import DepositWithdrawPanel, { WalletTab } from "../components/wallet/DepositWithdrawPanel";
 import WalletKeysModal from "../components/wallet/WalletKeysModal";
+import ModalErrorBoundary from "../components/modal/ModalErrorBoundary";
 import SeedPhraseGrid from "../components/wallet/SeedPhraseGrid";
 import SendModal from "../components/modal/SendModal";
 import AvatarPickerModal from "../components/modal/AvatarPickerModal";
@@ -318,16 +319,18 @@ const Wallet: React.FC = () => {
             )}
 
             {showKeysModal && existingAddress && (
-                <WalletKeysModal
-                    address={existingAddress}
-                    onClose={() => setShowKeysModal(false)}
-                    onCleared={() => {
-                        setShowKeysModal(false);
-                        setExistingAddress(null);
-                        setNewMnemonic("");
-                        setNewAddress("");
-                    }}
-                />
+                <ModalErrorBoundary onClose={() => setShowKeysModal(false)}>
+                    <WalletKeysModal
+                        address={existingAddress}
+                        onClose={() => setShowKeysModal(false)}
+                        onCleared={() => {
+                            setShowKeysModal(false);
+                            setExistingAddress(null);
+                            setNewMnemonic("");
+                            setNewAddress("");
+                        }}
+                    />
+                </ModalErrorBoundary>
             )}
         </div>
     );
