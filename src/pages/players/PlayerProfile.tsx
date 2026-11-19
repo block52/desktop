@@ -38,7 +38,7 @@ const PlayerProfile: React.FC<{ address: string }> = ({ address }) => {
                   { label: "WTSD", value: scaledPercent(profile.wtsd), note: "Went to showdown" },
                   { label: "Sessions", value: profile.session_count.toLocaleString(), note: `Longest ${profile.longest_session_blocks.toLocaleString()} blocks` },
                   { label: "Biggest pot", value: formatMicroUsd(profile.biggest_pot_won), note: "Won in a single hand" },
-                  { label: "Rake", value: formatMicroUsd(profile.total_rake_contributed), note: `${profile.vip_points.toLocaleString()} VIP points` }
+                  { label: "Rake", value: formatMicroUsd(profile.total_rake_contributed), note: "Contributed in total" }
               ];
 
     return (
@@ -53,17 +53,12 @@ const PlayerProfile: React.FC<{ address: string }> = ({ address }) => {
             <div className={styles.identity}>
                 <div className={`${styles.avatar} ${styles.avatarLg}`}>{playerInitials(address)}</div>
                 <div className={styles.identityText}>
-                    <h1 className={styles.title}>{`${address.slice(0, 10)}…${address.slice(-6)}`}</h1>
+                    <h1 className={styles.title}>Player</h1>
                     <span className={styles.fullAddress}>
                         {address}
                         <CopyButton text={address} message="Address copied" title="Copy address" />
                     </span>
                 </div>
-                {profile !== null && (
-                    <span className={styles.vip}>
-                        {profile.vip_tier} · {profile.rakeback_pct}% rakeback
-                    </span>
-                )}
             </div>
 
             {isLoading && <p className={styles.state}>Loading player…</p>}
