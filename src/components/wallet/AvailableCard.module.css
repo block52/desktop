@@ -8,19 +8,27 @@
 .cardHead {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .headAddress {
     font-family: var(--mono);
-    font-size: 11.5px;
+    font-size: 11px;
     color: rgb(148, 163, 184);
+    /* The full address: break it rather than cut it when the card is narrow. */
+    overflow-wrap: anywhere;
+    text-align: right;
+    min-width: 0;
 }
 
 .headRight {
     display: inline-flex;
     align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 8px;
+    min-width: 0;
 }
 
 .iconButton {

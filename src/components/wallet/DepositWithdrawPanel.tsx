@@ -477,7 +477,7 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
                         <div className={`search-field ${styles.addressField}`}>
                             {isWeb3Connected && web3Address ? (
                                 <span className={styles.addressText}>
-                                    {web3Address.slice(0, 6)}…{web3Address.slice(-4)} (connected wallet)
+                                    {web3Address} (connected wallet)
                                 </span>
                             ) : (
                                 <span className={styles.addressText}>Connect your Web3 wallet to receive the withdrawal</span>
@@ -520,7 +520,7 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
                             <div className={styles.balanceRow}>
                                 <span className={styles.balanceLabel}>To</span>
                                 <span className={styles.monoHash}>
-                                    {web3Address.slice(0, 10)}…{web3Address.slice(-8)}
+                                    {web3Address}
                                 </span>
                             </div>
                         )}
@@ -561,7 +561,7 @@ const WithdrawCard: React.FC<{ usdcBalanceMicro: string; onDone: () => Promise<v
                     <div className={styles.balanceRow}>
                         <span className={styles.balanceLabel}>To</span>
                         <span className={styles.monoHash}>
-                            {withdrawalInfo.baseAddress.slice(0, 10)}…{withdrawalInfo.baseAddress.slice(-8)}
+                            {withdrawalInfo.baseAddress}
                         </span>
                     </div>
                     <button className={`btn-glow shimmer-hover ${styles.primaryButton}`} onClick={handleCompleteOnEthereum}>

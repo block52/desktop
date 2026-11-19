@@ -51,7 +51,7 @@ describe("ActivityPanel", () => {
         expect(screen.getByText("Withdrawal")).toBeTruthy();
         expect(screen.getByText("-$5.00")).toBeTruthy();
         expect(screen.getByText("COMPLETED")).toBeTruthy();
-        expect(screen.getByText(/To 0x4f2a…/)).toBeTruthy();
+        expect(screen.getByText(/To 0x4f2a9C1e7b3D58aE06f1c29B7d4E8a35F0c6b91D/)).toBeTruthy();
     });
 
     it("lists withdrawals still to complete apart from the history", () => {

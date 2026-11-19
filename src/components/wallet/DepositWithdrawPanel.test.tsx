@@ -111,7 +111,7 @@ describe("DepositWithdrawPanel", () => {
 
         expect(screen.getByText("Amount")).toBeTruthy();
         expect(screen.getByText("To address on Ethereum")).toBeTruthy();
-        expect(screen.getByText(/0x4f2a…b91D \(connected wallet\)/)).toBeTruthy();
+        expect(screen.getByText(/0x4f2a9C1e7b3D58aE06f1c29B7d4E8a35F0c6b91D \(connected wallet\)/)).toBeTruthy();
         expect(screen.getByText("Bridge fee")).toBeTruthy();
         expect(screen.getByRole("button", { name: "Withdraw" })).toBeTruthy();
     });

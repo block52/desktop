@@ -50,7 +50,7 @@ Known intentional divergences — do not "fix" these when comparing:
 - **Nodes**: app manages RPC network endpoints; mock lists validators
 - **Lobby**: adds a Mine tab (tables you created, marked by an accent bar and "by you"), per-row Playing / Waiting / Finished status badges, a creator line instead of the small id, newest-first order, and 15/30/50-per-page pagination
 - **Create table**: web-parity form (game type, name validation, blind/buy-in presets, calculated range, creation-fee preview) — the mock's dialog is simpler
-- **Wallet**: refresh button, copyable address, and a transfers + withdrawals activity feed (the mock shows withdrawals only)
+- **Wallet**: refresh button, copyable address, full (never shortened) addresses throughout, and a transfers + withdrawals activity feed (the mock shows withdrawals only)
 - **Block explorer**: shared pagination (15/30/50) on every tab
 - **Dashboard**: the hero is a slider (live featured Sit & Go, then the next scheduled tournaments from the web repo's `sng-schedule.json`; Register opens the link in the system browser, https only); "Your last session" and My hands are real indexer data, fetched when the page opens (My hands falls back to the wallet's table sessions when the indexer has no hands attributed to it)
 - **Table**: ported from the web app rather than the mock — web card/chip art, win and turn ripples, seat banner (last action, turn clock, WINS / place), Modern / Classic / Nouns themes, Sit & Go strip (blind level, next blinds, prizes), play settings menu (auto fold / muck / pre-check / sounds), pre-select check, sit-out boxes, add chips, leave confirmation, Sit & Go prize claim, auto-reconnect banner, live hand strength, and action / turn sounds

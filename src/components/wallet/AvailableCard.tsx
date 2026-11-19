@@ -36,15 +36,12 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
     onRefresh,
     isRefreshing
 }) => {
-    const shortAddress = `${address.slice(0, 3)}…${address.slice(-4)}`;
-    const web3Short = web3Address ? `${web3Address.slice(0, 6)}…${web3Address.slice(-4)}` : "";
-
     return (
         <div className={`pane-lite ${styles.card}`}>
             <div className={styles.cardHead}>
                 <span className="section-label">Available</span>
                 <span className={styles.headRight}>
-                    <span className={styles.headAddress}>{shortAddress}</span>
+                    <span className={styles.headAddress}>{address}</span>
                     <CopyButton text={address} message="Address copied" title="Copy address" />
                     <button
                         className={styles.iconButton}
@@ -122,7 +119,7 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
                     <div className={styles.web3Info}>
                         <span className="section-label">Connected Web3 wallet</span>
                         <span className={styles.web3Address} title={web3Address}>
-                            {web3Short}
+                            {web3Address}
                             <CopyButton text={web3Address} message="Address copied" title="Copy Web3 address" />
                         </span>
                     </div>

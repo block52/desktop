@@ -76,7 +76,7 @@ const CompleteWithdrawalButton: React.FC<CompleteWithdrawalButtonProps> = ({ ite
     if (wrongWallet) {
         return (
             <span className={styles.note}>
-                Connect {item.toAddress.slice(0, 6)}…{item.toAddress.slice(-4)} to complete this withdrawal.
+                Connect {item.toAddress} to complete this withdrawal.
             </span>
         );
     }

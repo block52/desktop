@@ -182,7 +182,7 @@ const Wallet: React.FC = () => {
                         <p className={styles.cardDesc}>
                             {onChainAvatar === null
                                 ? "Show one of your NFTs on your seat at the tables."
-                                : `Registered: ${onChainAvatar.contractAddress.slice(0, 8)}…${onChainAvatar.contractAddress.slice(-4)} #${onChainAvatar.tokenId}`}
+                                : `Registered: ${onChainAvatar.contractAddress} #${onChainAvatar.tokenId}`}
                         </p>
                         <button type="button" className={`btn-ghost ${styles.ghostAction}`} onClick={() => setShowAvatarPicker(true)}>
                             {onChainAvatar === null ? "Choose NFT avatar" : "Change NFT avatar"}
