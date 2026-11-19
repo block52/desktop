@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes, scrypt } from "node:cryp
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { VaultStatus } from "./types";
+import type { PgpTool } from "./pgp";
 
 /** The OS keychain (Electron `safeStorage`), injected so the vault can be tested without Electron. */
 export interface OsKeyStore {
@@ -27,6 +28,8 @@ interface VaultFile {
     passwordKey: (Sealed & { salt: string }) | null;
     touchId: boolean;
     autoLockMinutes: number;
+    /** The vault key, PGP-encrypted to the user's public key. Opened by their own gpg, so no secret of theirs is stored. */
+    pgp?: { fingerprint: string; armored: string } | null;
 }
 
 interface VaultOptions {
@@ -35,6 +38,8 @@ interface VaultOptions {
     /** scrypt cost; tests lower it. */
     scryptCost?: number;
     now?: () => number;
+    /** Required to use a PGP key. */
+    pgp?: PgpTool;
 }
 
 const VAULT_KEY_BYTES = 32;
@@ -84,6 +89,7 @@ export class WalletVault {
     private readonly osKeys: OsKeyStore;
     private readonly cost: number;
     private readonly now: () => number;
+    private readonly pgp: PgpTool | undefined;
     private file: VaultFile | null = null;
     private loaded = false;
     private vaultKey: Buffer | null = null;
@@ -95,12 +101,13 @@ export class WalletVault {
         this.osKeys = options.osKeys;
         this.cost = options.scryptCost ?? SCRYPT_COST;
         this.now = options.now ?? Date.now;
+        this.pgp = options.pgp;
     }
 
     async status(): Promise<VaultStatus> {
         const file = await this.read();
         if (file === null) {
-            return { exists: false, locked: false, hasPassword: false, touchIdEnabled: false, autoLockMinutes: DEFAULT_AUTO_LOCK_MINUTES, osProtected: this.osKeys.isSecure() };
+            return { exists: false, locked: false, hasPassword: false, touchIdEnabled: false, autoLockMinutes: DEFAULT_AUTO_LOCK_MINUTES, pgpFingerprint: null, osProtected: this.osKeys.isSecure() };
         }
         return {
             exists: true,
@@ -108,6 +115,7 @@ export class WalletVault {
             hasPassword: file.passwordKey !== null,
             touchIdEnabled: file.touchId,
             autoLockMinutes: file.autoLockMinutes,
+            pgpFingerprint: file.pgp?.fingerprint ?? null,
             osProtected: this.osKeys.isSecure(),
         };
     }
@@ -115,7 +123,7 @@ export class WalletVault {
     /** A vault without a password opens with the OS keychain alone, so it is unlocked as soon as the app starts. */
     async openWithKeychainIfPasswordless(): Promise<void> {
         const file = await this.read();
-        if (file === null || file.passwordKey !== null || file.osKey === null || this.vaultKey !== null) return;
+        if (file === null || file.passwordKey !== null || file.osKey === null || this.vaultKey !== null) return; // PGP-only vaults have no keychain copy
         this.vaultKey = this.unsealOsKey(file.osKey);
     }
 
@@ -132,6 +140,41 @@ export class WalletVault {
         if (key === null) return false;
         this.vaultKey = key;
         return true;
+    }
+
+    /** Opens the vault with the user's own gpg. The key it returns must open the seed, or the wallet stays locked. */
+    async unlockWithPgp(): Promise<boolean> {
+        const file = await this.read();
+        const tool = this.requirePgpTool();
+        if (file === null || file.pgp === undefined || file.pgp === null) return false;
+        const key = Buffer.from((await tool.decrypt(file.pgp.armored)).trim(), "hex");
+        if (key.length !== VAULT_KEY_BYTES) return false;
+        try {
+            open(key, file.seed);
+        } catch {
+            return false;
+        }
+        this.vaultKey = key;
+        return true;
+    }
+
+    /**
+     * Lets this PGP public key open the wallet as well. With no password it is the only way in, so the keychain
+     * copy of the key is dropped, as it is when a password is set.
+     */
+    async setPgpKey(publicKey: string): Promise<void> {
+        const tool = this.requirePgpTool();
+        const file = await this.requireFile();
+        const key = this.requireKey();
+        const pgp = await tool.encryptTo(publicKey, key.toString("hex"));
+        await this.write({ ...file, pgp, osKey: file.passwordKey === null ? null : file.osKey });
+    }
+
+    async removePgpKey(): Promise<void> {
+        const file = await this.requireFile();
+        const key = this.requireKey();
+        // A wallet with no password goes back to the keychain, so something still opens it.
+        await this.write({ ...file, pgp: null, osKey: file.passwordKey === null ? this.sealOsKey(key) : file.osKey });
     }
 
     /** Checks the password without changing whether the vault is locked. */
@@ -186,7 +229,8 @@ export class WalletVault {
         if (!(await this.verifyPassword(current))) throw new Error("Current password is incorrect.");
         const file = await this.requireFile();
         const key = this.requireKey();
-        await this.write({ ...file, passwordKey: null, touchId: false, osKey: this.sealOsKey(key) });
+        // With a PGP key set, that key stays the way in; otherwise the keychain takes over.
+        await this.write({ ...file, passwordKey: null, touchId: false, osKey: file.pgp ? null : this.sealOsKey(key) });
     }
 
     async setTouchId(enabled: boolean): Promise<void> {
@@ -250,6 +294,11 @@ export class WalletVault {
         const key = Buffer.from(this.osKeys.decrypt(Buffer.from(sealed, "base64")), "hex");
         if (key.length !== VAULT_KEY_BYTES) throw new Error("The wallet key could not be read from the OS keychain.");
         return key;
+    }
+
+    private requirePgpTool(): PgpTool {
+        if (this.pgp === undefined) throw new Error("PGP is not available.");
+        return this.pgp;
     }
 
     private requireKey(): Buffer {

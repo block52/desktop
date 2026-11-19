@@ -6,7 +6,7 @@ interface WalletSecurityPanelProps {
     bridge: WalletBridge;
 }
 
-type Editing = "none" | "set" | "change" | "remove";
+type Editing = "none" | "set" | "change" | "remove" | "pgp";
 
 const AUTO_LOCK_OPTIONS = [
     { minutes: 5, label: "5 minutes" },
@@ -22,6 +22,7 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
     const [current, setCurrent] = useState("");
     const [next, setNext] = useState("");
     const [confirm, setConfirm] = useState("");
+    const [pgpKey, setPgpKey] = useState("");
     const [error, setError] = useState("");
     const [isBusy, setIsBusy] = useState(false);
 
@@ -36,6 +37,7 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
         setCurrent("");
         setNext("");
         setConfirm("");
+        setPgpKey("");
         setError("");
     };
 
@@ -54,6 +56,7 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
     };
 
     const submitForm = () => {
+        if (editing === "pgp") return run(() => bridge.setPgpKey(pgpKey), true);
         if (editing === "remove") return run(() => bridge.removePassword(current), true);
         if (next !== confirm) {
             setError("The two passwords do not match.");
@@ -64,6 +67,9 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
     };
 
     if (status === null || !status.exists) return null;
+
+    // Only a real string counts as a key: a status from a main process that predates PGP has no such field.
+    const pgpFingerprint = typeof status.pgpFingerprint === "string" ? status.pgpFingerprint : null;
 
     return (
         <div className={styles.field}>
@@ -89,12 +95,33 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
                             <button className={`btn-ghost ${styles.ghostAction}`} onClick={() => setEditing("remove")}>
                                 Remove password
                             </button>
-                            <button className={`btn-ghost ${styles.ghostAction}`} onClick={() => void bridge.lock()}>
-                                Lock now
-                            </button>
                         </>
                     )}
+                    {status.pgpAvailable && pgpFingerprint === null && (
+                        <button className={`btn-ghost ${styles.ghostAction}`} onClick={() => setEditing("pgp")}>
+                            Add PGP key
+                        </button>
+                    )}
+                    {pgpFingerprint !== null && (
+                        <button className={`btn-ghost ${styles.ghostAction}`} disabled={isBusy} onClick={() => void run(() => bridge.removePgpKey(), false)}>
+                            Remove PGP key
+                        </button>
+                    )}
+                    {(status.hasPassword || pgpFingerprint !== null) && (
+                        <button className={`btn-ghost ${styles.ghostAction}`} onClick={() => void bridge.lock()}>
+                            Lock now
+                        </button>
+                    )}
                 </div>
+            )}
+            {editing === "none" && pgpFingerprint !== null && (
+                <p className={styles.noteText}>
+                    PGP key {pgpFingerprint.match(/.{1,4}/g)?.join(" ")} can unlock this wallet using your own gpg
+                    {status.hasPassword ? ", as well as the password." : ", and is the only way in."}
+                </p>
+            )}
+            {editing === "none" && !status.pgpAvailable && (
+                <p className={styles.noteText}>Install GnuPG (gpg) to protect this wallet with a PGP key.</p>
             )}
 
             {editing !== "none" && (
@@ -105,7 +132,23 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
                         void submitForm();
                     }}
                 >
-                    {editing !== "set" && (
+                    {editing === "pgp" && (
+                        <>
+                            <textarea
+                                className={styles.textInput}
+                                rows={8}
+                                spellCheck={false}
+                                placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----"
+                                value={pgpKey}
+                                onChange={event => setPgpKey(event.target.value)}
+                            />
+                            <p className={styles.noteText}>
+                                Paste your public key. The wallet key is encrypted to it; unlocking uses your own gpg, so your private key and passphrase
+                                never enter this app. Keep your password or seed phrase backup: if you lose the PGP private key it cannot be recovered.
+                            </p>
+                        </>
+                    )}
+                    {editing !== "set" && editing !== "pgp" && (
                         <input
                             type="password"
                             className={styles.textInput}
@@ -115,7 +158,7 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
                             onChange={event => setCurrent(event.target.value)}
                         />
                     )}
-                    {editing !== "remove" && (
+                    {editing !== "remove" && editing !== "pgp" && (
                         <>
                             <input
                                 type="password"
@@ -141,7 +184,7 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
                     {error !== "" && <span className={styles.errorText}>{error}</span>}
                     <div className={styles.fieldRow}>
                         <button type="submit" className={`btn-ghost ${styles.ghostAction}`} disabled={isBusy}>
-                            {editing === "remove" ? "Remove password" : "Save password"}
+                            {editing === "remove" ? "Remove password" : editing === "pgp" ? "Save PGP key" : "Save password"}
                         </button>
                         <button type="button" className={`btn-ghost ${styles.ghostAction}`} onClick={closeForm}>
                             Cancel
@@ -152,7 +195,7 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
 
             {editing === "none" && error !== "" && <span className={styles.errorText}>{error}</span>}
 
-            {status.hasPassword && editing === "none" && (
+            {(status.hasPassword || pgpFingerprint !== null) && editing === "none" && (
                 <>
                     <label className={styles.optionRow}>
                         <span>Auto-lock after</span>
@@ -169,7 +212,7 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
                             ))}
                         </select>
                     </label>
-                    {status.touchIdAvailable && (
+                    {status.touchIdAvailable && status.hasPassword && (
                         <label className={styles.optionRow}>
                             <span>Unlock with Touch ID</span>
                             <input

@@ -14,6 +14,8 @@ const STATUS: WalletStatus = {
     hasPassword: false,
     touchIdEnabled: false,
     touchIdAvailable: false,
+        pgpAvailable: false,
+        pgpFingerprint: null,
     autoLockMinutes: 15,
     osProtected: true,
 };

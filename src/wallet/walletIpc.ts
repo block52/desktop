@@ -4,6 +4,7 @@ import path from "node:path";
 import { WalletVault } from "./vault";
 import { WalletSigner } from "./signer";
 import { WalletSidecar } from "./goSidecar";
+import { createGpgTool } from "./pgp";
 import type { SignerNetwork, WalletCredential, WalletStatus } from "./types";
 
 const MINUTE_MS = 60_000;
@@ -35,9 +36,15 @@ function osKeyStore() {
     };
 }
 
+/** Locking only means something when something other than the OS keychain is needed to reopen. */
+function isLockProtected(status: { hasPassword: boolean; pgpFingerprint: string | null }): boolean {
+    return status.hasPassword || status.pgpFingerprint !== null;
+}
+
 function isCredential(value: unknown): value is WalletCredential {
     if (typeof value !== "object" || value === null) return false;
     if ("touchId" in value) return value.touchId === true;
+    if ("pgp" in value) return value.pgp === true;
     return "password" in value && typeof value.password === "string";
 }
 
@@ -46,7 +53,9 @@ function isCredential(value: unknown): value is WalletCredential {
  * here; Touch ID and the password checks run on this side.
  */
 export function registerWalletIpc(): { lockWallet: () => void } {
-    const vault = new WalletVault({ filePath: path.join(app.getPath("userData"), "wallet-vault.json"), osKeys: osKeyStore() });
+    const pgp = createGpgTool();
+    let pgpAvailable: boolean | null = null;
+    const vault = new WalletVault({ filePath: path.join(app.getPath("userData"), "wallet-vault.json"), osKeys: osKeyStore(), pgp });
     let autoLockTimer: NodeJS.Timeout | null = null;
     let revealGrantedUntil = 0;
 
@@ -74,7 +83,10 @@ export function registerWalletIpc(): { lockWallet: () => void } {
         return sender !== null && event.senderFrame === event.sender.mainFrame;
     };
 
-    const status = async (): Promise<WalletStatus> => ({ ...(await vault.status()), touchIdAvailable: touchIdAvailable() });
+    const status = async (): Promise<WalletStatus> => {
+        pgpAvailable ??= await pgp.isAvailable();
+        return { ...(await vault.status()), touchIdAvailable: touchIdAvailable(), pgpAvailable };
+    };
 
     const lockNow = () => {
         vault.lock();
@@ -89,7 +101,7 @@ export function registerWalletIpc(): { lockWallet: () => void } {
         if (autoLockTimer !== null) clearTimeout(autoLockTimer);
         autoLockTimer = null;
         const current = await vault.status();
-        if (!current.exists || current.locked || !current.hasPassword || current.autoLockMinutes === 0) return;
+        if (!current.exists || current.locked || !isLockProtected(current) || current.autoLockMinutes === 0) return;
         autoLockTimer = setTimeout(lockNow, current.autoLockMinutes * MINUTE_MS);
     };
 
@@ -107,8 +119,10 @@ export function registerWalletIpc(): { lockWallet: () => void } {
 
     handle("wallet:unlock", async (credential: unknown) => {
         if (!isCredential(credential)) return false;
-        const unlocked =
-            "password" in credential ? await vault.unlockWithPassword(credential.password) : (await confirmTouchId("Unlock your Block52 wallet")) && (await vault.unlockWithKeychain());
+        let unlocked: boolean;
+        if ("password" in credential) unlocked = await vault.unlockWithPassword(credential.password);
+        else if ("pgp" in credential) unlocked = await vault.unlockWithPgp();
+        else unlocked = (await confirmTouchId("Unlock your Block52 wallet")) && (await vault.unlockWithKeychain());
         if (unlocked) await armAutoLock();
         return unlocked;
     });
@@ -230,6 +244,17 @@ export function registerWalletIpc(): { lockWallet: () => void } {
         await armAutoLock();
     });
 
+    handle("wallet:set-pgp-key", async (publicKey: unknown) => {
+        if (typeof publicKey !== "string") throw new Error("Invalid key.");
+        await vault.setPgpKey(publicKey.trim());
+        await armAutoLock();
+    });
+
+    handle("wallet:remove-pgp-key", async () => {
+        await vault.removePgpKey();
+        await armAutoLock();
+    });
+
     handle("wallet:set-touch-id", async (enabled: unknown) => {
         if (typeof enabled !== "boolean") throw new Error("Invalid value.");
         if (enabled && !touchIdAvailable()) throw new Error("Touch ID is not available on this Mac.");
@@ -248,7 +273,7 @@ export function registerWalletIpc(): { lockWallet: () => void } {
 
     // Lock when the screen locks or the machine sleeps. A wallet without a password has nothing to ask for, so it stays open.
     const lockIfProtected = async () => {
-        if ((await vault.status()).hasPassword) lockNow();
+        if (isLockProtected(await vault.status())) lockNow();
     };
     powerMonitor.on("lock-screen", () => void lockIfProtected());
     powerMonitor.on("suspend", () => void lockIfProtected());
