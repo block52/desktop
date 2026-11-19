@@ -82,13 +82,6 @@ const Players: React.FC = () => {
                     <button type="button" className={`section-label ${styles.sortButton}`} onClick={() => toggleSort("total_hands")}>
                         Hands{arrow("total_hands")}
                     </button>
-                    <button
-                        type="button"
-                        className={`section-label ${styles.sortButton} ${styles.hideNarrow}`}
-                        onClick={() => toggleSort("total_rake_contributed")}
-                    >
-                        Rake{arrow("total_rake_contributed")}
-                    </button>
                     <button type="button" className={`section-label ${styles.sortButton}`} onClick={() => toggleSort("net_profit")}>
                         Net{arrow("net_profit")}
                     </button>
@@ -122,7 +115,6 @@ const Players: React.FC = () => {
                                     </div>
                                 </div>
                                 <span className={styles.num}>{player.total_hands.toLocaleString()}</span>
-                                <span className={`${styles.num} ${styles.hideNarrow}`}>{formatMicroUsd(player.total_rake_contributed)}</span>
                                 <span className={`${styles.net} ${player.net_profit >= 0 ? styles.pos : styles.neg}`}>
                                     {player.net_profit > 0 ? "+" : ""}
                                     {formatMicroUsd(player.net_profit)}

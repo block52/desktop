@@ -76,9 +76,6 @@ const PlayersTab: React.FC<PlayersTabProps> = ({ onOpenPlayer }) => {
                     <span className={`${styles.headCell} ${styles.numHead}`} onClick={() => toggleSort("net_profit")}>
                         Net{arrow("net_profit")}
                     </span>
-                    <span className={`${styles.headCell} ${styles.numHead} ${styles.hideNarrow}`} onClick={() => toggleSort("total_rake_contributed")}>
-                        Rake{arrow("total_rake_contributed")}
-                    </span>
                 </div>
 
                 {isLoading && <p className={styles.state}>Loading players…</p>}
@@ -105,9 +102,6 @@ const PlayersTab: React.FC<PlayersTabProps> = ({ onOpenPlayer }) => {
                             <span className={styles.num} style={{ minWidth: 72 }}>{player.total_hands.toLocaleString()}</span>
                             <span className={`${styles.num} ${player.net_profit >= 0 ? styles.won : styles.lost}`} style={{ minWidth: 72 }}>
                                 {formatMicroUsd(player.net_profit)}
-                            </span>
-                            <span className={`${styles.num} ${styles.hideNarrow}`} style={{ minWidth: 72 }}>
-                                {formatMicroUsd(player.total_rake_contributed)}
                             </span>
                         </div>
                     ))}
