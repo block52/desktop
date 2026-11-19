@@ -26,7 +26,7 @@ const PendingWithdrawals: React.FC<PendingWithdrawalsProps> = ({ items, onComple
                     <div className={styles.info}>
                         <span className={styles.amount}>${(Number(item.amountMicro) / 1_000_000).toFixed(2)}</span>
                         <span className={styles.meta}>
-                            To {item.toAddress.slice(0, 6)}…{item.toAddress.slice(-4)}
+                            To {item.toAddress}
                             {item.createdAt !== null && ` · ${new Date(item.createdAt * 1000).toLocaleString()}`}
                         </span>
                     </div>

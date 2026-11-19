@@ -5,7 +5,7 @@
 .gridHeader,
 .row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) 110px 100px;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 2.4fr) 110px 100px;
     gap: 12px;
     align-items: center;
 }
@@ -54,9 +54,8 @@
     font-family: var(--mono);
     font-size: 12px;
     color: rgb(148, 163, 184);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    /* Full addresses: wrap them instead of cutting them off. */
+    overflow-wrap: anywhere;
     min-width: 0;
 }
 

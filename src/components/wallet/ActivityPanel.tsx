@@ -16,10 +16,6 @@ const PILL: Record<WithdrawalStatus, { text: string; className: string }> = {
     pending: { text: "PENDING", className: styles.pillPending }
 };
 
-function shortAddr(addr: string): string {
-    return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
-
 function formatAmount(micro: string): string {
     return `-$${(Number(micro) / 1_000_000).toFixed(2)}`;
 }
@@ -39,7 +35,7 @@ const TransferRow: React.FC<{ transfer: WalletTransfer }> = ({ transfer }) => {
                 </span>
             </div>
             <span className={styles.detailCell}>
-                {incoming ? "From" : "To"} {shortAddr(transfer.counterparty)}
+                {incoming ? "From" : "To"} {transfer.counterparty}
             </span>
             <span className={`${styles.pill} ${transfer.success ? styles.pillCompleted : styles.pillPending}`}>
                 {transfer.success ? "CONFIRMED" : "FAILED"}
@@ -62,7 +58,7 @@ const ActivityRow: React.FC<{ item: WithdrawalActivityItem }> = ({ item }) => {
                 </span>
             </div>
             <span className={styles.detailCell}>
-                To {shortAddr(item.toAddress)} · nonce {item.nonce.slice(0, 6)}
+                To {item.toAddress} · nonce {item.nonce.slice(0, 6)}
             </span>
             <span className={`${styles.pill} ${pill.className}`}>{pill.text}</span>
             <span className={`${styles.amountCell} ${item.status === "pending" ? styles.amountMuted : ""}`}>
