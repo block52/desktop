@@ -40,7 +40,7 @@ const ETHEREUM_RPC = ["https://eth.merkle.io"];
 
 const LOCAL_DEVELOPMENT = ["ws://localhost:*", "wss://localhost:*", "http://localhost:*"];
 
-/** Hosts read from build-time settings (indexer, payment proxy, schedule, NFT sources). */
+/** Hosts read from build-time settings (indexer, schedule, NFT sources). */
 export function hostsFromUrls(urls: Array<string | undefined>): string[] {
     const hosts: string[] = [];
     for (const value of urls) {

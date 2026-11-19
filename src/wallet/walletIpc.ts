@@ -5,6 +5,8 @@ import { WalletVault } from "./vault";
 import { WalletSigner } from "./signer";
 import { WalletSidecar } from "./goSidecar";
 import { createGpgTool } from "./pgp";
+import { EthWallet } from "./ethWallet";
+import { createEthChain } from "./ethChain";
 import type { SignerNetwork, WalletCredential, WalletStatus } from "./types";
 
 const MINUTE_MS = 60_000;
@@ -34,6 +36,15 @@ function osKeyStore() {
         encrypt: (plain: string) => safeStorage.encryptString(plain),
         decrypt: (cipher: Buffer) => safeStorage.decryptString(cipher),
     };
+}
+
+/**
+ * The Ethereum node for the deposit address: VITE_MAINNET_RPC_URL when set, else a public node. (The page's own reads use
+ * eth.merkle.io, which blocks requests that do not come from a browser, so the main process cannot use it.)
+ */
+function ethereumRpcUrl(): string {
+    const configured: unknown = import.meta.env.VITE_MAINNET_RPC_URL;
+    return typeof configured === "string" && configured !== "" ? configured : "https://ethereum-rpc.publicnode.com";
 }
 
 /** Locking only means something when something other than the OS keychain is needed to reopen. */
@@ -76,6 +87,13 @@ export function registerWalletIpc(): { lockWallet: () => void } {
         sendTokensInGo: goSignerOn
             ? async request => (await sidecar.broadcast({ ...request, kind: "send", mnemonic: await requireMnemonic(), gameId: "" })).txHash
             : undefined,
+    });
+
+    const ethWallet = new EthWallet({
+        readMnemonic: () => vault.getMnemonic(),
+        confirm: confirmInNativeDialog,
+        chain: createEthChain(ethereumRpcUrl()),
+        cosmosAddress: () => signer.address(),
     });
 
     const trusted = (event: IpcMainEvent | IpcMainInvokeEvent): boolean => {
@@ -219,6 +237,12 @@ export function registerWalletIpc(): { lockWallet: () => void } {
             Array.isArray(args) ? args : []
         );
     });
+
+    handle("wallet:eth-address", () => ethWallet.address());
+
+    handle("wallet:eth-balances", () => ethWallet.balances());
+
+    handle("wallet:eth-deposit", (token: unknown, amount: unknown) => ethWallet.deposit(token, amount));
 
     handle("wallet:reset-signer", async () => signer.reset());
 

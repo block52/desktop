@@ -18,7 +18,7 @@ import { base64ToHex } from "../../utils/encodingUtils";
 import { fetchWithdrawalSignature } from "../../utils/withdrawalSignature";
 import { withdrawAbi, BRIDGE_ADDRESS } from "../../abis/contractABI";
 import { ETH_CHAIN_ID, ETH_USDC_ADDRESS, ETH_USDT_ADDRESS } from "../../config/constants";
-import CryptoDepositPanel from "../modal/CryptoDepositPanel";
+import EthDepositPanel from "./EthDepositPanel";
 import EtherscanTxLink from "./EtherscanTxLink";
 import WithdrawSteps from "./WithdrawSteps";
 import { SlidingTabs } from "@block52/ui-sdk";
@@ -159,7 +159,7 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
             label="Deposit method"
             options={[
                 { value: "web3", label: "Web3 wallet" },
-                { value: "qr", label: "QR · BTC, ETH, USDT, USDC" }
+                { value: "qr", label: "ETH deposit" }
             ]}
             value={method}
             onChange={setMethod}
@@ -171,7 +171,7 @@ const DepositCard: React.FC<{ cosmosAddress: string; onConfirmed: () => Promise<
             <div className={`pane-lite ${styles.card}`}>
                 <div className={styles.title}>Deposit</div>
                 {methodSwitch}
-                <CryptoDepositPanel cosmosAddress={cosmosAddress} onCompleted={() => void onConfirmed()} />
+                <EthDepositPanel onCompleted={() => void onConfirmed()} />
             </div>
         );
     }
