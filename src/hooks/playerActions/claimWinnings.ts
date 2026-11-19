@@ -2,6 +2,7 @@ import type { TexasHoldemStateDTO } from "@block52/poker-vm-sdk";
 import type { NetworkEndpoints } from "../../context/NetworkContext";
 import { getSigningClient, withMoneyMoverRetry } from "../../utils/cosmos/client";
 import { finishingOrderFromState } from "../../utils/cosmos/settlementTx";
+import { goSignerEnabled, goBroadcast } from "./goSigner";
 
 interface ClaimWinningsResult {
     hash: string;
@@ -43,8 +44,9 @@ export async function claimWinnings(
     }
 
     // Retry once on a sequence mismatch: the record above may still be pending in the mempool.
-    const hash = await withMoneyMoverRetry(network, ({ signingClient: client }) =>
-        client.leaveGame(tableId, finishingOrderFromState(finalState))
-    );
+    const finishingOrder = finishingOrderFromState(finalState);
+    const hash = goSignerEnabled()
+        ? await goBroadcast(network, { kind: "leave", gameId: tableId, finishingOrder })
+        : await withMoneyMoverRetry(network, ({ signingClient: client }) => client.leaveGame(tableId, finishingOrder));
     return { hash, gameId: tableId };
 }

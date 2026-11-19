@@ -49,6 +49,8 @@ export interface BroadcastActionParams {
     data?: string;
     seat?: number;
     buyIn?: number;
+    /** A Sit & Go claim: player addresses, place 1 first, so the chain can work out payouts (leave only). */
+    finishingOrder?: string[];
 }
 
 /** What the preload script exposes to the page. The seed phrase only leaves the main process through `getMnemonic`. */

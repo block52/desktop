@@ -28,7 +28,7 @@ export async function goBroadcast(
     params:
         | { kind: "action"; gameId: string; action: string; amount: bigint; data?: string }
         | { kind: "join"; gameId: string; seat: number; buyIn: bigint }
-        | { kind: "leave"; gameId: string }
+        | { kind: "leave"; gameId: string; finishingOrder?: string[] }
         | { kind: "topUp"; gameId: string; amount: bigint }
 ): Promise<string> {
     const bridge = requireWalletBridge();
@@ -39,7 +39,7 @@ export async function goBroadcast(
               ? { kind: "join", gameId: params.gameId, seat: params.seat, buyIn: microToNumber(params.buyIn) }
               : params.kind === "topUp"
                 ? { kind: "topUp", gameId: params.gameId, amount: microToNumber(params.amount) }
-                : { kind: "leave", gameId: params.gameId };
+                : { kind: "leave", gameId: params.gameId, finishingOrder: params.finishingOrder };
 
     const result = await bridge.broadcastAction(network.grpc, COSMOS_CONSTANTS.CHAIN_ID, payload);
     return result.txHash;

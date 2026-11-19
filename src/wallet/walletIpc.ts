@@ -156,10 +156,9 @@ export function registerWalletIpc(): void {
         return vault.getMnemonic();
     });
 
-    // A game action (performAction / join / leave / topUp) signed and broadcast
-    // in Go as an ordered (account-sequence) transaction — the same on-chain
-    // model as the SDK's performActionSync. Money-moving methods (sendTokens,
-    // initiateWithdrawal) stay on the SDK signer for now.
+    // A game action (performAction / join / leave / topUp) signed and broadcast in Go the way the
+    // SDK does it: actions unordered (performActionSync), join/leave/topUp ordered and confirmed
+    // on-chain. Money-moving methods (sendTokens, initiateWithdrawal) stay on the SDK signer for now.
     handle("wallet:broadcast-action", async (grpc: unknown, chainId: unknown, params: unknown) => {
         if (typeof grpc !== "string" || typeof chainId !== "string") throw new Error("Invalid network.");
         if (typeof params !== "object" || params === null) throw new Error("Invalid action.");
@@ -177,6 +176,7 @@ export function registerWalletIpc(): void {
             data: typeof p.data === "string" ? p.data : undefined,
             seat: typeof p.seat === "number" ? p.seat : undefined,
             buyIn: typeof p.buyIn === "number" ? p.buyIn : undefined,
+            finishingOrder: Array.isArray(p.finishingOrder) && p.finishingOrder.every(entry => typeof entry === "string") ? (p.finishingOrder as string[]) : undefined,
         });
     });
 

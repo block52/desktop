@@ -108,10 +108,11 @@ export class WalletSidecar {
     }
 
     /**
-     * Signs a game action as an ordered (account-sequence) transaction and
-     * broadcasts it over gRPC — the same tx model as the SDK's performActionSync.
-     * Rejects with an Error whose .sequenceMismatch is true for a code-32 so the
-     * caller can run its existing retry.
+     * Signs a transaction and broadcasts it over gRPC the way the SDK does for each kind: a game
+     * `action` is unordered (like performActionSync) and returns once the node accepts it;
+     * `join`, `leave` and `topUp` are ordered, wait until the chain has committed them and reject
+     * with the chain's log if execution fails. A code-32 rejection keeps the node's
+     * "account sequence mismatch" text so the caller's existing retry recognises it.
      */
     async broadcast(params: {
         mnemonic: string;
@@ -124,6 +125,7 @@ export class WalletSidecar {
         data?: string;
         seat?: number;
         buyIn?: number;
+        finishingOrder?: string[];
     }): Promise<{ txHash: string; gameId: string }> {
         return (await this.call("broadcast", params)) as { txHash: string; gameId: string };
     }
