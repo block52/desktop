@@ -1,11 +1,12 @@
-import { app, BrowserWindow, nativeImage, ipcMain, shell, session, protocol, net } from "electron";
+import { app, BrowserWindow, dialog, Menu, nativeImage, ipcMain, shell, session, protocol, net } from "electron";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import started from "electron-squirrel-startup";
 import { APP_ORIGIN, APP_SCHEME, isOwnResource, resolveAppFile } from "./appProtocol";
 import { buildContentSecurityPolicy, hostsFromUrls } from "./csp";
 import { registerWalletIpc } from "./wallet/walletIpc";
-import { registerUpdateIpc } from "./updates/updateIpc";
+import { checkForUpdatesFromMenu, registerUpdateIpc } from "./updates/updateIpc";
+import { buildMenuTemplate } from "./appMenu";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -77,8 +78,32 @@ ipcMain.on("open-external", (_event, url: unknown) => {
 });
 
 app.whenReady().then(() => {
-  registerWalletIpc();
+  const { lockWallet } = registerWalletIpc();
   registerUpdateIpc();
+
+  const targetWindow = () => BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate(
+      buildMenuTemplate({
+        platform: process.platform,
+        appName: app.getName(),
+        isDev: !app.isPackaged,
+        actions: {
+          navigate: (route) => targetWindow()?.webContents.send("menu:navigate", route),
+          lockWallet,
+          checkForUpdates: () => void checkForUpdatesFromMenu(),
+          about: () => {
+            const options = { type: "info" as const, message: app.getName(), detail: `Version ${app.getVersion()}`, buttons: ["OK"] };
+            const parent = targetWindow();
+            void (parent !== undefined ? dialog.showMessageBox(parent, options) : dialog.showMessageBox(options));
+          },
+          openExternal: (url) => {
+            if (isWebUrl(url)) void shell.openExternal(url);
+          },
+        },
+      }),
+    ),
+  );
 
   // Set Content-Security-Policy.
   // Vite's dev server requires 'unsafe-eval' for HMR; production builds do not.

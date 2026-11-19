@@ -8,6 +8,10 @@ declare global {
             openExternal: (url: string) => void;
             platform?: string;
             wallet: WalletBridge;
+            menu?: {
+                /** The window menu asked to open a screen. Returns an unsubscribe function. */
+                onNavigate: (listener: (route: string) => void) => () => void;
+            };
             updates?: {
                 check: () => Promise<UpdateInfo | null>;
                 open: (version: string) => void;

@@ -45,7 +45,7 @@ function isCredential(value: unknown): value is WalletCredential {
  * The wallet lives in the main process. The page asks for it over IPC and can only do what is exposed
  * here; Touch ID and the password checks run on this side.
  */
-export function registerWalletIpc(): void {
+export function registerWalletIpc(): { lockWallet: () => void } {
     const vault = new WalletVault({ filePath: path.join(app.getPath("userData"), "wallet-vault.json"), osKeys: osKeyStore() });
     let autoLockTimer: NodeJS.Timeout | null = null;
     let revealGrantedUntil = 0;
@@ -252,4 +252,6 @@ export function registerWalletIpc(): void {
     };
     powerMonitor.on("lock-screen", () => void lockIfProtected());
     powerMonitor.on("suspend", () => void lockIfProtected());
+
+    return { lockWallet: lockNow };
 }
