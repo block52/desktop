@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { ToastProvider } from "@block52/ui-sdk";
 import type { WalletBridge, WalletStatus } from "../../wallet/types";
@@ -59,7 +59,11 @@ describe("WalletKeysModal", () => {
         const bridge = installBridge();
         renderModal();
 
-        expect(screen.getByDisplayValue("b52walletaddress")).toBeTruthy();
+        expect(screen.getByText("b52walletaddress")).toBeTruthy();
+        // The copy control sits inside the address box, not as a separate "Copy" pill next to it.
+        const addressBox = screen.getByText("b52walletaddress").parentElement as HTMLElement;
+        expect(within(addressBox).getByRole("button", { name: "Copy address" })).toBeTruthy();
+        expect(screen.queryByDisplayValue("b52walletaddress")).toBeNull();
         expect(screen.queryByText("alpha")).toBeNull();
         expect(bridge.revealMnemonic).not.toHaveBeenCalled();
     });
