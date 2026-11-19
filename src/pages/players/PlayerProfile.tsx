@@ -37,8 +37,7 @@ const PlayerProfile: React.FC<{ address: string }> = ({ address }) => {
                   { label: "Aggression", value: (profile.aggression_factor / 100).toFixed(2), note: "Bets + raises / calls" },
                   { label: "WTSD", value: scaledPercent(profile.wtsd), note: "Went to showdown" },
                   { label: "Sessions", value: profile.session_count.toLocaleString(), note: `Longest ${profile.longest_session_blocks.toLocaleString()} blocks` },
-                  { label: "Biggest pot", value: formatMicroUsd(profile.biggest_pot_won), note: "Won in a single hand" },
-                  { label: "Rake", value: formatMicroUsd(profile.total_rake_contributed), note: "Contributed in total" }
+                  { label: "Biggest pot", value: formatMicroUsd(profile.biggest_pot_won), note: "Won in a single hand" }
               ];
 
     return (
