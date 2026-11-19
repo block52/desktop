@@ -1,5 +1,6 @@
 import type { WalletBridge } from "./wallet/types";
 import type { UpdateInfo } from "./updates/updateCheck";
+import type { HandSearchResult } from "./indexer/handSearch";
 
 declare global {
     interface Window {
@@ -15,6 +16,12 @@ declare global {
             updates?: {
                 check: () => Promise<UpdateInfo | null>;
                 open: (version: string) => void;
+            };
+            indexer?: {
+                /** False when this build has no indexer API key, so GraphQL search cannot run. */
+                isSearchAvailable: () => Promise<boolean>;
+                /** Hands whose table id or a player's address contains `text`, through the indexer's GraphQL API. */
+                searchHands: (text: string, limit: number, offset: number) => Promise<HandSearchResult>;
             };
         };
     }

@@ -335,3 +335,47 @@
     border-radius: 2px;
     background: linear-gradient(90deg, hsl(263 83% 58%), hsl(280 75% 62%));
 }
+
+/* All tables: search the indexer by table id or player address. */
+.searchRow {
+    display: flex;
+    gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid hsl(245 22% 17% / 0.6);
+}
+
+.searchInput {
+    flex: 1;
+    min-width: 0;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: hsl(240 38% 5.5%);
+    border: 1px solid hsl(245 22% 17%);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+}
+
+.searchInput:focus {
+    border-color: hsl(263 83% 62% / 0.5);
+}
+
+.searchButton {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: Inter, system-ui, sans-serif;
+    white-space: nowrap;
+}
+
+.searchCount {
+    margin: 0;
+    padding: 10px 18px;
+    font-size: 12px;
+    color: rgb(148, 163, 184);
+    border-bottom: 1px solid hsl(245 22% 17% / 0.6);
+}

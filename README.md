@@ -49,6 +49,7 @@ noted. **They are baked into the shipped bundle, so never put a secret you are n
 |---|---|
 | `VITE_PROJECT_ID` | WalletConnect / Reown project id, needed for the Web3 wallet button |
 | `VITE_INDEXER_URL` | Block52 indexer (defaults to `https://indexer.block52.xyz`) |
+| `VITE_INDEXER_API_KEY` | Indexer GraphQL key for Hand history search; set from the `INDEXER_API_KEY` repo secret in release builds. Empty means no search. Treat it as readable by anyone with the app (read-only, rate-limited) |
 | `VITE_PAYMENT_PROXY_URL` | Crypto deposit proxy (defaults to the Block52 hosted proxy) |
 | `VITE_SNG_SCHEDULE_URL` | Weekly Sit & Go schedule JSON |
 | `VITE_TREASURY_WALLET_ADDRESS` | Treasury wallet address |

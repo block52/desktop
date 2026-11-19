@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useMyHands } from "../../hooks/useMyHands";
 import { useRecentHands } from "../../hooks/useRecentHands";
 import { useGameHands } from "../../hooks/useGameHands";
+import { useHandSearch, useHandSearchAvailable } from "../../hooks/useHandSearch";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import { describeHandOutcome } from "../../utils/handOutcome";
 import { SlidingTabs } from "@block52/ui-sdk";
@@ -38,10 +39,16 @@ const HandHistory: React.FC = () => {
     const mine = useMyHands(scope === "mine" ? address : null);
     const recent = useRecentHands(scope === "all");
     const tableHands = useGameHands(scope === "table" ? tableGameId : null);
+    // All tables: search the indexer by table id or player address (GraphQL), or list the newest hands.
+    const searchAvailable = useHandSearchAvailable();
+    const [searchDraft, setSearchDraft] = useState("");
+    const [searchText, setSearchText] = useState("");
+    const isSearching = scope === "all" && searchText !== "";
+    const found = useHandSearch(isSearching ? searchText : null);
 
     // Open the newest hand of the list by default so the replay isn't empty.
     const firstMine = mine.hands.length > 0 ? mine.hands[0] : null;
-    const firstRecent = recent.hands.length > 0 ? recent.hands[0] : null;
+    const firstRecent = (isSearching ? found : recent).hands[0] ?? null;
     const firstTable = tableHands.hands.length > 0 ? tableHands.hands[0] : null;
     useEffect(() => {
         if (selection !== null) return;
@@ -55,7 +62,12 @@ const HandHistory: React.FC = () => {
         setSelection(null);
     };
 
-    const listed = scope === "table" ? tableHands : recent;
+    const listed = scope === "table" ? tableHands : isSearching ? found : recent;
+
+    const applySearch = (value: string) => {
+        setSearchText(value.trim());
+        setSelection(null);
+    };
 
     const isSelected = (gameId: string, handNumber: number) => selection?.gameId === gameId && selection.handNumber === handNumber;
 
@@ -130,11 +142,42 @@ const HandHistory: React.FC = () => {
                         </>
                     )}
 
+                    {scope === "all" && searchAvailable && (
+                        <form
+                            className={styles.searchRow}
+                            onSubmit={event => {
+                                event.preventDefault();
+                                applySearch(searchDraft);
+                            }}
+                        >
+                            <input
+                                className={styles.searchInput}
+                                aria-label="Search hands"
+                                placeholder="Search by table id or player address"
+                                value={searchDraft}
+                                onChange={event => {
+                                    setSearchDraft(event.target.value);
+                                    if (event.target.value.trim() === "") applySearch("");
+                                }}
+                            />
+                            <button type="submit" className={`btn-ghost ${styles.searchButton}`}>
+                                Search
+                            </button>
+                        </form>
+                    )}
+
                     {(scope === "all" || scope === "table") && (
                         <>
                             {listed.isLoading && listed.hands.length === 0 && <p className={styles.state}>Loading hands…</p>}
                             {listed.error !== "" && <p className={`${styles.state} ${styles.stateError}`}>{listed.error}</p>}
-                            {!listed.isLoading && listed.error === "" && listed.hands.length === 0 && <p className={styles.state}>No indexed hands yet.</p>}
+                            {!listed.isLoading && listed.error === "" && listed.hands.length === 0 && (
+                                <p className={styles.state}>{isSearching ? "No hands match that table id or address." : "No indexed hands yet."}</p>
+                            )}
+                            {isSearching && listed.total > 0 && (
+                                <p className={styles.searchCount}>
+                                    {listed.total.toLocaleString()} {listed.total === 1 ? "hand" : "hands"} match “{searchText}”
+                                </p>
+                            )}
                             {listed.hands.map(hand => (
                                 <div
                                     key={`${hand.game_id}#${hand.hand_number}`}

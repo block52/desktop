@@ -49,6 +49,8 @@ jobs:
     env:
       VITE_PROJECT_ID: ${{ vars.VITE_PROJECT_ID }}
       VITE_INDEXER_URL: ${{ vars.VITE_INDEXER_URL }}
+      # A secret, not a variable: injected into the build for indexer GraphQL search (#49).
+      VITE_INDEXER_API_KEY: ${{ secrets.INDEXER_API_KEY }}
       VITE_PAYMENT_PROXY_URL: ${{ vars.VITE_PAYMENT_PROXY_URL }}
       VITE_SNG_SCHEDULE_URL: ${{ vars.VITE_SNG_SCHEDULE_URL }}
       VITE_TREASURY_WALLET_ADDRESS: ${{ vars.VITE_TREASURY_WALLET_ADDRESS }}
