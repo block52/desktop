@@ -13,7 +13,10 @@ import type { ActionDTO, TexasHoldemStateDTO } from "@block52/poker-vm-sdk";
 export const GAME_STATE_PUBLIC_PATH = "/pokerchain.poker.v1.Query/GameStatePublic";
 
 export function handEndedQuery(gameId: string, handNumber: number): string {
-    if (!/^[A-Za-z0-9]+$/.test(gameId)) throw new Error(`Invalid table id: ${gameId}`);
+    // Tournament tables carry a "-t<N>" suffix (e.g. 0x…-t1), and the chain's hand_ended event uses that
+    // full id — verified on the live node (parent id returns no hands). Allow "-" but keep refusing quotes,
+    // spaces and anything else that could break out of the quoted hand_ended.game_id='…' query.
+    if (!/^[A-Za-z0-9-]+$/.test(gameId)) throw new Error(`Invalid table id: ${gameId}`);
     if (!Number.isInteger(handNumber) || handNumber < 1) throw new Error(`Invalid hand number: ${handNumber}`);
     return `hand_ended.game_id='${gameId}' AND hand_ended.hand_number='${handNumber}'`;
 }
