@@ -7,10 +7,6 @@ import { Pagination, PAGE_SIZES } from "@block52/ui-sdk";
 import { pageInfo } from "@block52/ui-sdk";
 import styles from "./ExplorerTabs.module.css";
 
-function truncate(address: string): string {
-    return `${address.slice(0, 12)}…${address.slice(-8)}`;
-}
-
 interface PlayersTabProps {
     onOpenPlayer: (address: string) => void;
 }
@@ -100,12 +96,11 @@ const PlayersTab: React.FC<PlayersTabProps> = ({ onOpenPlayer }) => {
                         >
                             <div className={styles.grow}>
                                 <span className={styles.addressLine}>
-                                    <span className={styles.primary}>{truncate(player.player_address)}</span>
+                                    <span className={`${styles.primary} ${styles.fullAddress}`}>{player.player_address}</span>
                                     <span onClick={e => e.stopPropagation()}>
                                         <CopyButton text={player.player_address} message="Address copied" title="Copy address" />
                                     </span>
                                 </span>
-                                <span className={styles.secondary}>{player.vip_tier}</span>
                             </div>
                             <span className={styles.num} style={{ minWidth: 72 }}>{player.total_hands.toLocaleString()}</span>
                             <span className={`${styles.num} ${player.net_profit >= 0 ? styles.won : styles.lost}`} style={{ minWidth: 72 }}>

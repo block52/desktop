@@ -109,17 +109,16 @@ const Players: React.FC = () => {
                                 className={`row-hover ${styles.grid} ${styles.row}`}
                                 onClick={() => navigate(`/players/${player.player_address}`)}
                             >
-                                <span className={`${styles.rank} ${rank <= 3 ? styles.rankGold : ""}`}>{rank}</span>
+                                <span className={styles.rank}>{rank}</span>
                                 <div className={styles.who}>
                                     <div className={styles.avatar}>{playerInitials(player.player_address)}</div>
                                     <div className={styles.whoText}>
                                         <span className={styles.addrLine}>
-                                            <span className={styles.addr}>{`${player.player_address.slice(0, 10)}…${player.player_address.slice(-6)}`}</span>
+                                            <span className={styles.addr}>{player.player_address}</span>
                                             <span onClick={e => e.stopPropagation()}>
                                                 <CopyButton text={player.player_address} message="Address copied" title="Copy address" />
                                             </span>
                                         </span>
-                                        <span className={styles.tier}>{player.vip_tier}</span>
                                     </div>
                                 </div>
                                 <span className={styles.num}>{player.total_hands.toLocaleString()}</span>

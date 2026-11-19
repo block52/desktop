@@ -86,7 +86,7 @@
 
 .grid {
     display: grid;
-    grid-template-columns: 40px minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: 40px minmax(0, 3.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
     gap: 12px;
     align-items: center;
     padding: 10px 20px;
@@ -130,10 +130,6 @@
     color: rgb(148, 163, 184);
 }
 
-.rankGold {
-    color: hsl(43 80% 72%);
-}
-
 .who {
     display: flex;
     align-items: center;
@@ -173,11 +169,10 @@
     font-family: var(--mono);
     font-size: 13px;
     font-weight: 500;
-    line-height: 1;
+    line-height: 1.35;
     color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* The full address: wrap it rather than cut it. */
+    overflow-wrap: anywhere;
 }
 
 .addrLine {
@@ -185,13 +180,6 @@
     align-items: center;
     gap: 6px;
     min-width: 0;
-}
-
-.tier {
-    font-size: 11.5px;
-    line-height: 1;
-    text-transform: capitalize;
-    color: rgb(148, 163, 184);
 }
 
 .num {
@@ -278,17 +266,6 @@
     word-break: break-all;
 }
 
-.vip {
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: hsl(43 74% 60% / 0.16);
-    color: hsl(43 80% 72%);
-    border: 1px solid hsl(43 74% 60% / 0.3);
-}
 
 .tiles {
     display: grid;

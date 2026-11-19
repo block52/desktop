@@ -46,6 +46,15 @@
     text-overflow: ellipsis;
 }
 
+/* A full address wraps instead of being cut off. */
+.fullAddress {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+}
+
 .secondary {
     font-size: 11px;
     line-height: 1;
