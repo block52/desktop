@@ -37,6 +37,25 @@ export const SIGNING_METHODS = [
 
 export type SigningMethod = (typeof SIGNING_METHODS)[number];
 
+/** The tokens the Ethereum deposit address can send to the bridge. */
+export const ETH_DEPOSIT_TOKENS = ["USDC", "USDT"] as const;
+
+export type EthDepositToken = (typeof ETH_DEPOSIT_TOKENS)[number];
+
+/** What the Ethereum deposit address holds, in each asset's smallest unit (wei, or 6 or 8 decimals). */
+export interface EthBalances {
+    eth: bigint;
+    usdc: bigint;
+    usdt: bigint;
+    wbtc: bigint;
+}
+
+export interface EthDepositResult {
+    /** Null when the bridge already had enough allowance. */
+    approveHash: string | null;
+    depositHash: string;
+}
+
 export interface SignerNetwork {
     rpc: string;
     rest: string;
@@ -81,6 +100,11 @@ export interface WalletBridge {
     /** Runs one allow-listed SDK signing-client method in the main process. */
     signingCall: (network: SignerNetwork, method: SigningMethod, args: unknown[]) => Promise<unknown>;
     resetSigner: () => Promise<void>;
+    /** The Ethereum address derived from the same seed phrase (m/44'/60'/0'/0/0). */
+    ethAddress: () => Promise<string>;
+    ethBalances: () => Promise<EthBalances>;
+    /** Approves the bridge if needed and deposits to this wallet's own Block52 address, signed in the main process. */
+    ethDeposit: (token: EthDepositToken, amount: bigint) => Promise<EthDepositResult>;
     clear: () => Promise<void>;
     setPassword: (password: string) => Promise<void>;
     changePassword: (current: string, next: string) => Promise<void>;

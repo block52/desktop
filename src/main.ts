@@ -123,7 +123,6 @@ app.whenReady().then(() => {
     isDev,
     extraConnectHosts: hostsFromUrls([
       import.meta.env.VITE_INDEXER_URL,
-      import.meta.env.VITE_PAYMENT_PROXY_URL,
       import.meta.env.VITE_SNG_SCHEDULE_URL,
       import.meta.env.VITE_PROFILE_NFT_INDEXER_URL,
       import.meta.env.VITE_MAINNET_RPC_URL,
