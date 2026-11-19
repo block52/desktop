@@ -1,6 +1,10 @@
-// Renderer-safe player-notes types. The DB module (playerNotesDb.ts) imports
-// node:sqlite and must never reach the renderer bundle, so the shared shapes
-// live here and the DB module re-uses them.
+// Renderer-safe player-notes types + limits. The DB module (playerNotesDb.ts)
+// imports node:sqlite and must never reach the renderer bundle, so the shared
+// shapes and caps live here and the DB module re-uses them.
+
+export const NICKNAME_MAX = 40;
+export const NOTES_MAX = 10_000;
+export const TAG_MAX = 24;
 
 export interface Tag {
     id: number;

@@ -1,17 +1,15 @@
 import { DatabaseSync } from "node:sqlite";
+import { NICKNAME_MAX, NOTES_MAX, TAG_MAX } from "./types";
 import type { PlayerNote, PlayerNotesExport, Tag } from "./types";
 
 export type { PlayerNote, PlayerNotesExport, Tag } from "./types";
+export { NICKNAME_MAX, NOTES_MAX, TAG_MAX } from "./types";
 
 // Local, private player notes (nickname, free text, tags) kept in a SQLite file
 // owned by the Electron main process. Never leaves the machine (issue #63).
 //
 // node:sqlite ships with the Electron runtime's Node (24.21), so there is no
 // native module to rebuild per platform.
-
-export const NICKNAME_MAX = 40;
-export const NOTES_MAX = 10_000;
-export const TAG_MAX = 24;
 
 /** A fixed palette the UI offers for tag colours; stored as a plain string. */
 export const TAG_COLORS = ["slate", "violet", "green", "amber", "red", "blue"] as const;

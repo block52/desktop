@@ -4,6 +4,7 @@ import { usePlayerProfile } from "../../hooks/usePlayerProfile";
 import { formatMicroUsd } from "../../utils/currency";
 import { CopyButton } from "@block52/ui-sdk";
 import { playerInitials } from "./Players";
+import PlayerNotesPanel from "../../components/players/PlayerNotesPanel";
 import styles from "./Players.module.css";
 
 /** Indexer percentage fields are integers scaled x100 (2550 = 25.5%). */
@@ -59,6 +60,8 @@ const PlayerProfile: React.FC<{ address: string }> = ({ address }) => {
                     </span>
                 </div>
             </div>
+
+            <PlayerNotesPanel address={address} />
 
             {isLoading && <p className={styles.state}>Loading player…</p>}
             {!isLoading && error !== "" && <p className={`${styles.state} ${styles.stateError}`}>{error}</p>}
