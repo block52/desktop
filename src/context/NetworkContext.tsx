@@ -224,28 +224,6 @@ export const NetworkProvider: React.FC<{ children: ReactNode }> = ({ children })
         localStorage.setItem(DISCOVERED_NETWORKS_KEY, JSON.stringify(discoveredNetworks));
     }, [discoveredNetworks]);
 
-    // Automatic node discovery (#73): from the selected node's validator set, find
-    // other pokerchain nodes and add the verified ones to "Discovered". Read-only;
-    // the user still picks, and a node they picked is kept over anything found.
-    useEffect(() => {
-        if (currentNetwork.rest === "") return;
-        const controller = new AbortController();
-        const run = async () => {
-            const known = [...NETWORK_PRESETS, ...discoveredNetworks];
-            const found = await discoverNetworks(currentNetwork.rest, known, fetch, controller.signal);
-            if (!controller.signal.aborted) found.forEach(addDiscoveredNetwork);
-        };
-        void run();
-        const timer = setInterval(() => void run(), DISCOVERY_POLL_MS);
-        return () => {
-            controller.abort();
-            clearInterval(timer);
-        };
-        // Re-run when the selected network changes. addDiscoveredNetwork de-dupes,
-        // so re-reading the current discovered list each run is enough.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentNetwork.rest]);
-
     const setNetwork = (network: NetworkEndpoints) => {
         setCurrentNetwork(network);
     };
@@ -267,6 +245,28 @@ export const NetworkProvider: React.FC<{ children: ReactNode }> = ({ children })
     const removeDiscoveredNetwork = (name: string) => {
         setDiscoveredNetworks(prev => prev.filter(n => n.name !== name));
     };
+
+    // Automatic node discovery (#73): from the selected node's validator set, find
+    // other pokerchain nodes and add the verified ones to "Discovered". Read-only;
+    // the user still picks, and a node they picked is kept over anything found.
+    useEffect(() => {
+        if (currentNetwork.rest === "") return;
+        const controller = new AbortController();
+        const run = async () => {
+            const known = [...NETWORK_PRESETS, ...discoveredNetworks];
+            const found = await discoverNetworks(currentNetwork.rest, known, fetch, controller.signal);
+            if (!controller.signal.aborted) found.forEach(addDiscoveredNetwork);
+        };
+        void run();
+        const timer = setInterval(() => void run(), DISCOVERY_POLL_MS);
+        return () => {
+            controller.abort();
+            clearInterval(timer);
+        };
+        // Re-run when the selected network changes. addDiscoveredNetwork de-dupes,
+        // so re-reading the current discovered list each run is enough.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentNetwork.rest]);
 
     return (
         <NetworkContext.Provider
