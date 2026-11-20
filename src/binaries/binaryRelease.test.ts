@@ -90,3 +90,26 @@ describe("updateAvailable", () => {
         expect(updateAvailable(null, "0.1.210")).toBe(false); // not installed is handled separately
     });
 });
+
+import { checksumMatches, parseSha256File, sha256AssetName } from "./binaryRelease";
+
+describe("checksum helpers", () => {
+    const hash = "a".repeat(64);
+    it("parses a bare digest and a 'digest  filename' line", () => {
+        expect(parseSha256File(hash)).toBe(hash);
+        expect(parseSha256File(`${hash}  pokerchaind-darwin-arm64\n`)).toBe(hash);
+        expect(parseSha256File(hash.toUpperCase())).toBe(hash); // lowercased
+    });
+    it("rejects garbage", () => {
+        expect(parseSha256File("")).toBeNull();
+        expect(parseSha256File("not a hash")).toBeNull();
+        expect(parseSha256File("abc123")).toBeNull(); // too short
+    });
+    it("compares case-insensitively", () => {
+        expect(checksumMatches(hash, hash.toUpperCase())).toBe(true);
+        expect(checksumMatches(hash, "b".repeat(64))).toBe(false);
+    });
+    it("names the sha256 asset", () => {
+        expect(sha256AssetName("pokerchaind-darwin-arm64")).toBe("pokerchaind-darwin-arm64.sha256");
+    });
+});

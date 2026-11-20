@@ -30,6 +30,10 @@ declare global {
             /** Node binary (pokerchaind, ws-server) installed vs latest versions + update flag. */
             binaries?: {
                 status: () => Promise<BinaryStatus[]>;
+                /** Download, verify (sha256) and install the latest release of a binary. Resolves with the installed version. */
+                download: (name: string) => Promise<{ version: string }>;
+                /** Download progress for the binary currently installing. Returns an unsubscribe function. */
+                onProgress: (listener: (p: { name: string; received: number; total: number | null }) => void) => () => void;
             };
         };
     }

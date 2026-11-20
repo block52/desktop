@@ -5,7 +5,7 @@ import { isNewer, isValidVersion } from "../updates/updateCheck";
 // release and the installed version and decides whether an update exists; the
 // download + checksum verify + install is a follow-up.
 
-export const BINARY_RELEASE_REPO = "block52/pokerchain";
+export const BINARY_RELEASE_REPO = "block52/pokerchain-releases";
 
 export type BinaryName = "pokerchaind" | "ws-server";
 export const BINARY_NAMES: BinaryName[] = ["pokerchaind", "ws-server"];
@@ -96,6 +96,22 @@ export function parseVersionLong(output: string): InstalledVersion {
 export function updateAvailable(installed: string | null, latest: string): boolean {
     if (installed === null) return false; // "not installed" is prompted separately, not an update
     return isNewer(latest, installed);
+}
+
+/** The hex digest from a `.sha256` asset, which is either "abc123" or "abc123  filename". Lowercased; null if unparseable. */
+export function parseSha256File(content: string): string | null {
+    const first = content.trim().split(/\s+/)[0] ?? "";
+    return /^[0-9a-f]{64}$/i.test(first) ? first.toLowerCase() : null;
+}
+
+/** True when the downloaded file's digest matches the expected one (case-insensitive). */
+export function checksumMatches(expected: string, actual: string): boolean {
+    return expected.toLowerCase() === actual.toLowerCase();
+}
+
+/** The `.sha256` asset name for a binary asset. */
+export function sha256AssetName(assetName: string): string {
+    return `${assetName}.sha256`;
 }
 
 /** Per-binary status returned to the renderer (renderer-safe: no node imports here). */
