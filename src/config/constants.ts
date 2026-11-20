@@ -9,4 +9,4 @@ export const ETH_WBTC_ADDRESS = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
  * ETH as before. Overridable at build time for testing.
  */
 export const GASLESS_DEPOSITOR_ADDRESS: string | null = "0xF2e703BEC24fA942095437B00Bb06eA73e11b778";
-export const GASLESS_RELAYER_URL: string | null = null;
+export const GASLESS_RELAYER_URL: string | null = "https://faas-syd1-c274eac6.doserverless.co/api/v1/web/fn-5bba8865-5650-4c62-9aac-ae0aa9130432/gasless/relay";
