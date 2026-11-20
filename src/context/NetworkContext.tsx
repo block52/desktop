@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
+import { discoverNetworks } from "../utils/networkDiscovery";
 
 /**
  * NetworkEndpoints describes all endpoints for a given network.
@@ -135,6 +136,9 @@ const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 
 const DISCOVERED_NETWORKS_KEY = "discoveredNetworks";
 
+/** How often to re-scan the selected node's validator set for new nodes. */
+const DISCOVERY_POLL_MS = 5 * 60 * 1000;
+
 export const NetworkProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Initialize network from localStorage. A saved choice always wins. On a first
     // run we start on Block52 and let the probe below upgrade to Localhost if a
@@ -219,6 +223,28 @@ export const NetworkProvider: React.FC<{ children: ReactNode }> = ({ children })
     useEffect(() => {
         localStorage.setItem(DISCOVERED_NETWORKS_KEY, JSON.stringify(discoveredNetworks));
     }, [discoveredNetworks]);
+
+    // Automatic node discovery (#73): from the selected node's validator set, find
+    // other pokerchain nodes and add the verified ones to "Discovered". Read-only;
+    // the user still picks, and a node they picked is kept over anything found.
+    useEffect(() => {
+        if (currentNetwork.rest === "") return;
+        const controller = new AbortController();
+        const run = async () => {
+            const known = [...NETWORK_PRESETS, ...discoveredNetworks];
+            const found = await discoverNetworks(currentNetwork.rest, known, fetch, controller.signal);
+            if (!controller.signal.aborted) found.forEach(addDiscoveredNetwork);
+        };
+        void run();
+        const timer = setInterval(() => void run(), DISCOVERY_POLL_MS);
+        return () => {
+            controller.abort();
+            clearInterval(timer);
+        };
+        // Re-run when the selected network changes. addDiscoveredNetwork de-dupes,
+        // so re-reading the current discovered list each run is enough.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentNetwork.rest]);
 
     const setNetwork = (network: NetworkEndpoints) => {
         setCurrentNetwork(network);
