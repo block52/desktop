@@ -332,3 +332,56 @@
         grid-template-columns: minmax(0, 1fr) auto auto;
     }
 }
+
+/* Local player notes: tag filter row + in-row nickname and tag chips (#63). */
+.tagFilter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 12px;
+}
+
+.tagChip {
+    background: none;
+    border: 1px solid hsl(245 22% 20%);
+    border-radius: 999px;
+    color: hsl(215 20% 65%);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 12px;
+}
+
+.tagChip:hover {
+    color: #e8e8f0;
+    border-color: hsl(263 83% 58%);
+}
+
+.tagChipOn {
+    background: hsl(263 83% 58% / 0.16);
+    border-color: hsl(263 83% 58% / 0.4);
+    color: hsl(263 83% 80%);
+}
+
+.nickname {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #f0f0f6;
+    margin-bottom: 1px;
+}
+
+.rowTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 4px;
+}
+
+.rowTag {
+    background: hsl(263 83% 58% / 0.14);
+    color: hsl(263 83% 78%);
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 500;
+}

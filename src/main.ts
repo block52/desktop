@@ -27,8 +27,10 @@ const iconPath = path.join(__dirname, "../../assets/icon.png");
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1440,
+    height: 900,
+    minWidth: 960,
+    minHeight: 640,
     icon: iconPath,
     // macOS: no title bar, the traffic lights sit inside the app (the renderer draws a drag strip under them).
     ...(process.platform === "darwin" ? { titleBarStyle: "hidden" as const, trafficLightPosition: { x: 16, y: 10 } } : {}),
