@@ -1,0 +1,42 @@
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid hsl(245 22% 14%);
+}
+
+.row:last-of-type { border-bottom: none; }
+
+.name { display: flex; flex-direction: column; gap: 2px; }
+.binary { font-family: ui-monospace, monospace; font-size: 13px; color: #e8e8f0; }
+.engine { font-size: 11px; color: hsl(215 20% 60%); }
+
+.versions { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.installed { color: #c9cce0; }
+.latest { color: hsl(215 20% 60%); }
+
+.badge {
+    justify-self: end;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.badgeOk { background: hsl(150 50% 40% / 0.16); color: hsl(150 55% 70%); }
+.badgeAttention { background: hsl(263 83% 58% / 0.16); color: hsl(263 83% 80%); }
+.badgeMuted { background: hsl(245 22% 20%); color: hsl(215 20% 60%); }
+
+.state, .error, .note { font-size: 12px; color: hsl(215 20% 60%); margin: 0; }
+.error { color: #ff7a7a; }
+.note { margin-top: 4px; }

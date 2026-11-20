@@ -2,6 +2,7 @@ import type { WalletBridge } from "./wallet/types";
 import type { UpdateInfo } from "./updates/updateCheck";
 import type { HandSearchResult } from "./indexer/handSearch";
 import type { PlayersBridge } from "./players/types";
+import type { BinaryStatus } from "./binaries/binaryRelease";
 
 declare global {
     interface Window {
@@ -26,6 +27,10 @@ declare global {
             };
             /** Local, private player notes/nicknames/tags (SQLite in the main process). */
             players?: PlayersBridge;
+            /** Node binary (pokerchaind, ws-server) installed vs latest versions + update flag. */
+            binaries?: {
+                status: () => Promise<BinaryStatus[]>;
+            };
         };
     }
 }

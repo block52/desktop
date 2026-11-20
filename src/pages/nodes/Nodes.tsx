@@ -9,6 +9,7 @@ import { getCosmosClient, getSigningClient } from "../../utils/cosmos/client";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import NodeStats from "../../components/nodes/NodeStats";
 import RunNodeGuide, { buildSeeds } from "../../components/nodes/RunNodeGuide";
+import NodeVersions from "../../components/nodes/NodeVersions";
 import NodeDetailsModal from "../../components/nodes/NodeDetailsModal";
 import BondValidatorForm, { type BondPayload } from "../../components/nodes/BondValidatorForm";
 import styles from "./Nodes.module.css";
@@ -345,22 +346,26 @@ const Nodes: React.FC = () => {
                 </>
             )}
 
-            {tab === "run" &&
-                (trustPoint !== null && seeds !== "" ? (
-                    <RunNodeGuide
-                        chainVersion={chainVersion}
-                        genesisUrl={`${currentNetwork.rest}/genesis`}
-                        seeds={seeds}
-                        rpcServers={rpcServers}
-                        trustHeight={trustPoint.height}
-                        trustHash={trustPoint.hash}
-                    />
-                ) : (
-                    <div className={`pane-lite ${styles.stateBox}`}>
-                        <div className={styles.spinner} />
-                        <p className={styles.stateText}>Reading node and chain info…</p>
-                    </div>
-                ))}
+            {tab === "run" && (
+                <>
+                    <NodeVersions />
+                    {trustPoint !== null && seeds !== "" ? (
+                        <RunNodeGuide
+                            chainVersion={chainVersion}
+                            genesisUrl={`${currentNetwork.rest}/genesis`}
+                            seeds={seeds}
+                            rpcServers={rpcServers}
+                            trustHeight={trustPoint.height}
+                            trustHash={trustPoint.hash}
+                        />
+                    ) : (
+                        <div className={`pane-lite ${styles.stateBox}`}>
+                            <div className={styles.spinner} />
+                            <p className={styles.stateText}>Reading node and chain info…</p>
+                        </div>
+                    )}
+                </>
+            )}
 
             {tab === "validator" && (
                 <BondValidatorForm
