@@ -95,7 +95,7 @@ const PlayerProfile: React.FC<{ address: string }> = ({ address }) => {
                             return (
                                 <div key={`${session.game_id}-${session.join_block}`} className={`row-hover ${styles.grid} ${styles.sessionGrid} ${styles.row}`}>
                                     <Link to={`/table/${session.game_id}`} className={styles.gameId} title={session.game_id}>
-                                        {`${session.game_id.slice(0, 8)}…${session.game_id.slice(-6)}`}
+                                        {session.game_id}
                                     </Link>
                                     <span className={`${styles.num} ${styles.mono} ${styles.hideNarrow}`}>{session.join_block.toLocaleString()}</span>
                                     <span className={`${styles.num} ${styles.mono} ${styles.hideNarrow}`}>
