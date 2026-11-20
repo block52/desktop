@@ -87,6 +87,20 @@ describe("classifyMessage", () => {
         expect(result.format).toBe(GameFormat.CASH);
     });
 
+    it("passes through an explicit \"tournament\" format (multi-table tournaments, not just sit-and-go)", () => {
+        // A scheduled multi-table tournament table sends format "tournament". It must
+        // survive as GameFormat.TOURNAMENT so the table renders in chips, not cash.
+        const snapshot = makeState();
+        const message: RawWsMessage = {
+            event: "state",
+            gameId: TABLE_ID,
+            data: { gameId: TABLE_ID, gameState: snapshot, format: GameFormat.TOURNAMENT },
+        };
+        const result = classifyMessage(message, TABLE_ID);
+        if (result.kind !== "state") throw new Error("expected state");
+        expect(result.format).toBe(GameFormat.TOURNAMENT);
+    });
+
     it("infers SIT_AND_GO from a non-zero startingStack when neither format nor tournamentId is sent", () => {
         // The real cause of the "$0.000 blinds" bug: some tournament frames carry no
         // format AND no tournamentId. Every cash table reports startingStack "0", so a
