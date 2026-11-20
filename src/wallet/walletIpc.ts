@@ -7,6 +7,9 @@ import { WalletSidecar } from "./goSidecar";
 import { createGpgTool } from "./pgp";
 import { EthWallet } from "./ethWallet";
 import { createEthChain } from "./ethChain";
+import { GASLESS_DEPOSITOR_ADDRESS, GASLESS_RELAYER_URL } from "../config/constants";
+import { createGaslessRelay } from "./gaslessRelay";
+import type { GaslessRelay } from "./gaslessRelay";
 import type { SignerNetwork, WalletCredential, WalletStatus } from "./types";
 
 const MINUTE_MS = 60_000;
@@ -45,6 +48,12 @@ function osKeyStore() {
 function ethereumRpcUrl(): string {
     const configured: unknown = import.meta.env.VITE_MAINNET_RPC_URL;
     return typeof configured === "string" && configured !== "" ? configured : "https://ethereum-rpc.publicnode.com";
+}
+
+/** Gasless USDC deposits, when both the deposit contract and the service are configured. */
+function gaslessDeposits(): { depositor: string; relay: GaslessRelay } | undefined {
+    if (GASLESS_DEPOSITOR_ADDRESS === null || GASLESS_RELAYER_URL === null) return undefined;
+    return { depositor: GASLESS_DEPOSITOR_ADDRESS, relay: createGaslessRelay({ baseUrl: GASLESS_RELAYER_URL }) };
 }
 
 /** Locking only means something when something other than the OS keychain is needed to reopen. */
@@ -94,6 +103,7 @@ export function registerWalletIpc(): { lockWallet: () => void } {
         confirm: confirmInNativeDialog,
         chain: createEthChain(ethereumRpcUrl()),
         cosmosAddress: () => signer.address(),
+        gasless: gaslessDeposits(),
     });
 
     const trusted = (event: IpcMainEvent | IpcMainInvokeEvent): boolean => {

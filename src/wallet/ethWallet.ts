@@ -2,6 +2,8 @@ import { HDNodeWallet } from "ethers";
 import { ETH_USDC_ADDRESS, ETH_USDT_ADDRESS } from "../config/constants";
 import { formatUnits } from "../config/ethTokens";
 import { ETH_DEPOSIT_TOKENS } from "./types";
+import { signGaslessDeposit } from "./gaslessDeposit";
+import type { GaslessRelay } from "./gaslessRelay";
 import type { EthBalances, EthDepositResult, EthDepositToken } from "./types";
 
 /** The standard Ethereum path, so the same seed phrase gives the same address in any Ethereum wallet. */
@@ -28,6 +30,10 @@ interface EthWalletDeps {
     chain: EthChain;
     /** This wallet's own Block52 address. The bridge mints to it, never to an address the page supplies. */
     cosmosAddress: () => Promise<string>;
+    /** When set, USDC is deposited without the user paying network fees. Absent until the deposit service is live. */
+    gasless?: { depositor: string; relay: GaslessRelay };
+    /** Seconds since the epoch. Injected for tests. */
+    now?: () => number;
 }
 
 function isDepositToken(value: unknown): value is EthDepositToken {
@@ -63,9 +69,25 @@ export class EthWallet {
 
         const held = await chain.balances(account.address);
         if (amount > (token === "USDC" ? held.usdc : held.usdt)) throw new Error(`There is not enough ${token} on this address.`);
-        if (held.eth === 0n) throw new Error("This address has no ETH to pay the network fee. Send a little ETH to it first.");
+        const gasless = token === "USDC" ? this.deps.gasless : undefined;
+        if (gasless === undefined && held.eth === 0n) throw new Error("This address has no ETH to pay the network fee. Send a little ETH to it first.");
 
         const receiver = await this.deps.cosmosAddress();
+        if (gasless !== undefined) {
+            const confirmed = await this.deps.confirm(
+                "Deposit to Block52?",
+                `Deposit ${formatUnits(amount, 6)} USDC from the Ethereum address\n${account.address}\nto your Block52 address\n${receiver}\n\nNo ETH is needed: the network fee is paid for you.`,
+            );
+            if (!confirmed) throw new Error("Cancelled.");
+            const request = await signGaslessDeposit({
+                account,
+                depositor: gasless.depositor,
+                value: amount,
+                receiver,
+                now: (this.deps.now ?? (() => Math.floor(Date.now() / 1000)))(),
+            });
+            return { approveHash: null, depositHash: await gasless.relay.submit(request) };
+        }
         const confirmed = await this.deps.confirm(
             "Deposit to Block52?",
             `Deposit ${formatUnits(amount, 6)} ${token} from the Ethereum address\n${account.address}\nto your Block52 address\n${receiver}`,
