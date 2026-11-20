@@ -394,7 +394,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
                     <span className={styles.spinner} aria-hidden="true" />
                     <span className={styles.connectingTitle}>Entering the table…</span>
                     {id !== undefined && (
-                        <span className={styles.connectingId}>
+                        <span className={styles.connectingId} title={id}>
                             {id.slice(0, 8)}…{id.slice(-6)}
                         </span>
                     )}
