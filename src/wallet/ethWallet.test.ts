@@ -87,3 +87,60 @@ describe("EthWallet", () => {
         expect(confirm).not.toHaveBeenCalled();
     });
 });
+
+describe("EthWallet gasless USDC", () => {
+    const RECEIVER = `b521${"q".repeat(38)}`;
+    const HASH = `0x${"ef".repeat(32)}`;
+
+    function gaslessSetup(options: { eth?: bigint; confirm?: boolean } = {}) {
+        const chain: EthChain = {
+            balances: vi.fn(async () => ({ eth: options.eth ?? 0n, usdc: 50_000_000n, usdt: 50_000_000n, wbtc: 0n })),
+            allowance: vi.fn(async () => 0n),
+            approve: vi.fn(async () => "0xapprove"),
+            depositUnderlying: vi.fn(async () => "0xdeposit"),
+            depositToken: vi.fn(async () => "0xdeposit"),
+        };
+        const submit = vi.fn(async () => HASH);
+        const confirm = vi.fn(async () => options.confirm ?? true);
+        const wallet = new EthWallet({
+            readMnemonic: async () => MNEMONIC,
+            confirm,
+            chain,
+            cosmosAddress: async () => RECEIVER,
+            gasless: { depositor: "0x1111111111111111111111111111111111111111", relay: { submit } },
+            now: () => 1_800_000_000,
+        });
+        return { wallet, chain, submit, confirm };
+    }
+
+    it("deposits USDC through the relay with no ETH, and sends nothing from the user's own address", async () => {
+        const { wallet, chain, submit, confirm } = gaslessSetup({ eth: 0n });
+        const result = await wallet.deposit("USDC", 20_000_000n);
+        expect(result).toEqual({ approveHash: null, depositHash: HASH });
+        expect(chain.approve).not.toHaveBeenCalled();
+        expect(chain.depositUnderlying).not.toHaveBeenCalled();
+        const [request] = submit.mock.calls[0] as unknown as [{ from: string; value: string; receiver: string }];
+        expect(request).toMatchObject({ from: HARDHAT_ACCOUNT_0, value: "20000000", receiver: RECEIVER });
+        const [, detail] = confirm.mock.calls[0] as unknown as [string, string];
+        expect(detail).toContain("No ETH is needed");
+    });
+
+    it("signs nothing and submits nothing when the user cancels", async () => {
+        const { wallet, submit } = gaslessSetup({ confirm: false });
+        await expect(wallet.deposit("USDC", 1_000_000n)).rejects.toThrow("Cancelled");
+        expect(submit).not.toHaveBeenCalled();
+    });
+
+    it("still needs ETH for USDT, which cannot be gasless", async () => {
+        const { wallet, submit } = gaslessSetup({ eth: 0n });
+        await expect(wallet.deposit("USDT", 1_000_000n)).rejects.toThrow(/no ETH/);
+        expect(submit).not.toHaveBeenCalled();
+    });
+
+    it("refuses more than the address holds before asking", async () => {
+        const { wallet, confirm } = gaslessSetup();
+        await expect(wallet.deposit("USDC", 60_000_000n)).rejects.toThrow(/not enough USDC/);
+        expect(confirm).not.toHaveBeenCalled();
+    });
+});
+
