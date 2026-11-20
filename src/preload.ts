@@ -57,6 +57,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
         searchHands: (text: string, limit: number, offset: number): Promise<HandSearchResult> =>
             ipcRenderer.invoke("indexer:search-hands", text, limit, offset),
     },
+    binaries: {
+        status: () => ipcRenderer.invoke("binaries:status"),
+    },
     players: {
         get: (address: string) => ipcRenderer.invoke("players:get", address),
         getMany: (addresses: string[]) => ipcRenderer.invoke("players:get-many", addresses),

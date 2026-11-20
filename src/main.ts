@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import started from "electron-squirrel-startup";
 import { APP_ORIGIN, APP_SCHEME, isOwnResource, resolveAppFile } from "./appProtocol";
 import { buildContentSecurityPolicy, hostsFromUrls } from "./csp";
+import { registerBinariesIpc } from "./binaries/binariesIpc";
 import { registerIndexerIpc } from "./indexer/indexerIpc";
 import { registerPlayerNotesIpc } from "./players/playerNotesIpc";
 import { registerWalletIpc } from "./wallet/walletIpc";
@@ -86,6 +87,9 @@ registerIndexerIpc();
 
 // Local player notes/nicknames/tags (SQLite in this process).
 registerPlayerNotesIpc();
+
+// Node binary versions + update check (pokerchaind, ws-server).
+registerBinariesIpc();
 
 app.whenReady().then(() => {
   const { lockWallet } = registerWalletIpc();
