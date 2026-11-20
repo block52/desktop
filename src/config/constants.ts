@@ -8,5 +8,5 @@ export const ETH_WBTC_ADDRESS = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
  * pays the network fee. Both stay null until they are live; with either unset the wallet deposits from the user's own
  * ETH as before. Overridable at build time for testing.
  */
-export const GASLESS_DEPOSITOR_ADDRESS: string | null = null;
+export const GASLESS_DEPOSITOR_ADDRESS: string | null = "0xF2e703BEC24fA942095437B00Bb06eA73e11b778";
 export const GASLESS_RELAYER_URL: string | null = null;
