@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CopyButton } from "@block52/ui-sdk";
 import { usePlayersDirectory } from "../../hooks/usePlayersDirectory";
+import { usePlayerNotes } from "../../hooks/usePlayerNotes";
 import { formatMicroUsd } from "../../utils/currency";
 import type { PlayerSortField } from "../../utils/indexer";
+import type { Tag } from "../../players/types";
 import styles from "./Players.module.css";
 
 const PAGE_SIZE = 20;
@@ -28,6 +30,22 @@ const Players: React.FC = () => {
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE
     });
+
+    // Local, private notes for the players on this page (nickname + tags).
+    const { notes } = usePlayerNotes(players.map(p => p.player_address));
+
+    // All tags the user has, for the filter chips next to the search.
+    const [allTags, setAllTags] = useState<Tag[]>([]);
+    const [tagFilter, setTagFilter] = useState<number | null>(null);
+    useEffect(() => {
+        window.electronAPI?.players?.listTags().then(setAllTags).catch(() => setAllTags([]));
+    }, [notes]);
+
+    // The tag filter narrows the loaded page to players carrying that tag.
+    const shown = useMemo(
+        () => (tagFilter === null ? players : players.filter(p => (notes[p.player_address]?.tags ?? []).some(t => t.id === tagFilter))),
+        [players, notes, tagFilter]
+    );
 
     const applySearch = (value: string) => {
         setSearch(value.trim());
@@ -75,6 +93,28 @@ const Players: React.FC = () => {
                 </div>
             </div>
 
+            {allTags.length > 0 && (
+                <div className={styles.tagFilter}>
+                    <button
+                        type="button"
+                        className={`${styles.tagChip} ${tagFilter === null ? styles.tagChipOn : ""}`}
+                        onClick={() => setTagFilter(null)}
+                    >
+                        All
+                    </button>
+                    {allTags.map(tag => (
+                        <button
+                            key={tag.id}
+                            type="button"
+                            className={`${styles.tagChip} ${tagFilter === tag.id ? styles.tagChipOn : ""}`}
+                            onClick={() => setTagFilter(id => (id === tag.id ? null : tag.id))}
+                        >
+                            {tag.name}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             <div className={`pane-lite ${styles.panel}`}>
                 <div className={`${styles.grid} ${styles.headRow}`}>
                     <span className="section-label">#</span>
@@ -93,9 +133,14 @@ const Players: React.FC = () => {
                     <p className={styles.state}>{search === "" ? "No players yet." : "No players match that address."}</p>
                 )}
 
+                {!isLoading && shown.length === 0 && tagFilter !== null && players.length > 0 && (
+                    <p className={styles.state}>No players on this page have that tag.</p>
+                )}
+
                 {!isLoading &&
-                    players.map((player, index) => {
+                    shown.map((player, index) => {
                         const rank = page * PAGE_SIZE + index + 1;
+                        const note = notes[player.player_address];
                         return (
                             <div
                                 key={player.player_address}
@@ -106,12 +151,20 @@ const Players: React.FC = () => {
                                 <div className={styles.who}>
                                     <div className={styles.avatar}>{playerInitials(player.player_address)}</div>
                                     <div className={styles.whoText}>
+                                        {note?.nickname != null && note.nickname !== "" && <span className={styles.nickname}>{note.nickname}</span>}
                                         <span className={styles.addrLine}>
                                             <span className={styles.addr}>{player.player_address}</span>
                                             <span onClick={e => e.stopPropagation()}>
                                                 <CopyButton text={player.player_address} message="Address copied" title="Copy address" />
                                             </span>
                                         </span>
+                                        {note !== undefined && note.tags.length > 0 && (
+                                            <span className={styles.rowTags}>
+                                                {note.tags.map(tag => (
+                                                    <span key={tag.id} className={styles.rowTag}>{tag.name}</span>
+                                                ))}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                                 <span className={styles.num}>{player.total_hands.toLocaleString()}</span>
