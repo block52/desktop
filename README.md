@@ -140,9 +140,12 @@ only crosses to the sidecar in memory, per call. Forge builds the binary in `gen
 
 ```bash
 cd sidecar && go build -o dist/b52-wallet .
+# Windows: the binary needs the .exe extension
+cd sidecar && go build -o dist/b52-wallet.exe .
 ```
 
-Requires Go (see `sidecar/go.mod`). In a packaged build Forge handles this automatically.
+Requires Go (see `sidecar/go.mod`). In a packaged build Forge handles this automatically, using the same name
+(`src/wallet/sidecarBinary.ts`).
 
 ## CI/CD
 

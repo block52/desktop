@@ -9,6 +9,10 @@ import { MakerRpm } from "@electron-forge/maker-rpm";
 import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
+import { sidecarBinaryName } from "./src/wallet/sidecarBinary";
+
+// The Go wallet sidecar for the platform being built on (b52-wallet.exe on Windows). The app looks for this same name.
+const SIDECAR_BINARY = sidecarBinaryName(process.platform);
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -19,14 +23,19 @@ const config: ForgeConfig = {
     executableName: "block52",
     // The Go wallet sidecar binary, bundled next to the app (process.resourcesPath). Built by the
     // generateAssets hook below. src/wallet/goSidecar.ts resolves it there when packaged.
-    extraResource: ["./sidecar/dist/b52-wallet"],
+    extraResource: [`./sidecar/dist/${SIDECAR_BINARY}`],
   },
   rebuildConfig: {},
   hooks: {
-    // Build the Go wallet sidecar for the host platform before packaging, so extraResource finds it.
-    // Cross-building for other targets is done in CI with GOOS/GOARCH; this covers a local `yarn make`.
+    // Build the Go wallet sidecar before packaging, so extraResource finds it. It is built for the machine doing the
+    // packaging: CI builds each platform on its own runner (release.yml). CGO is off (the sidecar is pure Go) so the
+    // binary has no C library dependency, and -trimpath keeps the build machine's paths out of it.
     generateAssets: async () => {
-      execFileSync("go", ["build", "-o", "dist/b52-wallet", "."], { cwd: path.join(__dirname, "sidecar"), stdio: "inherit" });
+      execFileSync("go", ["build", "-trimpath", "-o", `dist/${SIDECAR_BINARY}`, "."], {
+        cwd: path.join(__dirname, "sidecar"),
+        stdio: "inherit",
+        env: { ...process.env, CGO_ENABLED: "0" },
+      });
     },
     // Electron ships ad-hoc signed, and renaming the executable and editing Info.plist breaks that signature.
     // On Apple Silicon a broken signature plus the download quarantine shows "is damaged and can't be opened",
