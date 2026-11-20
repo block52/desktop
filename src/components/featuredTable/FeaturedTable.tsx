@@ -47,7 +47,7 @@ const FeaturedTable: React.FC<FeaturedTableProps> = ({ game }) => {
             </div>
 
             <div className={styles.textBlock}>
-                <div className={styles.heroTitle}>{game.name ?? shortId(game.gameId)}</div>
+                <div className={styles.heroTitle} title={game.gameId}>{game.name ?? shortId(game.gameId)}</div>
                 <div className={styles.heroDescription}>
                     {isFull
                         ? "The table is full and playing. Watch it live — every hand settled on-chain."
