@@ -40,3 +40,18 @@
 .state, .error, .note { font-size: 12px; color: hsl(215 20% 60%); margin: 0; }
 .error { color: #ff7a7a; }
 .note { margin-top: 4px; }
+
+.action {
+    justify-self: end;
+    border-radius: 999px;
+    padding: 5px 14px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.progress {
+    justify-self: end;
+    font-size: 12px;
+    color: hsl(263 83% 80%);
+    font-variant-numeric: tabular-nums;
+}

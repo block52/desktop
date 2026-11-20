@@ -59,6 +59,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     },
     binaries: {
         status: () => ipcRenderer.invoke("binaries:status"),
+        download: (name: string) => ipcRenderer.invoke("binaries:download", name),
+        onProgress: (listener: (p: { name: string; received: number; total: number | null }) => void) => {
+            const handler = (_event: unknown, p: { name: string; received: number; total: number | null }) => listener(p);
+            ipcRenderer.on("binaries:download-progress", handler);
+            return () => ipcRenderer.removeListener("binaries:download-progress", handler);
+        },
     },
     players: {
         get: (address: string) => ipcRenderer.invoke("players:get", address),
