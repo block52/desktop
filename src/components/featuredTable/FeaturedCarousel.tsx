@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import type { GameWithFormat } from "../../hooks/useFindGames";
 import { useSngSchedule } from "../../hooks/useSngSchedule";
-import { getUpcomingSngs } from "../../utils/sngSchedule";
+import { getUpcomingSngs } from "@block52/ui-sdk";
 import FeaturedTable from "./FeaturedTable";
 import UpcomingSngSlide from "./UpcomingSngSlide";
 import styles from "./FeaturedCarousel.module.css";

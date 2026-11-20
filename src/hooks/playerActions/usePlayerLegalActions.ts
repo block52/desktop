@@ -3,7 +3,7 @@ import { PlayerActionType } from "@block52/poker-vm-sdk";
 import type { LegalActionDTO, PlayerDTO, TexasHoldemStateDTO } from "@block52/poker-vm-sdk";
 import { useGameState } from "../../context/GameStateContext";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
-import { hasElements } from "../../utils/guards";
+import { hasElements } from "@block52/ui-sdk";
 import type { PlayerLegalActionsResult } from "./types";
 
 /**

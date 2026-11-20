@@ -2,7 +2,7 @@ import React from "react";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useAppKitAccount } from "@reown/appkit/react";
 import { useNetwork } from "../../context/NetworkContext";
-import { base64ToHex } from "../../utils/encodingUtils";
+import { base64ToHex } from "@block52/ui-sdk";
 import { describeWithdrawError, fetchWithdrawalSignature } from "../../utils/withdrawalSignature";
 import { withdrawAbi, BRIDGE_ADDRESS } from "../../abis/contractABI";
 import { ETH_CHAIN_ID } from "../../config/constants";

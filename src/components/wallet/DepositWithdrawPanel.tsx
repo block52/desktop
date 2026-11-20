@@ -14,7 +14,7 @@ import { assertAddressMatchesWallet } from "../../utils/cosmos/verifiedAddress";
 import { useToast } from "@block52/ui-sdk";
 import { useNetwork } from "../../context/NetworkContext";
 import { getSigningClient as getRemoteSigningClient } from "../../utils/cosmos/client";
-import { base64ToHex } from "../../utils/encodingUtils";
+import { base64ToHex } from "@block52/ui-sdk";
 import { fetchWithdrawalSignature } from "../../utils/withdrawalSignature";
 import { withdrawAbi, BRIDGE_ADDRESS } from "../../abis/contractABI";
 import { ETH_CHAIN_ID, ETH_USDC_ADDRESS, ETH_USDT_ADDRESS } from "../../config/constants";
