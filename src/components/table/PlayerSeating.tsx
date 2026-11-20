@@ -1,6 +1,7 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { PlayerStatus, type PlayerDTO } from "@block52/poker-vm-sdk";
 import { DEFAULT_FELT_ASPECT, FELT_HEIGHT_FRACTION, getSeatPercent, resolveTableSize, seatToUiPosition } from "../../config/seatGeometry";
+import { usePlayerNotes } from "../../hooks/usePlayerNotes";
 import { Seat } from "./Seat";
 import type { SeatStatusLabel } from "./SeatBanner";
 import styles from "./PlayerSeating.module.css";
@@ -101,6 +102,10 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
         playersBySeat.set(player.seat, player);
     }
 
+    // Your local nickname for each seated player (shown instead of the seat label when set).
+    const addresses = useMemo(() => players.map(p => p.address), [players]);
+    const { notes } = usePlayerNotes(addresses);
+
     const seats = [];
     for (let serverSeat = 1; serverSeat <= tableSize; serverSeat++) {
         const uiPosition = seatToUiPosition(serverSeat, heroServerSeat, tableSize);
@@ -122,6 +127,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
 
         const isHero = localPlayer !== undefined && player.seat === localPlayer.seat;
         const maxBuyInMicro = maxBuyIn !== undefined ? Number(maxBuyIn) : 0;
+        const nickname = notes[player.address]?.nickname;
 
         seats.push(
             <Seat
@@ -136,7 +142,7 @@ export const PlayerSeating: React.FC<PlayerSeatingProps> = ({
                 isFolded={player.status === PlayerStatus.FOLDED}
                 isHero={isHero}
                 stackFraction={isHero && maxBuyInMicro > 0 ? Number(player.stack) / maxBuyInMicro : undefined}
-                name={`Seat ${serverSeat}`}
+                name={nickname != null && nickname !== "" ? nickname : `Seat ${serverSeat}`}
                 seatNumber={serverSeat}
                 stack={formatStack(player.stack)}
                 currentBet={player.sumOfBets !== "0" ? formatStack(player.sumOfBets) : undefined}
