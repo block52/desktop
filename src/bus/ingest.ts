@@ -102,16 +102,26 @@ function toGameFormat(raw: string | undefined): GameFormat | undefined {
 }
 
 /**
- * The game-state snapshot carries no explicit format field; a tournament table is
- * identified by its `tournamentId`. Infer SIT_AND_GO from it so the table isn't
- * mistaken for a cash game (which would divide chip amounts by micro-USDC and show
- * raises as 0.00).
+ * The game-state snapshot carries no explicit format field, so a tournament table
+ * has to be recognised from its contents. Without this it is mistaken for a cash
+ * game, which divides chip amounts by micro-USDC — blinds render "$0.000", buy-in
+ * "$0.00" (tournaments carry none), and raises show 0.00.
+ *
+ * Signals, in order of preference:
+ *   - an explicit `format` on the envelope (when the server sends one);
+ *   - a `tournamentId` on the snapshot;
+ *   - a non-zero `gameOptions.startingStack` — the most reliable, because every
+ *     cash table reports "0" and every tournament a positive starting stack, and
+ *     it is always present in the snapshot (unlike `format` / `tournamentId`,
+ *     which some frames omit — the cause of the "$0.000" blinds bug).
  */
 function resolveGameFormat(rawFormat: string | undefined, snapshot: TexasHoldemStateDTO): GameFormat | undefined {
     const explicit = toGameFormat(rawFormat);
     if (explicit !== undefined) return explicit;
     const tournamentId = (snapshot as { tournamentId?: unknown }).tournamentId;
     if (typeof tournamentId === "string" && tournamentId !== "") return GameFormat.SIT_AND_GO;
+    const startingStack = snapshot.gameOptions?.startingStack;
+    if (startingStack !== undefined && /^[0-9]+$/.test(startingStack) && BigInt(startingStack) > 0n) return GameFormat.SIT_AND_GO;
     return undefined;
 }
 
