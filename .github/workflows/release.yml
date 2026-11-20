@@ -28,7 +28,7 @@ jobs:
       - run: yarn lint
       - run: yarn typecheck
       - run: yarn test
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: sidecar/go.mod
           cache-dependency-path: sidecar/go.sum
@@ -72,7 +72,7 @@ jobs:
         uses: ./.github/actions/linux-packaging-tools
       - uses: ./.github/actions/setup
       # yarn make builds the Go wallet sidecar for this runner's platform (b52-wallet.exe on Windows).
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: sidecar/go.mod
           cache-dependency-path: sidecar/go.sum
