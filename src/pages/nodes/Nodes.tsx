@@ -374,7 +374,14 @@ const Nodes: React.FC = () => {
                 />
             )}
 
-            {detailsNetwork !== null && <NodeDetailsModal network={detailsNetwork} onClose={() => setDetailsNetwork(null)} />}
+            {detailsNetwork !== null && (
+                <NodeDetailsModal
+                    network={detailsNetwork}
+                    isValidator={entryByName.get(detailsNetwork.name)?.isValidator ?? false}
+                    votingPower={entryByName.get(detailsNetwork.name)?.votingPower ?? 0}
+                    onClose={() => setDetailsNetwork(null)}
+                />
+            )}
         </div>
     );
 };

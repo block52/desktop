@@ -55,8 +55,9 @@ describe("useNodeRegistry", () => {
     it("reports health, height, validator role, and node id per network", async () => {
         mockNode(true, "506717", [{ operator_address: "b52valoper1x" }]);
         vi.stubGlobal("fetch", vi.fn().mockImplementation(async (url: string) => {
-            if (url.includes("/cosmos/staking/")) {
-                return { ok: true, json: async () => ({ validators: [{}] }) };
+            // This node's validator role comes from its own /status voting power.
+            if (url.includes("/status")) {
+                return { ok: true, json: async () => ({ result: { validator_info: { voting_power: "9" } } }) };
             }
             if (url.includes("/node_info")) {
                 return { ok: true, json: async () => ({ default_node_info: { default_node_id: "node-id-abc" } }) };
@@ -67,7 +68,25 @@ describe("useNodeRegistry", () => {
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
         const alpha = result.current.entries.find(e => e.network.name === "Alpha");
-        expect(alpha).toEqual({ network: NET_A, online: true, blockHeight: "506717", isValidator: true, nodeId: "node-id-abc" });
+        expect(alpha).toEqual({ network: NET_A, online: true, blockHeight: "506717", isValidator: true, votingPower: 9, nodeId: "node-id-abc" });
+    });
+
+    it("a follower node (no voting power) is not a validator", async () => {
+        mockNode(true, "100", []);
+        vi.stubGlobal("fetch", vi.fn().mockImplementation(async (url: string) => {
+            if (url.includes("/status")) {
+                return { ok: true, json: async () => ({ result: { validator_info: { voting_power: "0" } } }) };
+            }
+            if (url.includes("/node_info")) {
+                return { ok: true, json: async () => ({ default_node_info: { default_node_id: "n" } }) };
+            }
+            throw new Error(`unexpected url: ${url}`);
+        }));
+        const { result } = renderHook(() => useNodeRegistry([NET_A]));
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        const alpha = result.current.entries.find(e => e.network.name === "Alpha");
+        expect(alpha?.isValidator).toBe(false);
+        expect(alpha?.votingPower).toBe(0);
     });
 
     it("falls back to the legacy id field when default_node_id is absent", async () => {

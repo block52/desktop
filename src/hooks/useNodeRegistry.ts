@@ -7,7 +7,10 @@ export interface NodeEntry {
     network: NetworkEndpoints;
     online: boolean;
     blockHeight: string | null;
+    /** True when this node reports its own voting power (it is a validator). The app only reads it. */
     isValidator: boolean;
+    /** This node's own voting power from /status (0 for a non-validating follower). */
+    votingPower: number;
     nodeId: string | null;
 }
 
@@ -58,19 +61,26 @@ export function useNodeRegistry(networks: NetworkEndpoints[], pollMs = REGISTRY_
                         nodeId = null;
                     }
 
+                    // Whether THIS node is a validator — its own voting power from
+                    // /status, not the chain-wide validator list (which is non-empty
+                    // for every network). The app only reads it: a validator node is a
+                    // data source we label as such, never something we control (#74).
+                    let votingPower = 0;
                     try {
-                        const response = await fetch(
-                            `${network.rest}/cosmos/staking/v1beta1/validators?pagination.limit=1`
-                        );
-                        if (response.ok) {
-                            const data = (await response.json()) as { validators?: unknown[] };
-                            isValidator = (data.validators ?? []).length > 0;
+                        const statusResponse = await fetch(`${network.rpc.replace(/\/+$/, "")}/status`);
+                        if (statusResponse.ok) {
+                            const status = (await statusResponse.json()) as {
+                                result?: { validator_info?: { voting_power?: string } };
+                            };
+                            const power = Number(status.result?.validator_info?.voting_power ?? "0");
+                            votingPower = Number.isFinite(power) ? power : 0;
+                            isValidator = votingPower > 0;
                         }
                     } catch {
                         isValidator = false;
                     }
 
-                    return { network, online, blockHeight, isValidator, nodeId };
+                    return { network, online, blockHeight, isValidator, votingPower, nodeId };
                 })
             );
 

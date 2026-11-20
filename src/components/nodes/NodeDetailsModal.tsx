@@ -8,6 +8,9 @@ const POLL_MS = 15000;
 
 interface NodeDetailsModalProps {
     network: NetworkEndpoints;
+    /** Whether this node reports its own voting power. The app only ever reads from it. */
+    isValidator?: boolean;
+    votingPower?: number;
     onClose: () => void;
 }
 
@@ -16,7 +19,7 @@ interface Loaded {
     checkedAt: number;
 }
 
-export const NodeDetailsModal: React.FC<NodeDetailsModalProps> = ({ network, onClose }) => {
+export const NodeDetailsModal: React.FC<NodeDetailsModalProps> = ({ network, isValidator = false, votingPower = 0, onClose }) => {
     const [loaded, setLoaded] = useState<Loaded | null>(null);
     const [now, setNow] = useState(() => Date.now());
     const [refreshKey, setRefreshKey] = useState(0);
@@ -52,7 +55,8 @@ export const NodeDetailsModal: React.FC<NodeDetailsModalProps> = ({ network, onC
         ["Time since block", status?.blockTime != null ? formatSince(status.blockTime, now) : null],
         ["Node version", status?.nodeVersion ?? null],
         ["Cosmos SDK", status?.cosmosSdkVersion ?? null],
-        ["Moniker", status?.moniker ?? null]
+        ["Moniker", status?.moniker ?? null],
+        ["Role", isValidator ? `Validator · voting power ${votingPower.toLocaleString()}` : "Follower (sync node)"]
     ];
 
     return (
@@ -81,6 +85,12 @@ export const NodeDetailsModal: React.FC<NodeDetailsModalProps> = ({ network, onC
                         <dd>{loaded === null ? "—" : new Date(loaded.checkedAt).toLocaleTimeString()}</dd>
                     </div>
                 </dl>
+
+                <p className={styles.readOnlyNote}>
+                    {isValidator
+                        ? "This node is a validator. The app only reads from it — it never touches validator or node keys, and never starts, stops or configures it."
+                        : "The app only reads from this node; it never starts, stops or configures it."}
+                </p>
 
                 <div className={styles.endpoints}>
                     <span className="section-label">Endpoints</span>
