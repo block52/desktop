@@ -47,7 +47,11 @@ jobs:
           - name: windows-x64
             os: windows-latest
           - name: linux-x64
-            os: ubuntu-latest
+            # Not ubuntu-latest (26.04): its rpm (4.20+) runs %install in a per-package build folder, and the spec
+            # template in electron-installer-redhat (3.4.0, and still 4.0.0) copies `usr/*` relative to the old one,
+            # so the .rpm fails with "cp: cannot stat 'usr/*'". 24.04's rpm still uses the old layout. Move back to
+            # ubuntu-latest once electron-installer-redhat handles rpm 4.20.
+            os: ubuntu-24.04
     runs-on: ${{ matrix.os }}
     name: build (${{ matrix.name }})
     # Holds the release secret. Protect it under Settings > Environments > release (required reviewers, and
