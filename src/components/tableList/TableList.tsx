@@ -5,6 +5,7 @@ import { useFindGames } from "../../hooks/useFindGames";
 import type { GameWithFormat } from "../../hooks/useFindGames";
 import { useTablesStatus, type TableLiveStatus } from "../../hooks/useTablesStatus";
 import { sortGamesNewestFirst } from "../../utils/convertUtils";
+import { gameMatchesSearch } from "../../utils/gameSearch";
 import { paginate } from "@block52/ui-sdk";
 import { Pagination, PAGE_SIZES } from "@block52/ui-sdk";
 import CreateTableModal from "../modal/CreateTableModal";
@@ -125,9 +126,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
         }
         if (search.trim()) {
             const q = search.trim().toLowerCase();
-            list = list.filter(
-                game => game.gameId.toLowerCase().includes(q) || (game.name !== undefined && game.name.toLowerCase().includes(q))
-            );
+            list = list.filter(game => gameMatchesSearch(game, q));
         }
         return list;
     }, [rawGames, search, formatFilter]);
