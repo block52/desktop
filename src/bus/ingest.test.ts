@@ -60,6 +60,33 @@ describe("classifyMessage", () => {
         expect(result.validationError).toBeNull();
     });
 
+    it("infers SIT_AND_GO from a tournamentId when no explicit format is sent", () => {
+        // Tournament tables carry no format field, only a tournamentId. Without this
+        // inference the table is treated as cash and chip amounts divide by 1e6.
+        const snapshot = makeState({ tournamentId: "0x7398acda" } as Partial<TexasHoldemStateDTO>);
+        const message: RawWsMessage = {
+            event: "state",
+            gameId: TABLE_ID,
+            data: { gameId: TABLE_ID, gameState: snapshot }, // no format
+        };
+        const result = classifyMessage(message, TABLE_ID);
+        expect(result.kind).toBe("state");
+        if (result.kind !== "state") throw new Error("expected state");
+        expect(result.format).toBe(GameFormat.SIT_AND_GO);
+    });
+
+    it("an explicit format still wins over the tournamentId inference", () => {
+        const snapshot = makeState({ tournamentId: "0xabc" } as Partial<TexasHoldemStateDTO>);
+        const message: RawWsMessage = {
+            event: "state",
+            gameId: TABLE_ID,
+            data: { gameId: TABLE_ID, gameState: snapshot, format: GameFormat.CASH },
+        };
+        const result = classifyMessage(message, TABLE_ID);
+        if (result.kind !== "state") throw new Error("expected state");
+        expect(result.format).toBe(GameFormat.CASH);
+    });
+
     it("ignores a state-bearing message for a different table", () => {
         const message: RawWsMessage = {
             event: "state",

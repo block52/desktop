@@ -101,6 +101,20 @@ function toGameFormat(raw: string | undefined): GameFormat | undefined {
     return Object.values(GameFormat).includes(raw as GameFormat) ? (raw as GameFormat) : undefined;
 }
 
+/**
+ * The game-state snapshot carries no explicit format field; a tournament table is
+ * identified by its `tournamentId`. Infer SIT_AND_GO from it so the table isn't
+ * mistaken for a cash game (which would divide chip amounts by micro-USDC and show
+ * raises as 0.00).
+ */
+function resolveGameFormat(rawFormat: string | undefined, snapshot: TexasHoldemStateDTO): GameFormat | undefined {
+    const explicit = toGameFormat(rawFormat);
+    if (explicit !== undefined) return explicit;
+    const tournamentId = (snapshot as { tournamentId?: unknown }).tournamentId;
+    if (typeof tournamentId === "string" && tournamentId !== "") return GameFormat.SIT_AND_GO;
+    return undefined;
+}
+
 function toGameVariant(raw: string | undefined): GameVariant | undefined {
     if (raw === undefined) return undefined;
     return Object.values(GameVariant).includes(raw as GameVariant) ? (raw as GameVariant) : undefined;
@@ -158,7 +172,7 @@ export function classifyMessage(raw: RawWsMessage | null | undefined, tableId: s
         return {
             kind: "state",
             snapshot: gameStateData,
-            format: toGameFormat(rawFormat),
+            format: resolveGameFormat(rawFormat, gameStateData),
             variant: toGameVariant(rawVariant),
             name,
             creator,
