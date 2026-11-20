@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { COSMOS_CONSTANTS, PlayerActionType, NonPlayerActionType, TexasHoldemRound, GameVariant, PlayerStatus, hasAction, isSitAndGoFormat } from "@block52/poker-vm-sdk";
+import { COSMOS_CONSTANTS, PlayerActionType, NonPlayerActionType, TexasHoldemRound, GameVariant, PlayerStatus, hasAction, isSitAndGoFormat, isTournamentFormat } from "@block52/poker-vm-sdk";
 import { useGameState } from "../../context/GameStateContext";
 import { useToast } from "@block52/ui-sdk";
 import { useNetwork } from "../../context/NetworkContext";
@@ -334,7 +334,7 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
 
     // ---- Sit out (cash games only: tournament seats never sit out voluntarily) ----
     const pendingSitOut = legalActions.pendingSitOut;
-    const sitOutAllowed = !isSitAndGoFormat(gameFormat) && hasAction(legalActions.legalActions, NonPlayerActionType.SIT_OUT);
+    const sitOutAllowed = !isTournamentFormat(gameFormat) && hasAction(legalActions.legalActions, NonPlayerActionType.SIT_OUT);
     const sitOutNextHandChecked =
         sitOutNextHandOptimistic !== null && sitOutNextHandOptimistic.source === pendingSitOut
             ? sitOutNextHandOptimistic.checked
@@ -422,7 +422,11 @@ const Table: React.FC<{ onOpenNav: () => void }> = ({ onOpenNav }) => {
               }
             : undefined;
 
-    const isTournamentBlinds = isSitAndGoFormat(gameFormat);
+    // Chip-denominated (no micro-USDC division) for every tournament format —
+    // sit-and-go AND scheduled multi-table tournaments (format "tournament").
+    // Using the SNG-only check here rendered a "tournament" table as cash, so
+    // stacks/blinds/pot all divided by 1e6 and showed 0.
+    const isTournamentBlinds = isTournamentFormat(gameFormat);
 
     // Sit & Go has no seat or amount to choose, so registration opens on its own
     // when an unseated viewer lands on the table. Clicking an open seat also opens it.
