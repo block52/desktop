@@ -36,7 +36,7 @@ const createWindow = () => {
     // macOS: no title bar, the traffic lights sit inside the app (the renderer draws a drag strip under them).
     ...(process.platform === "darwin" ? { titleBarStyle: "hidden" as const, trafficLightPosition: { x: 16, y: 10 } } : {}),
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
