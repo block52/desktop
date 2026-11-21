@@ -1,18 +1,18 @@
 import { COSMOS_CONSTANTS } from "@block52/poker-vm-sdk";
 import type { NetworkEndpoints } from "../../context/NetworkContext";
 import type { BroadcastActionParams } from "../../wallet/types";
+import { goSignerOn } from "../../wallet/goSignerFlag";
 import { requireWalletBridge } from "../../utils/cosmos/walletBridge";
 
 /**
- * Game-action signing via the Go sidecar (pokerchain-go-client) instead of the
- * TypeScript SDK. Opt-in behind VITE_GO_SIGNER so the SDK stays the default
- * until the Go path is validated against a real node (see desktop #30, #37).
+ * Game-action signing via the Go sidecar (pokerchain-go-client). This is the
+ * default; VITE_GO_SIGNER=false falls back to the TypeScript SDK (see goSignerFlag.ts).
  *
  * Amounts are passed to Go as micro-USDC numbers; micro values are well within
  * JS safe-integer range, so the bigint→number narrowing is lossless here.
  */
 export function goSignerEnabled(): boolean {
-    return import.meta.env.VITE_GO_SIGNER === "true";
+    return goSignerOn(import.meta.env.VITE_GO_SIGNER);
 }
 
 function microToNumber(micro: bigint): number {

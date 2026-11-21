@@ -4,6 +4,7 @@ import path from "node:path";
 import { WalletVault } from "./vault";
 import { WalletSigner } from "./signer";
 import { WalletSidecar } from "./goSidecar";
+import { goSignerOn } from "./goSignerFlag";
 import { createGpgTool } from "./pgp";
 import { EthWallet } from "./ethWallet";
 import { createEthChain } from "./ethChain";
@@ -78,13 +79,13 @@ export function registerWalletIpc(): { lockWallet: () => void } {
     };
 
     const sidecar = new WalletSidecar();
-    // With the Go signer on (VITE_GO_SIGNER), sendTokens is signed in the sidecar. WalletSigner still asks the user in
-    // a native dialog first; sending never goes through "wallet:broadcast-action", which has no such confirmation.
-    const goSignerOn = import.meta.env.VITE_GO_SIGNER === "true";
+    // sendTokens is signed in the sidecar unless VITE_GO_SIGNER=false. WalletSigner still asks the user in a native
+    // dialog first; sending never goes through "wallet:broadcast-action", which has no such confirmation.
+    const sendInGo = goSignerOn(import.meta.env.VITE_GO_SIGNER);
     const signer = new WalletSigner({
         readMnemonic: () => vault.getMnemonic(),
         confirm: confirmInNativeDialog,
-        sendTokensInGo: goSignerOn
+        sendTokensInGo: sendInGo
             ? async request => (await sidecar.broadcast({ ...request, kind: "send", mnemonic: await requireMnemonic(), gameId: "" })).txHash
             : undefined,
     });
