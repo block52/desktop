@@ -3,7 +3,7 @@
   "productName": "Block52",
   "version": "1.0.7",
   "description": "Block52 poker desktop app",
-  "main": ".vite/build/main.js",
+  "main": ".vite/build/main.cjs",
   "private": true,
   "scripts": {
     "start": "electron-forge start",
