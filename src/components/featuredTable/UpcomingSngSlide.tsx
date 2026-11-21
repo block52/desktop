@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { formatCountdown, formatLocalLabel, formatUtcLabel, type UpcomingSng } from "../../utils/sngSchedule";
+import { formatCountdown, formatLocalLabel, formatUtcLabel, type UpcomingSng } from "@block52/ui-sdk";
 import styles from "./FeaturedTable.module.css";
 
 interface UpcomingSngSlideProps {
