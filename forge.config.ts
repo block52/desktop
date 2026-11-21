@@ -3,9 +3,10 @@ import { readdirSync } from "node:fs";
 import path from "node:path";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
-import { MakerZIP } from "@electron-forge/maker-zip";
+import { MakerDMG } from "@electron-forge/maker-dmg";
 import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerRpm } from "@electron-forge/maker-rpm";
+import MakerAppImage from "@reforged/maker-appimage";
 import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
@@ -52,10 +53,16 @@ const config: ForgeConfig = {
     },
   },
   makers: [
+    // Windows: Squirrel .exe installer (also emits the RELEASES/.nupkg auto-update feed).
     new MakerSquirrel({}),
-    new MakerZIP({}, ["darwin"]),
+    // macOS: a drag-to-Applications .dmg. This replaces the old .zip — note Squirrel.Mac
+    // auto-update pulls a .zip, so in-app auto-update on macOS would need a MakerZIP back
+    // (there is no tested macOS auto-update path yet, so the .dmg alone is fine for now).
+    new MakerDMG({}, ["darwin"]),
+    // Linux: native packages for deb/rpm distros, plus a portable AppImage that runs anywhere.
     new MakerRpm({ options: { bin: "block52" } }),
     new MakerDeb({ options: { bin: "block52" } }),
+    new MakerAppImage({ options: { bin: "block52" } }),
   ],
   plugins: [
     new VitePlugin({
