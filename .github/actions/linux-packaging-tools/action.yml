@@ -1,8 +1,9 @@
 name: Linux packaging tools
-description: Install the tools electron-forge needs to build .deb and .rpm installers
+description: Install the tools electron-forge needs to build .deb, .rpm and AppImage installers
 
 runs:
   using: composite
   steps:
-    - run: sudo apt-get update && sudo apt-get install -y rpm fakeroot dpkg
+    # squashfs-tools provides mksquashfs, which @reforged/maker-appimage uses to build the AppImage.
+    - run: sudo apt-get update && sudo apt-get install -y rpm fakeroot dpkg squashfs-tools
       shell: bash
