@@ -12,11 +12,10 @@
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "sync:ui-sdk": "node tools/sync-ui-sdk.mjs"
+    "test": "vitest run"
   },
   "engines": {
-    "node": ">=24"
+    "node": "24.x"
   },
   "keywords": [],
   "author": {
@@ -52,7 +51,7 @@
   },
   "dependencies": {
     "@block52/poker-vm-sdk": "1.25.0",
-    "@block52/ui-sdk": "0.1.0",
+    "@block52/ui-sdk": "https://github.com/block52/ui-sdk/releases/download/v0.2.0/block52-ui-sdk-0.2.0.tgz",
     "@reown/appkit": "^1.8.23",
     "@reown/appkit-adapter-wagmi": "^1.8.23",
     "@tanstack/react-query": "^5.108.0",

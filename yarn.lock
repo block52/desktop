@@ -189,10 +189,9 @@
     long "^5.3.2"
     tslib "^2.6.0"
 
-"@block52/ui-sdk@0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@block52/ui-sdk/-/ui-sdk-0.1.0.tgz#9cbb83b38a47c7b80445c18661961eb63c9e799e"
-  integrity sha512-peaWc6qNu9c87aJ6l0WY6YlW3dmfo7v2Vi8Mh/YGOlFaeNLHYTxISu2MJa01+QriNySYwLttMV3uN5B+McbHAQ==
+"@block52/ui-sdk@https://github.com/block52/ui-sdk/releases/download/v0.2.0/block52-ui-sdk-0.2.0.tgz":
+  version "0.2.0"
+  resolved "https://github.com/block52/ui-sdk/releases/download/v0.2.0/block52-ui-sdk-0.2.0.tgz#6639cde4be3e4e134fa7808e2c61efafae334690"
 
 "@bufbuild/protobuf@^2.10.0":
   version "2.12.0"

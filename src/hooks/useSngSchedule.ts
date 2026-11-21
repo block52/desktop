@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { parseSngSchedule, type SngTournament } from "../utils/sngSchedule";
+import { parseSngSchedule, type SngTournament } from "@block52/ui-sdk";
 
 /**
  * The recurring Sit & Go schedule lives in the web app's repo so it can be edited without a release.
