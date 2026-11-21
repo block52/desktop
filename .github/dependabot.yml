@@ -14,3 +14,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      # init and analyze must bump together — CodeQL fails if two steps in the
+      # same workflow run different versions (#93/#94 each failed alone).
+      codeql-action:
+        patterns: ["github/codeql-action*"]
