@@ -45,10 +45,27 @@ export function stateSyncConfig(rpcServers: string, trustHeight: string, trustHa
     ].join("\n");
 }
 
+// Two weeks of history at the chain's ~5.35s blocks ≈ 226,000 blocks. Keeping that
+// much lets the block explorer and hand replay work on a local node for recent play:
+//   - min-retain-blocks keeps the blocks themselves (block explorer, reads by height)
+//   - pruning-keep-recent keeps app state at past heights (hand replay queries state
+//     at the hand's end height)
+// History only builds up while the node runs — a freshly state-synced node starts with
+// just current state and reaches two weeks after running that long; older history comes
+// from the indexer. ~1.1 GB of blocks for the window at today's activity (the tx index
+// grows unbounded on top of that, ~10 GB/year). See issue #111.
+const TWO_WEEK_BLOCKS = 226000;
+
 export function appToml(): string {
     return [
         "# ~/.pokerchain/config/app.toml",
         "minimum-gas-prices = \"0usdc\"",
+        "",
+        "# Keep ~two weeks of history for the block explorer and hand replay (issue #111).",
+        "pruning = \"custom\"",
+        `pruning-keep-recent = "${TWO_WEEK_BLOCKS}"`,
+        "pruning-interval = \"10\"",
+        `min-retain-blocks = ${TWO_WEEK_BLOCKS}`,
         "",
         "[state-sync]",
         "snapshot-interval = 1000",
@@ -131,6 +148,12 @@ const RunNodeGuide: React.FC<RunNodeGuideProps> = ({ chainVersion, genesisUrl, s
                 Bootstrap from the seed nodes and let PEX find the rest; never make a single node your only peer.
                 State sync fetches a recent snapshot instead of replaying from genesis, which doesn't work across
                 the chain's past upgrades. The trust point below is read live from the chain.
+            </p>
+            <p className={styles.text}>
+                The pruning settings in <code>app.toml</code> keep about two weeks of history, so the block explorer
+                and hand replay work on your node for recent play. History builds up while the node runs — a freshly
+                synced node starts empty and reaches two weeks after running that long; older history comes from the
+                indexer. Budget roughly 1&nbsp;GB for the window (the transaction index keeps growing on top of that).
             </p>
             <CodeBlock label="config.toml" code={p2pConfig(seeds)} />
             <CodeBlock label="config.toml" code={stateSyncConfig(rpcServers, trustHeight, trustHash)} />
