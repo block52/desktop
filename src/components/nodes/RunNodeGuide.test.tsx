@@ -59,6 +59,15 @@ describe("command builders", () => {
         expect(out).toContain("embedded_engine = \"embedded\"");
     });
 
+    it("appToml keeps ~two weeks of history for the explorer and hand replay (#111)", () => {
+        const out = appToml();
+        // State (hand replay) and blocks (explorer) both retained for ~226,000 blocks ≈ 14 days.
+        expect(out).toContain("pruning = \"custom\"");
+        expect(out).toContain("pruning-keep-recent = \"226000\"");
+        expect(out).toContain("pruning-interval = \"10\"");
+        expect(out).toContain("min-retain-blocks = 226000");
+    });
+
     it("buildSeeds joins node ids at the default p2p port", () => {
         expect(buildSeeds([{ host: "node1.block52.xyz", nodeId: "abc123" }, { host: "node2.block52.xyz", nodeId: null }])).toBe(
             "abc123@node1.block52.xyz:26656"
