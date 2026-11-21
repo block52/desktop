@@ -54,7 +54,7 @@ noted. **They are baked into the shipped bundle, so never put a secret you are n
 | `VITE_TREASURY_WALLET_ADDRESS` | Treasury wallet address |
 | `VITE_PROFILE_NFT_INDEXER_URL` | NFT listing for the avatar picker: URL template with `{owner}` / `{chainId}` |
 | `VITE_MAINNET_RPC_URL` | Alternative NFT source: an Alchemy mainnet RPC URL (ships the key in the app; prefer the proxy in [`tools/nft-proxy`](tools/nft-proxy)) |
-| `VITE_GO_SIGNER` | `true` routes game actions (bet/call/raise/join/leave/top-up) through the Go wallet sidecar instead of the TypeScript SDK. Default off. See [Architecture](#architecture). |
+| `VITE_GO_SIGNER` | Game actions (bet/call/raise/join/leave/top-up) and sends are signed by the Go wallet sidecar by default; `false` falls back to the TypeScript SDK. See [Architecture](#architecture). |
 
 ## Project layout
 
@@ -118,14 +118,14 @@ What runs in Go today:
   signature. These are the default (`src/wallet/walletIpc.ts` routes `generate` / `import` / `get-address` /
   `sign-query` to the sidecar).
 - **Recent blocks** — a rolling 1000-block window polled from Tendermint RPC (`recentBlocks`).
-- **Game actions** — signed and broadcast via the sidecar **behind `VITE_GO_SIGNER=true`**; the TypeScript SDK
-  path is the default until the Go path is validated against a live node. It follows the SDK's own models:
+- **Game actions** — signed and broadcast via the sidecar by default (`VITE_GO_SIGNER=false` falls back to the
+  TypeScript SDK; the flag is read in one place, `src/wallet/goSignerFlag.ts`). It follows the SDK's own models:
   - bet/call/raise/fold/deal/… (`action`) are **unordered** transactions, like `performActionSync` (no account
     sequence; the chain de-duplicates on signer + timeout). They return once the node accepts them (CheckTx).
   - join/leave/top-up are **ordered** (account sequence, 1,000,000 gas like the SDK), then the sidecar waits until
     the chain has committed the tx and reports a failed execution. A Sit & Go claim sends its finishing order with
     the leave so the chain can work out payouts.
-  - **sendTokens** (a bank transfer) is signed by the sidecar the same ordered, confirmed way, under the same flag. The
+  - **sendTokens** (a bank transfer) is signed by the sidecar the same ordered, confirmed way, with the same fallback. The
     main process still asks in a native confirmation dialog first, and the sidecar only signs as its own wallet: it
     refuses another sender, a zero amount, a malformed denom and any recipient that is not a valid `b52` address.
     It is deliberately not reachable through the game-action IPC channel, which has no confirmation.

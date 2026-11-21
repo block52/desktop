@@ -7,7 +7,10 @@ vi.mock("../../utils/cosmos/client", () => ({
     withMoneyMoverRetry: async (_network: unknown, run: (client: { signingClient: { leaveGame: typeof leaveGame } }) => Promise<string>) =>
         run({ signingClient: { leaveGame } }),
 }));
-vi.mock("./goSigner", () => ({ goSignerEnabled: () => import.meta.env.VITE_GO_SIGNER === "true", goBroadcast }));
+vi.mock("./goSigner", async () => {
+    const { goSignerOn } = await import("../../wallet/goSignerFlag");
+    return { goSignerEnabled: () => goSignerOn(import.meta.env.VITE_GO_SIGNER), goBroadcast };
+});
 
 import { claimWinnings, resultsAlreadyOnChain } from "./claimWinnings";
 
@@ -21,17 +24,18 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("claimWinnings", () => {
-    it("settles through the SDK by default", async () => {
-        expect(await claimWinnings("table", NETWORK, undefined)).toEqual({ hash: "0xsdk", gameId: "table" });
-        expect(leaveGame).toHaveBeenCalledOnce();
-        expect(goBroadcast).not.toHaveBeenCalled();
-    });
-
-    it("settles through the Go sidecar, with the finishing order, when VITE_GO_SIGNER is on", async () => {
-        vi.stubEnv("VITE_GO_SIGNER", "true");
+    it("settles through the Go sidecar, with the finishing order, by default", async () => {
+        vi.stubEnv("VITE_GO_SIGNER", "");
         expect(await claimWinnings("table", NETWORK, undefined)).toEqual({ hash: "0xgo", gameId: "table" });
         expect(goBroadcast).toHaveBeenCalledWith(NETWORK, { kind: "leave", gameId: "table", finishingOrder: expect.any(Array) });
         expect(leaveGame).not.toHaveBeenCalled();
+    });
+
+    it("settles through the SDK when VITE_GO_SIGNER=false", async () => {
+        vi.stubEnv("VITE_GO_SIGNER", "false");
+        expect(await claimWinnings("table", NETWORK, undefined)).toEqual({ hash: "0xsdk", gameId: "table" });
+        expect(leaveGame).toHaveBeenCalledOnce();
+        expect(goBroadcast).not.toHaveBeenCalled();
     });
 });
 
