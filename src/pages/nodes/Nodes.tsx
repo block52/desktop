@@ -8,7 +8,7 @@ import { useToast } from "@block52/ui-sdk";
 import { getCosmosClient, getSigningClient } from "../../utils/cosmos/client";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import NodeStats from "../../components/nodes/NodeStats";
-import RunNodeGuide, { buildSeeds } from "../../components/nodes/RunNodeGuide";
+import RunNodeGuide, { buildSeeds, isLoopbackUrl } from "../../components/nodes/RunNodeGuide";
 import NodeVersions from "../../components/nodes/NodeVersions";
 import NodeDetailsModal from "../../components/nodes/NodeDetailsModal";
 import BondValidatorForm, { type BondPayload } from "../../components/nodes/BondValidatorForm";
@@ -129,18 +129,21 @@ const Nodes: React.FC = () => {
         };
     }, [currentNetwork]);
 
+    // A node on this machine (the Localhost network) is never a peer or state-sync server for a new one.
+    const remoteEntries = useMemo(() => entries.filter(e => !isLoopbackUrl(e.network.rpc)), [entries]);
     const seedNodes = useMemo(
         () =>
-            entries
+            remoteEntries
                 .filter(e => e.online && e.nodeId !== null)
                 .map(e => ({ host: new URL(e.network.rest).hostname, nodeId: e.nodeId })),
-        [entries]
+        [remoteEntries]
     );
     const seeds = useMemo(() => buildSeeds(seedNodes), [seedNodes]);
-    // State sync needs ≥2 RPC servers that actually answer. Use each online node's own
-    // curated rpc URL — a node's REST hostname doesn't necessarily expose RPC on :26657
-    // (e.g. tommillerservices), and a dead server can fail light-client verification (#102).
-    const rpcUrls = useMemo(() => entries.filter(e => e.online).map(e => e.network.rpc), [entries]);
+    // State sync needs ≥2 RPC servers that actually answer. Use each node's own curated rpc
+    // URL, and only nodes whose RPC answered /status (`online` means REST answered) — a node's
+    // REST hostname doesn't necessarily expose RPC on :26657 (e.g. tommillerservices), and a
+    // dead server can fail light-client verification (#102).
+    const rpcUrls = useMemo(() => remoteEntries.filter(e => e.rpcOnline).map(e => e.network.rpc), [remoteEntries]);
     const rpcServers = useMemo(() => rpcUrls.join(","), [rpcUrls]);
 
     /* ── Bond validator ── */
