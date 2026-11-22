@@ -8,7 +8,7 @@ import { useToast } from "@block52/ui-sdk";
 import { getCosmosClient, getSigningClient } from "../../utils/cosmos/client";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import NodeStats from "../../components/nodes/NodeStats";
-import RunNodeGuide, { buildSeeds } from "../../components/nodes/RunNodeGuide";
+import RunNodeGuide, { buildSeeds, isLoopbackUrl } from "../../components/nodes/RunNodeGuide";
 import NodeVersions from "../../components/nodes/NodeVersions";
 import NodeDetailsModal from "../../components/nodes/NodeDetailsModal";
 import BondValidatorForm, { type BondPayload } from "../../components/nodes/BondValidatorForm";
@@ -129,15 +129,19 @@ const Nodes: React.FC = () => {
         };
     }, [currentNetwork]);
 
-    const seedNodes = useMemo(
+    // A node on this machine (Localhost, Stub) is never a peer or state-sync server for a new node.
+    const remoteEntries = useMemo(() => entries.filter(e => !isLoopbackUrl(e.network.rpc)), [entries]);
+    const seeds = useMemo(
         () =>
-            entries
-                .filter(e => e.online && e.nodeId !== null)
-                .map(e => ({ host: new URL(e.network.rest).hostname, nodeId: e.nodeId })),
-        [entries]
+            buildSeeds(
+                remoteEntries
+                    .filter(e => e.online && e.nodeId !== null)
+                    .map(e => ({ host: new URL(e.network.rest).hostname, nodeId: e.nodeId }))
+            ),
+        [remoteEntries]
     );
-    const seeds = useMemo(() => buildSeeds(seedNodes), [seedNodes]);
-    const rpcServers = useMemo(() => seedNodes.map(n => `http://${n.host}:26657`).join(","), [seedNodes]);
+    // Each node's own RPC address, and only if it just answered: a REST hostname need not serve RPC on 26657.
+    const rpcServers = useMemo(() => remoteEntries.filter(e => e.rpcOnline).map(e => e.network.rpc), [remoteEntries]);
 
     /* ── Bond validator ── */
     const [isBonding, setIsBonding] = useState(false);
@@ -352,7 +356,6 @@ const Nodes: React.FC = () => {
                     {trustPoint !== null && seeds !== "" ? (
                         <RunNodeGuide
                             chainVersion={chainVersion}
-                            genesisUrl={`${currentNetwork.rest}/genesis`}
                             seeds={seeds}
                             rpcServers={rpcServers}
                             trustHeight={trustPoint.height}

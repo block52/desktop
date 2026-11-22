@@ -42,6 +42,17 @@
     text-wrap: pretty;
 }
 
+.warning {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid hsl(38 90% 50% / 0.35);
+    background: hsl(38 90% 50% / 0.1);
+    color: hsl(43 90% 75%);
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
 .codeBlock {
     border: 1px solid hsl(245 22% 17%);
     border-radius: 10px;
