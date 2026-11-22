@@ -137,7 +137,11 @@ const Nodes: React.FC = () => {
         [entries]
     );
     const seeds = useMemo(() => buildSeeds(seedNodes), [seedNodes]);
-    const rpcServers = useMemo(() => seedNodes.map(n => `http://${n.host}:26657`).join(","), [seedNodes]);
+    // State sync needs ≥2 RPC servers that actually answer. Use each online node's own
+    // curated rpc URL — a node's REST hostname doesn't necessarily expose RPC on :26657
+    // (e.g. tommillerservices), and a dead server can fail light-client verification (#102).
+    const rpcUrls = useMemo(() => entries.filter(e => e.online).map(e => e.network.rpc), [entries]);
+    const rpcServers = useMemo(() => rpcUrls.join(","), [rpcUrls]);
 
     /* ── Bond validator ── */
     const [isBonding, setIsBonding] = useState(false);
@@ -349,10 +353,9 @@ const Nodes: React.FC = () => {
             {tab === "run" && (
                 <>
                     <NodeVersions />
-                    {trustPoint !== null && seeds !== "" ? (
+                    {trustPoint !== null && seeds !== "" && rpcUrls.length >= 2 ? (
                         <RunNodeGuide
                             chainVersion={chainVersion}
-                            genesisUrl={`${currentNetwork.rest}/genesis`}
                             seeds={seeds}
                             rpcServers={rpcServers}
                             trustHeight={trustPoint.height}

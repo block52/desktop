@@ -3,7 +3,6 @@ import styles from "./RunNodeGuide.module.css";
 
 export interface RunNodeGuideProps {
     chainVersion: string;
-    genesisUrl: string;
     seeds: string;
     rpcServers: string;
     trustHeight: string;
@@ -16,11 +15,18 @@ export function versionCommand(): string {
     return "pokerchaind version";
 }
 
-export function initCommands(genesisUrl: string): string {
+// The official genesis from the public mirror, with its SHA-256 built into the app so
+// the integrity check doesn't trust the file it just downloaded. A node's own /genesis
+// (REST 501, or RPC's reordered consensus_params) hashes differently and replays to a
+// wrong AppHash around block 150 — see pokerchain's GENESIS.md. Issue #102.
+export const GENESIS_URL = "https://raw.githubusercontent.com/block52/pokerchain-releases/main/networks/pokerchain/genesis.json";
+export const GENESIS_SHA256 = "ae808c4889f1c520c92f40d55dd984d41fec7a03b0373170dcafdeeaf1454731";
+
+export function initCommands(): string {
     return [
         "pokerchaind init <your-moniker> --chain-id pokerchain --home ~/.pokerchain",
-        `curl -fSL "${genesisUrl}" -o ~/.pokerchain/config/genesis.json`,
-        "sha256sum ~/.pokerchain/config/genesis.json"
+        `curl -fSL "${GENESIS_URL}" -o ~/.pokerchain/config/genesis.json`,
+        `echo "${GENESIS_SHA256}  ~/.pokerchain/config/genesis.json" | sha256sum -c -`
     ].join("\n");
 }
 
@@ -30,7 +36,11 @@ export function p2pConfig(seeds: string): string {
         "[p2p]",
         `seeds = "${seeds}"`,
         `persistent_peers = "${seeds}"`,
-        "external_address = \"<your-public-ip>:26656\"   # if reachable from the Internet"
+        "external_address = \"<your-public-ip>:26656\"   # if reachable from the Internet",
+        "",
+        "# Let the Block52 desktop app's RPC calls through (RPC only listens on 127.0.0.1).",
+        "[rpc]",
+        "cors_allowed_origins = [\"*\"]"
     ].join("\n");
 }
 
@@ -71,7 +81,16 @@ export function appToml(): string {
         "snapshot-interval = 1000",
         "snapshot-keep-recent = 2",
         "",
-        "[engine]",
+        "# Serve the Block52 desktop app on this node (its Localhost network).",
+        "# init leaves the REST API off; CORS lets the app (another origin) call it.",
+        "[api]",
+        "enable = true",
+        "enabled-unsafe-cors = true",
+        "",
+        "# Run the poker engine in-process. pokerchaind reads pvm.embedded_engine; under",
+        "# [engine] it is ignored and the node panics at startup with pvm_url unset.",
+        "[pvm]",
+        "pvm_url = \"\"",
         "embedded_engine = \"embedded\""
     ].join("\n");
 }
@@ -129,7 +148,7 @@ const StepCard: React.FC<StepCardProps> = ({ step, title, children }) => (
     </div>
 );
 
-const RunNodeGuide: React.FC<RunNodeGuideProps> = ({ chainVersion, genesisUrl, seeds, rpcServers, trustHeight, trustHash }) => (
+const RunNodeGuide: React.FC<RunNodeGuideProps> = ({ chainVersion, seeds, rpcServers, trustHeight, trustHash }) => (
     <div className={styles.guide}>
         <StepCard step={1} title={`Install pokerchain ${chainVersion}`}>
             <p className={styles.text}>
@@ -140,7 +159,12 @@ const RunNodeGuide: React.FC<RunNodeGuideProps> = ({ chainVersion, genesisUrl, s
         </StepCard>
 
         <StepCard step={2} title="Initialise the home dir and install the genesis">
-            <CodeBlock label="Shell" code={initCommands(genesisUrl)} />
+            <p className={styles.text}>
+                Download the official genesis from the public mirror and check it against the SHA-256 the app has
+                built in. Don&apos;t use a node&apos;s own genesis — it hashes differently and replays to a wrong
+                AppHash early in the chain.
+            </p>
+            <CodeBlock label="Shell" code={initCommands()} />
         </StepCard>
 
         <StepCard step={3} title="Peers, discovery and state sync">
@@ -154,6 +178,12 @@ const RunNodeGuide: React.FC<RunNodeGuideProps> = ({ chainVersion, genesisUrl, s
                 and hand replay work on your node for recent play. History builds up while the node runs — a freshly
                 synced node starts empty and reaches two weeks after running that long; older history comes from the
                 indexer. Budget roughly 1&nbsp;GB for the window (the transaction index keeps growing on top of that).
+            </p>
+            <p className={styles.text}>
+                The <code>[api]</code> and <code>[rpc]</code> blocks let the app reach this node on its{" "}
+                <em>Localhost</em> network: <code>init</code> leaves the REST API off, and REST and RPC only listen on
+                localhost, so the app (a different origin) needs CORS. The in-process engine (<code>[pvm]</code>) and
+                the built-in WebSocket relay on <code>:8585</code> mean no extra services to run.
             </p>
             <CodeBlock label="config.toml" code={p2pConfig(seeds)} />
             <CodeBlock label="config.toml" code={stateSyncConfig(rpcServers, trustHeight, trustHash)} />

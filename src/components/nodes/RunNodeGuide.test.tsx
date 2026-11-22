@@ -5,6 +5,8 @@ import { ToastProvider } from "@block52/ui-sdk";
 import RunNodeGuide, {
     appToml,
     buildSeeds,
+    GENESIS_SHA256,
+    GENESIS_URL,
     initCommands,
     p2pConfig,
     startCommands,
@@ -14,9 +16,8 @@ import RunNodeGuide, {
 
 const GUIDE = {
     chainVersion: "0.1.73",
-    genesisUrl: "https://node1.block52.xyz/genesis",
     seeds: "abc123@node1.block52.xyz:26656,def456@node.texashodl.net:26656",
-    rpcServers: "http://node1.block52.xyz:26657,http://node.texashodl.net:26657",
+    rpcServers: "https://node1.block52.xyz/rpc/,https://node.texashodl.net/rpc/",
     trustHeight: "505877",
     trustHash: "A1B2C3HASH"
 };
@@ -31,17 +32,22 @@ describe("command builders", () => {
         expect(versionCommand()).toBe("pokerchaind version");
     });
 
-    it("initCommands init the home dir and install genesis", () => {
-        const out = initCommands(GUIDE.genesisUrl);
+    it("initCommands download the official genesis from the mirror and verify its sha256 (#102)", () => {
+        const out = initCommands();
         expect(out).toContain("pokerchaind init <your-moniker> --chain-id pokerchain --home ~/.pokerchain");
-        expect(out).toContain(`curl -fSL "${GUIDE.genesisUrl}" -o ~/.pokerchain/config/genesis.json`);
-        expect(out).toContain("sha256sum ~/.pokerchain/config/genesis.json");
+        // The mirror URL, not a node's own /genesis (which hashes differently).
+        expect(out).toContain(`curl -fSL "${GENESIS_URL}" -o ~/.pokerchain/config/genesis.json`);
+        // The check compares against the built-in sha, so it actually verifies something.
+        expect(out).toContain(`echo "${GENESIS_SHA256}  ~/.pokerchain/config/genesis.json" | sha256sum -c -`);
+        expect(GENESIS_URL).toContain("pokerchain-releases");
     });
 
-    it("p2pConfig renders seeds and persistent peers", () => {
+    it("p2pConfig renders seeds, persistent peers and RPC CORS for the app (#102)", () => {
         const out = p2pConfig(GUIDE.seeds);
         expect(out).toContain(`seeds = "${GUIDE.seeds}"`);
         expect(out).toContain(`persistent_peers = "${GUIDE.seeds}"`);
+        expect(out).toContain("[rpc]");
+        expect(out).toContain("cors_allowed_origins = [\"*\"]");
     });
 
     it("stateSyncConfig renders live trust values", () => {
@@ -52,11 +58,20 @@ describe("command builders", () => {
         expect(out).toContain(`trust_hash = "${GUIDE.trustHash}"`);
     });
 
-    it("appToml renders pruning and engine settings", () => {
+    it("appToml renders the engine under [pvm] and enables the REST API for the app (#102)", () => {
         const out = appToml();
         expect(out).toContain("minimum-gas-prices = \"0usdc\"");
         expect(out).toContain("snapshot-interval = 1000");
+        // The engine must be under [pvm], not an [engine] section — otherwise the node panics at startup.
+        expect(out).toContain("[pvm]");
+        expect(out).toContain("pvm_url = \"\"");
         expect(out).toContain("embedded_engine = \"embedded\"");
+        // No [engine] section header (it may appear only in an explanatory comment).
+        expect(out.split("\n").some(line => line.trim() === "[engine]")).toBe(false);
+        // REST API on (init leaves it off) so the app can use the node on Localhost.
+        expect(out).toContain("[api]");
+        expect(out).toContain("enable = true");
+        expect(out).toContain("enabled-unsafe-cors = true");
     });
 
     it("appToml keeps ~two weeks of history for the explorer and hand replay (#111)", () => {
