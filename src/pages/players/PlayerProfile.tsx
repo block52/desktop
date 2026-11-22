@@ -7,9 +7,9 @@ import { playerInitials } from "./Players";
 import PlayerNotesPanel from "../../components/players/PlayerNotesPanel";
 import styles from "./Players.module.css";
 
-/** Indexer percentage fields are integers scaled x100 (2550 = 25.5%). */
-function scaledPercent(value: number): string {
-    return `${(value / 100).toFixed(1)}%`;
+/** Indexer percentage fields are integers scaled x100 (2550 = 25.5%). With no hands there is no share to show. */
+function scaledPercent(value: number, hands: number): string {
+    return hands === 0 ? "—" : `${(value / 100).toFixed(1)}%`;
 }
 
 interface Tile {
@@ -33,12 +33,25 @@ const PlayerProfile: React.FC<{ address: string }> = ({ address }) => {
                       note: `${formatMicroUsd(profile.total_buy_ins)} in · ${formatMicroUsd(profile.total_cash_outs)} out`,
                       tone: profile.net_profit >= 0 ? "pos" : "neg"
                   },
-                  { label: "VPIP", value: scaledPercent(profile.vpip), note: "Voluntarily in pot" },
-                  { label: "PFR", value: scaledPercent(profile.pfr), note: "Preflop raise" },
+                  { label: "VPIP", value: scaledPercent(profile.vpip, profile.total_hands), note: "Voluntarily in pot" },
+                  { label: "PFR", value: scaledPercent(profile.pfr, profile.total_hands), note: "Preflop raise" },
                   { label: "Aggression", value: (profile.aggression_factor / 100).toFixed(2), note: "Bets + raises / calls" },
-                  { label: "WTSD", value: scaledPercent(profile.wtsd), note: "Went to showdown" },
-                  { label: "Sessions", value: profile.session_count.toLocaleString(), note: `Longest ${profile.longest_session_blocks.toLocaleString()} blocks` },
-                  { label: "Biggest pot", value: formatMicroUsd(profile.biggest_pot_won), note: "Won in a single hand" }
+                  { label: "WTSD", value: scaledPercent(profile.wtsd, profile.total_hands), note: "Went to showdown" },
+                  {
+                      label: "Sessions",
+                      value: profile.session_count.toLocaleString(),
+                      // The indexer measures only sessions with a leave block, and sends 0 when there are none.
+                      note:
+                          profile.longest_session_blocks === 0
+                              ? "No finished sessions"
+                              : `Longest ${profile.longest_session_blocks.toLocaleString()} blocks`
+                  },
+                  {
+                      label: "Biggest pot",
+                      // Cash tables only (Sit & Go and tournament pots are chips, not money); 0 when none is recorded.
+                      value: profile.biggest_pot_won === 0 ? "—" : formatMicroUsd(profile.biggest_pot_won),
+                      note: "Won in one cash-game hand"
+                  }
               ];
 
     return (
