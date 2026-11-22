@@ -8,6 +8,7 @@ import RunNodeGuide, {
     GENESIS_SHA256,
     GENESIS_URL,
     initCommands,
+    isLoopbackUrl,
     p2pConfig,
     startCommands,
     stateSyncConfig,
@@ -37,8 +38,10 @@ describe("command builders", () => {
         expect(out).toContain("pokerchaind init <your-moniker> --chain-id pokerchain --home ~/.pokerchain");
         // The mirror URL, not a node's own /genesis (which hashes differently).
         expect(out).toContain(`curl -fSL "${GENESIS_URL}" -o ~/.pokerchain/config/genesis.json`);
-        // The check compares against the built-in sha, so it actually verifies something.
-        expect(out).toContain(`echo "${GENESIS_SHA256}  ~/.pokerchain/config/genesis.json" | sha256sum -c -`);
+        // The check compares against the built-in sha, so it actually verifies something. It runs from the
+        // config dir: sha256sum -c opens the listed path literally, and a quoted ~ is never expanded.
+        expect(out).toContain(`(cd ~/.pokerchain/config && echo "${GENESIS_SHA256}  genesis.json" | sha256sum -c -)`);
+        expect(out).not.toContain(`"${GENESIS_SHA256}  ~`);
         expect(GENESIS_URL).toContain("pokerchain-releases");
     });
 
@@ -89,8 +92,17 @@ describe("command builders", () => {
         );
     });
 
-    it("startCommands start the node", () => {
-        expect(startCommands()).toContain("pokerchaind start --home ~/.pokerchain");
+    it("startCommands start the node and show how to check it has caught up", () => {
+        const out = startCommands();
+        expect(out).toContain("pokerchaind start --home ~/.pokerchain");
+        expect(out).toContain("curl -s localhost:26657/status | jq .result.sync_info.catching_up");
+    });
+
+    it("isLoopbackUrl spots nodes on this machine", () => {
+        expect(isLoopbackUrl("http://localhost:26657/")).toBe(true);
+        expect(isLoopbackUrl("http://127.0.0.1:26657")).toBe(true);
+        expect(isLoopbackUrl("http://[::1]:26657")).toBe(true);
+        expect(isLoopbackUrl("https://node1.block52.xyz/rpc/")).toBe(false);
     });
 });
 

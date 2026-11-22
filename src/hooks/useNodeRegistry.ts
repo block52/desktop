@@ -12,6 +12,8 @@ export interface NodeEntry {
     /** This node's own voting power from /status (0 for a non-validating follower). */
     votingPower: number;
     nodeId: string | null;
+    /** Its RPC address (`network.rpc`) answered /status. `online` comes from REST, which can answer when RPC doesn't. */
+    rpcOnline: boolean;
 }
 
 const REGISTRY_POLL_MS = 15000;
@@ -66,21 +68,24 @@ export function useNodeRegistry(networks: NetworkEndpoints[], pollMs = REGISTRY_
                     // for every network). The app only reads it: a validator node is a
                     // data source we label as such, never something we control (#74).
                     let votingPower = 0;
+                    let rpcOnline = false;
                     try {
                         const statusResponse = await fetch(`${network.rpc.replace(/\/+$/, "")}/status`);
                         if (statusResponse.ok) {
                             const status = (await statusResponse.json()) as {
                                 result?: { validator_info?: { voting_power?: string } };
                             };
+                            rpcOnline = status.result !== undefined;
                             const power = Number(status.result?.validator_info?.voting_power ?? "0");
                             votingPower = Number.isFinite(power) ? power : 0;
                             isValidator = votingPower > 0;
                         }
                     } catch {
                         isValidator = false;
+                        rpcOnline = false;
                     }
 
-                    return { network, online, blockHeight, isValidator, votingPower, nodeId };
+                    return { network, online, blockHeight, isValidator, votingPower, nodeId, rpcOnline };
                 })
             );
 

@@ -26,7 +26,9 @@ export function initCommands(): string {
     return [
         "pokerchaind init <your-moniker> --chain-id pokerchain --home ~/.pokerchain",
         `curl -fSL "${GENESIS_URL}" -o ~/.pokerchain/config/genesis.json`,
-        `echo "${GENESIS_SHA256}  ~/.pokerchain/config/genesis.json" | sha256sum -c -`
+        // sha256sum -c opens the path it reads literally, and ~ inside quotes isn't expanded: check from the directory.
+        "# must print \"genesis.json: OK\" (macOS: use shasum -a 256 -c - instead of sha256sum -c -)",
+        `(cd ~/.pokerchain/config && echo "${GENESIS_SHA256}  genesis.json" | sha256sum -c -)`
     ].join("\n");
 }
 
@@ -98,7 +100,8 @@ export function appToml(): string {
 export function startCommands(): string {
     return [
         "pokerchaind start --home ~/.pokerchain",
-        "# in another shell: done when catching_up is false"
+        "# in another shell; done when this prints false:",
+        "curl -s localhost:26657/status | jq .result.sync_info.catching_up"
     ].join("\n");
 }
 
@@ -113,6 +116,12 @@ export function buildSeeds(nodes: SeedNode[]): string {
         .filter((n): n is { host: string; nodeId: string } => n.nodeId !== null)
         .map(n => `${n.nodeId}@${n.host}:26656`)
         .join(",");
+}
+
+/** A node on this machine: never a peer or state-sync server for a new node. */
+export function isLoopbackUrl(url: string): boolean {
+    const host = new URL(url).hostname;
+    return host === "localhost" || host === "[::1]" || host.startsWith("127.");
 }
 
 /* ── UI ── */
