@@ -1,5 +1,31 @@
-import { describe, expect, it } from "vitest";
-import { orderCardStats, presentResult, type CardStats } from "./indexer";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { indexerApi, orderCardStats, presentResult, type CardStats } from "./indexer";
+
+afterEach(() => {
+    vi.unstubAllGlobals();
+});
+
+function serve(body: unknown) {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => body }));
+}
+
+describe("paged endpoints", () => {
+    it("turn an empty page sent as data: null into an empty list", async () => {
+        serve({ data: null, pagination: { limit: 20, offset: 0, total: 0 } });
+        const sessions = await indexerApi.getPlayerSessions("b521x", 20, 0);
+        expect(sessions).toEqual({ data: [], pagination: { limit: 20, offset: 0, total: 0 } });
+
+        const hands = await indexerApi.getHandsForGame("0xnone", 25, 0);
+        expect(hands.data).toEqual([]);
+    });
+
+    it("pass rows through unchanged", async () => {
+        const row = { game_id: "0xg", hand_number: 3, block_height: 9, deck_seed: "s", created_at: "2026-11-21T00:00:00Z" };
+        serve({ data: [row], pagination: { limit: 25, offset: 0, total: 1 } });
+        const hands = await indexerApi.getRecentHands(25, 0);
+        expect(hands).toEqual({ data: [row], pagination: { limit: 25, offset: 0, total: 1 } });
+    });
+});
 
 const stat = (card: string, rank: string, suit: string): CardStats => ({
     card,

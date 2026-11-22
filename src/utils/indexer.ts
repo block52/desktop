@@ -161,6 +161,15 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
     return (await response.json()) as T;
 }
 
+/**
+ * Some endpoints (/hands?game_id=, /players/:address/sessions) send an empty page as `"data": null`, Go's
+ * encoding of an empty list. Hand callers an empty array, as the other endpoints already send.
+ */
+async function getPaged<T>(path: string, signal?: AbortSignal): Promise<Paged<T>> {
+    const page = await getJson<{ data: T[] | null; pagination: Paged<T>["pagination"] }>(path, signal);
+    return { data: page.data === null ? [] : page.data, pagination: page.pagination };
+}
+
 export const indexerApi = {
     getCardStats: (signal?: AbortSignal) => getJson<CardStats[]>("/api/v1/stats/cards", signal),
     getSummary: (signal?: AbortSignal) => getJson<StatsSummary>("/api/v1/stats/summary", signal),
@@ -174,20 +183,20 @@ export const indexerApi = {
             offset: String(params.offset)
         });
         if (params.search !== "") query.set("search", params.search);
-        return getJson<Paged<PlayerListItem>>(`/api/v1/players?${query.toString()}`, signal);
+        return getPaged<PlayerListItem>(`/api/v1/players?${query.toString()}`, signal);
     },
     getHandsForGame: (gameId: string, limit: number, offset: number, signal?: AbortSignal) =>
-        getJson<Paged<IndexedHand>>(`/api/v1/hands?game_id=${encodeURIComponent(gameId)}&limit=${limit}&offset=${offset}`, signal),
+        getPaged<IndexedHand>(`/api/v1/hands?game_id=${encodeURIComponent(gameId)}&limit=${limit}&offset=${offset}`, signal),
     getRecentHands: (limit: number, offset: number, signal?: AbortSignal) =>
-        getJson<Paged<IndexedHand>>(`/api/v1/hands?limit=${limit}&offset=${offset}`, signal),
+        getPaged<IndexedHand>(`/api/v1/hands?limit=${limit}&offset=${offset}`, signal),
     getHand: (gameId: string, handNumber: number, signal?: AbortSignal) =>
         getJson<IndexedHand>(`/api/v1/hands/${encodeURIComponent(gameId)}/${handNumber}`, signal),
     getPlayerProfile: (address: string, signal?: AbortSignal) =>
         getJson<PlayerProfile>(`/api/v1/players/${encodeURIComponent(address)}/stats`, signal),
     getPlayerSessions: (address: string, limit: number, offset: number, signal?: AbortSignal) =>
-        getJson<Paged<PlayerSession>>(`/api/v1/players/${encodeURIComponent(address)}/sessions?limit=${limit}&offset=${offset}`, signal),
+        getPaged<PlayerSession>(`/api/v1/players/${encodeURIComponent(address)}/sessions?limit=${limit}&offset=${offset}`, signal),
     getPlayerHands: (address: string, limit: number, offset: number, signal?: AbortSignal) =>
-        getJson<Paged<PlayerHand>>(`/api/v1/players/${encodeURIComponent(address)}/hands?limit=${limit}&offset=${offset}`, signal),
+        getPaged<PlayerHand>(`/api/v1/players/${encodeURIComponent(address)}/hands?limit=${limit}&offset=${offset}`, signal),
 };
 
 // ── Presentation helpers ──
