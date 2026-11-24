@@ -8,7 +8,7 @@ import { goSignerOn } from "./goSignerFlag";
 import { createGpgTool } from "./pgp";
 import { EthWallet } from "./ethWallet";
 import { createEthChain } from "./ethChain";
-import { GASLESS_DEPOSITOR_ADDRESS, GASLESS_RELAYER_URL } from "../config/constants";
+import { GASLESS_DEPOSITOR_ADDRESS, GASLESS_MIN_DEPOSIT, GASLESS_RELAYER_URL } from "../config/constants";
 import { createGaslessRelay } from "./gaslessRelay";
 import type { GaslessRelay } from "./gaslessRelay";
 import type { SignerNetwork, WalletCredential, WalletStatus } from "./types";
@@ -52,9 +52,9 @@ function ethereumRpcUrl(): string {
 }
 
 /** Gasless USDC deposits, when both the deposit contract and the service are configured. */
-function gaslessDeposits(): { depositor: string; relay: GaslessRelay } | undefined {
+function gaslessDeposits(): { depositor: string; relay: GaslessRelay; minimum: bigint } | undefined {
     if (GASLESS_DEPOSITOR_ADDRESS === null || GASLESS_RELAYER_URL === null) return undefined;
-    return { depositor: GASLESS_DEPOSITOR_ADDRESS, relay: createGaslessRelay({ baseUrl: GASLESS_RELAYER_URL }) };
+    return { depositor: GASLESS_DEPOSITOR_ADDRESS, relay: createGaslessRelay({ baseUrl: GASLESS_RELAYER_URL }), minimum: GASLESS_MIN_DEPOSIT };
 }
 
 /** Locking only means something when something other than the OS keychain is needed to reopen. */

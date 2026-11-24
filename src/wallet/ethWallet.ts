@@ -30,8 +30,11 @@ interface EthWalletDeps {
     chain: EthChain;
     /** This wallet's own Block52 address. The bridge mints to it, never to an address the page supplies. */
     cosmosAddress: () => Promise<string>;
-    /** When set, USDC is deposited without the user paying network fees. Absent until the deposit service is live. */
-    gasless?: { depositor: string; relay: GaslessRelay };
+    /**
+     * When set, USDC from `minimum` up (the deposit service's own minimum) is deposited without the user paying network
+     * fees. Absent until the deposit service is live.
+     */
+    gasless?: { depositor: string; relay: GaslessRelay; minimum: bigint };
     /** Seconds since the epoch. Injected for tests. */
     now?: () => number;
 }
@@ -69,8 +72,17 @@ export class EthWallet {
 
         const held = await chain.balances(account.address);
         if (amount > (token === "USDC" ? held.usdc : held.usdt)) throw new Error(`There is not enough ${token} on this address.`);
-        const gasless = token === "USDC" ? this.deps.gasless : undefined;
-        if (gasless === undefined && held.eth === 0n) throw new Error("This address has no ETH to pay the network fee. Send a little ETH to it first.");
+        const offered = token === "USDC" ? this.deps.gasless : undefined;
+        // Under the service's minimum, USDC goes the ordinary way, from the user's own ETH, as it does without the service.
+        const gasless = offered !== undefined && amount >= offered.minimum ? offered : undefined;
+        if (gasless === undefined && held.eth === 0n) {
+            const minimum = offered === undefined ? null : `${formatUnits(offered.minimum, 6)} USDC`;
+            throw new Error(
+                minimum === null
+                    ? "This address has no ETH to pay the network fee. Send a little ETH to it first."
+                    : `Deposits under ${minimum} need a little ETH for the network fee. Deposit ${minimum} or more, or send some ETH to this address first.`,
+            );
+        }
 
         const receiver = await this.deps.cosmosAddress();
         if (gasless !== undefined) {

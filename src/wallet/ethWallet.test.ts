@@ -107,7 +107,7 @@ describe("EthWallet gasless USDC", () => {
             confirm,
             chain,
             cosmosAddress: async () => RECEIVER,
-            gasless: { depositor: "0x1111111111111111111111111111111111111111", relay: { submit } },
+            gasless: { depositor: "0x1111111111111111111111111111111111111111", relay: { submit }, minimum: 5_000_000n },
             now: () => 1_800_000_000,
         });
         return { wallet, chain, submit, confirm };
@@ -127,8 +127,30 @@ describe("EthWallet gasless USDC", () => {
 
     it("signs nothing and submits nothing when the user cancels", async () => {
         const { wallet, submit } = gaslessSetup({ confirm: false });
-        await expect(wallet.deposit("USDC", 1_000_000n)).rejects.toThrow("Cancelled");
+        await expect(wallet.deposit("USDC", 20_000_000n)).rejects.toThrow("Cancelled");
         expect(submit).not.toHaveBeenCalled();
+    });
+
+    it("is gasless from exactly the service's minimum", async () => {
+        const { wallet, submit } = gaslessSetup({ eth: 0n });
+        await wallet.deposit("USDC", 5_000_000n);
+        expect(submit).toHaveBeenCalledOnce();
+    });
+
+    it("deposits less than the minimum the ordinary way, from the user's own ETH", async () => {
+        const { wallet, chain, submit } = gaslessSetup({ eth: 10n ** 16n });
+        const result = await wallet.deposit("USDC", 4_999_999n);
+        expect(submit).not.toHaveBeenCalled();
+        expect(chain.approve).toHaveBeenCalledOnce();
+        expect(chain.depositUnderlying).toHaveBeenCalledWith(expect.anything(), 4_999_999n, RECEIVER);
+        expect(result).toEqual({ approveHash: "0xapprove", depositHash: "0xdeposit" });
+    });
+
+    it("says how to deposit less than the minimum without ETH, before asking", async () => {
+        const { wallet, submit, confirm } = gaslessSetup({ eth: 0n });
+        await expect(wallet.deposit("USDC", 1_000_000n)).rejects.toThrow("Deposits under 5 USDC need a little ETH for the network fee. Deposit 5 USDC or more");
+        expect(submit).not.toHaveBeenCalled();
+        expect(confirm).not.toHaveBeenCalled();
     });
 
     it("still needs ETH for USDT, which cannot be gasless", async () => {
