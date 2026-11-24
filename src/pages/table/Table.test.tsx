@@ -22,7 +22,7 @@ vi.mock("@block52/ui-sdk", async (importOriginal) => ({
     useToast: () => ({ showSuccess: vi.fn(), showError: vi.fn(), showWarning: vi.fn(), showInfo: vi.fn() })
 }));
 vi.mock("../../hooks/useCosmosWallet", () => ({
-    useCosmosWallet: () => ({ balance: [], address: hoisted.address, refreshBalance: vi.fn() })
+    useCosmosWallet: () => ({ balance: [], loaded: true, error: null, address: hoisted.address, refreshBalance: vi.fn() })
 }));
 vi.mock("../../utils/cosmos/storage", () => ({
     getCosmosAddress: () => hoisted.address

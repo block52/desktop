@@ -21,7 +21,7 @@ import { useEthAccount } from "../hooks/wallet/useEthAccount";
 import styles from "./Wallet.module.css";
 
 const Wallet: React.FC = () => {
-    const { address: cosmosAddress, balance, refreshBalance } = useCosmosWallet();
+    const { address: cosmosAddress, balance, loaded: usdcLoaded, error: usdcError, refreshBalance } = useCosmosWallet();
     const { currentNetwork } = useNetwork();
 
     const [showSendModal, setShowSendModal] = useState(false);
@@ -161,6 +161,8 @@ const Wallet: React.FC = () => {
                     <div className={styles.grid}>
                         <AvailableCard
                             usdcBalanceMicro={usdcBalanceAmount}
+                            usdcLoaded={usdcLoaded}
+                            usdcError={usdcError ?? ""}
                             address={existingAddress}
                             eth={eth}
                             web3Address={web3Address === undefined ? null : web3Address}

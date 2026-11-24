@@ -13,7 +13,7 @@ import usdcUrl from "../../assets/lobby/usdc.svg";
 import styles from "./Dashboard.module.css";
 
 const Dashboard: React.FC = () => {
-  const { address: cosmosAddress, balance, refreshBalance } = useCosmosWallet();
+  const { address: cosmosAddress, balance, loaded: usdcLoaded, error: usdcError, refreshBalance } = useCosmosWallet();
 
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [search, setSearch] = useState("");
@@ -21,6 +21,13 @@ const Dashboard: React.FC = () => {
 
   const usdcBalanceAmount =
     balance.find((b) => b.denom === COSMOS_CONSTANTS.TOKEN_DENOM)?.amount ?? "0";
+
+  // "…" until a balance has loaded, "—" when it failed — a failed load must not read as $0.00 (#103).
+  const usdcDisplay = usdcLoaded
+    ? `$${(Number(usdcBalanceAmount) / Math.pow(10, COSMOS_CONSTANTS.USDC_DECIMALS)).toFixed(2)}`
+    : usdcError !== null
+      ? "—"
+      : "…";
 
   const avatarInitials = cosmosAddress
     ? cosmosAddress.slice(2, 4).toUpperCase()
@@ -70,8 +77,8 @@ const Dashboard: React.FC = () => {
         <div className={styles.headerRight}>
           <div className={styles.balancePill}>
             <img src={usdcUrl} alt="USDC" className={styles.usdcIcon} />
-            <span className={styles.balanceAmount}>
-              ${(Number(usdcBalanceAmount) / Math.pow(10, COSMOS_CONSTANTS.USDC_DECIMALS)).toFixed(2)}
+            <span className={styles.balanceAmount} title={usdcError !== null ? usdcError : undefined}>
+              {usdcDisplay}
             </span>
             <button className={styles.depositChip} onClick={() => setShowDepositModal(true)} disabled={!cosmosAddress}>
               Deposit

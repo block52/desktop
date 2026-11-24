@@ -22,6 +22,8 @@ function ethAccount(overrides: Partial<EthAccount> = {}): EthAccount {
 
 const BASE_PROPS = {
     usdcBalanceMicro: "12300000",
+    usdcLoaded: true,
+    usdcError: "",
     address: "b52abc123def",
     eth: ethAccount(),
     web3Address: null as string | null,
@@ -83,6 +85,20 @@ describe("AvailableCard", () => {
         cleanup();
         renderCard({ eth: ethAccount({ balances: null, error: "node down" }) });
         expect(screen.getByText("—")).toBeTruthy();
+    });
+
+    it("shows the Block52 USDC as … while loading and — (not $0.00) when it fails (#103)", () => {
+        // Not loaded yet, no error → loading placeholder.
+        renderCard({ usdcLoaded: false, usdcError: "", usdcBalanceMicro: "0" });
+        expect(screen.getByText("…")).toBeTruthy();
+        expect(screen.queryByText("$0.00")).toBeNull();
+        cleanup();
+        // Failed load → dash with the error in a tooltip, never $0.00.
+        renderCard({ usdcLoaded: false, usdcError: "node unreachable", usdcBalanceMicro: "0" });
+        const dash = screen.getByText("—");
+        expect(dash).toBeTruthy();
+        expect(dash.getAttribute("title")).toBe("node unreachable");
+        expect(screen.queryByText("$0.00")).toBeNull();
     });
 
     it("leaves out the Ethereum wallet outside the desktop app", () => {
