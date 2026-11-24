@@ -9,6 +9,10 @@ import styles from "./AvailableCard.module.css";
 
 interface AvailableCardProps {
     usdcBalanceMicro: string;
+    /** True once the Block52 balance has loaded; false while loading or after a failed fetch. */
+    usdcLoaded: boolean;
+    /** Non-empty when the Block52 balance could not be read; shown as a tooltip on the "—". */
+    usdcError: string;
     /** The Block52 address. */
     address: string;
     /** The Ethereum wallet derived from the same seed phrase. */
@@ -37,9 +41,17 @@ function ethUsdc(eth: EthAccount): string {
     return eth.error !== "" ? "—" : "…";
 }
 
+/** The Block52 USDC; "…" while loading, "—" when it could not be read (so a failed load isn't shown as $0.00). */
+function block52Usdc(loaded: boolean, error: string, micro: string): string {
+    if (loaded) return `$${microToUsd(micro)}`;
+    return error !== "" ? "—" : "…";
+}
+
 /** Both of the user's wallets: Block52 and the Ethereum wallet derived from the same seed phrase. */
 const AvailableCard: React.FC<AvailableCardProps> = ({
     usdcBalanceMicro,
+    usdcLoaded,
+    usdcError,
     address,
     eth,
     web3Address,
@@ -93,7 +105,9 @@ const AvailableCard: React.FC<AvailableCardProps> = ({
                 <div className={styles.balanceRow}>
                     <img src={usdcUrl} alt="" className={styles.usdcIcon} />
                     <span className={styles.balanceLabel}>Block52 USDC</span>
-                    <span className={styles.balanceAmount}>${microToUsd(usdcBalanceMicro)}</span>
+                    <span className={styles.balanceAmount} title={usdcError !== "" ? usdcError : undefined}>
+                        {block52Usdc(usdcLoaded, usdcError, usdcBalanceMicro)}
+                    </span>
                 </div>
                 {eth.available && (
                     <div className={styles.balanceRow}>

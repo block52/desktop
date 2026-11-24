@@ -22,25 +22,12 @@ interface Balance {
 interface UseCosmosWalletReturn {
   address: string | null;
   balance: Balance[];
-  isLoading: boolean;
-  error: string | null;
-  refreshBalance: () => Promise<void>;
-  importSeedPhrase: (mnemonic: string) => Promise<void>;
-  sendTokens: (
-    recipient: string,
-    amount: bigint | string,
-    denom?: string,
-  ) => Promise<string>;
-}
-
-interface Balance {
-  denom: string;
-  amount: string;
-}
-
-interface UseCosmosWalletReturn {
-  address: string | null;
-  balance: Balance[];
+  /**
+   * True only once a balance fetch has succeeded. Lets callers tell
+   * "loaded, no USDC" (show $0.00) from "not loaded / failed" (show … or —),
+   * instead of reading an empty balance as a zero balance. See issue #103.
+   */
+  loaded: boolean;
   isLoading: boolean;
   error: string | null;
   refreshBalance: () => Promise<void>;
@@ -56,6 +43,7 @@ export const useCosmosWallet = (): UseCosmosWalletReturn => {
   const { currentNetwork } = useNetwork();
   const [address, setAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<Balance[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,8 +82,13 @@ export const useCosmosWallet = (): UseCosmosWalletReturn => {
 
       const balances = await client.getAllBalances(address);
       setBalance(balances);
+      setLoaded(true);
     } catch (err: any) {
       console.error("Error fetching balance:", err);
+      // A failed fetch is not a zero balance: drop any stale value and mark
+      // the balance not-loaded so callers show — / … rather than $0.00 (#103).
+      setBalance([]);
+      setLoaded(false);
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -172,6 +165,7 @@ export const useCosmosWallet = (): UseCosmosWalletReturn => {
   return {
     address,
     balance,
+    loaded,
     isLoading,
     error,
     refreshBalance,

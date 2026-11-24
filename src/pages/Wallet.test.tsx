@@ -16,7 +16,7 @@ vi.mock("../utils/cosmos/storage", () => ({
     getCosmosAddress: vi.fn(() => null),
     setCosmosAddress: vi.fn()
 }));
-vi.mock("../hooks/useCosmosWallet", () => ({ useCosmosWallet: () => ({ address: null, balance: [], refreshBalance: vi.fn() }) }));
+vi.mock("../hooks/useCosmosWallet", () => ({ useCosmosWallet: () => ({ address: null, balance: [], loaded: false, error: null, refreshBalance: vi.fn() }) }));
 vi.mock("../context/NetworkContext", () => ({ useNetwork: () => ({ currentNetwork: { rpc: "", rest: "" } }) }));
 vi.mock("../hooks/useOnChainAvatar", () => ({ useOnChainAvatar: () => null }));
 vi.mock("@block52/ui-sdk", async (importOriginal) => ({
