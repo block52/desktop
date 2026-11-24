@@ -8,9 +8,12 @@ import type { PlayerNote } from "../players/types";
  */
 export function usePlayerNotes(addresses: string[]): {
     notes: Record<string, PlayerNote>;
+    /** False until the first getMany resolves, so callers can tell "loading" from "no note". */
+    loaded: boolean;
     refresh: () => void;
 } {
     const [notes, setNotes] = useState<Record<string, PlayerNote>>({});
+    const [loaded, setLoaded] = useState(false);
 
     // A stable key so the effect only re-runs when the set of addresses changes,
     // not on every render that rebuilds the array.
@@ -21,21 +24,36 @@ export function usePlayerNotes(addresses: string[]): {
         const list = key === "" ? [] : key.split(",");
         if (players === undefined || list.length === 0) {
             setNotes({});
+            setLoaded(true);
             return;
         }
+        setLoaded(false);
         players
             .getMany(list)
-            .then(setNotes)
-            .catch(() => setNotes({}));
+            .then(map => {
+                setNotes(map);
+                setLoaded(true);
+            })
+            .catch(() => {
+                setNotes({});
+                setLoaded(true);
+            });
     }, [key]);
 
     useEffect(load, [load]);
 
-    return { notes, refresh: load };
+    return { notes, loaded, refresh: load };
 }
 
-/** One player's note, for a profile or a single seat. */
+const emptyNote = (address: string): PlayerNote => ({ address, nickname: null, notes: null, tags: [], updatedAt: 0 });
+
+/**
+ * One player's note, for a profile or a single seat. `note` is null until the
+ * data has loaded, so an editor does not seed from an empty placeholder before
+ * the stored note arrives; after loading it is the stored note or an empty one.
+ */
 export function usePlayerNote(address: string | null): { note: PlayerNote | null; refresh: () => void } {
-    const { notes, refresh } = usePlayerNotes(address === null ? [] : [address]);
-    return { note: address === null ? null : (notes[address] ?? { address, nickname: null, notes: null, tags: [], updatedAt: 0 }), refresh };
+    const { notes, loaded, refresh } = usePlayerNotes(address === null ? [] : [address]);
+    if (address === null || !loaded) return { note: null, refresh };
+    return { note: notes[address] ?? emptyNote(address), refresh };
 }

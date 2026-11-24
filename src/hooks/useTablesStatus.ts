@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { isSitAndGoFormat, type TexasHoldemStateDTO } from "@block52/poker-vm-sdk";
+import { isTournamentFormat, type TexasHoldemStateDTO } from "@block52/poker-vm-sdk";
 import { useNetwork } from "../context/NetworkContext";
 import { isTablePlaying, isTournamentFinished } from "../utils/tournamentState";
 import type { GameWithFormat } from "../utils/convertUtils";
@@ -40,7 +40,7 @@ export function useTablesStatus(games: GameWithFormat[]): ReadonlyMap<string, Ta
             results.forEach((result, index) => {
                 if (result.status !== "fulfilled") return;
                 const game = tracked[index];
-                const isTournament = isSitAndGoFormat(game.gameFormat);
+                const isTournament = isTournamentFormat(game.gameFormat);
                 if (isTournamentFinished(result.value, isTournament)) next.set(game.gameId, "finished");
                 else if (isTournament && game.currentPlayers < game.maxPlayers) next.set(game.gameId, "waiting");
                 else if (isTablePlaying(result.value, isTournament)) next.set(game.gameId, "playing");

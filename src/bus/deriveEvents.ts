@@ -25,7 +25,7 @@
 import type { TexasHoldemStateDTO, ActionDTO, PlayerDTO } from "@block52/poker-vm-sdk";
 import { TexasHoldemRound } from "@block52/poker-vm-sdk";
 import type { GameEvent } from "./types";
-import { hasElements, isEmpty } from "../utils/guards";
+import { hasElements, isEmpty } from "@block52/ui-sdk";
 
 /**
  * Thrown by {@link deriveEvents} when a same-hand snapshot's action indices

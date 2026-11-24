@@ -60,6 +60,78 @@ describe("classifyMessage", () => {
         expect(result.validationError).toBeNull();
     });
 
+    it("infers SIT_AND_GO from a tournamentId when no explicit format is sent", () => {
+        // Tournament tables carry no format field, only a tournamentId. Without this
+        // inference the table is treated as cash and chip amounts divide by 1e6.
+        const snapshot = makeState({ tournamentId: "0x7398acda" } as Partial<TexasHoldemStateDTO>);
+        const message: RawWsMessage = {
+            event: "state",
+            gameId: TABLE_ID,
+            data: { gameId: TABLE_ID, gameState: snapshot }, // no format
+        };
+        const result = classifyMessage(message, TABLE_ID);
+        expect(result.kind).toBe("state");
+        if (result.kind !== "state") throw new Error("expected state");
+        expect(result.format).toBe(GameFormat.SIT_AND_GO);
+    });
+
+    it("an explicit format still wins over the tournamentId inference", () => {
+        const snapshot = makeState({ tournamentId: "0xabc" } as Partial<TexasHoldemStateDTO>);
+        const message: RawWsMessage = {
+            event: "state",
+            gameId: TABLE_ID,
+            data: { gameId: TABLE_ID, gameState: snapshot, format: GameFormat.CASH },
+        };
+        const result = classifyMessage(message, TABLE_ID);
+        if (result.kind !== "state") throw new Error("expected state");
+        expect(result.format).toBe(GameFormat.CASH);
+    });
+
+    it("passes through an explicit \"tournament\" format (multi-table tournaments, not just sit-and-go)", () => {
+        // A scheduled multi-table tournament table sends format "tournament". It must
+        // survive as GameFormat.TOURNAMENT so the table renders in chips, not cash.
+        const snapshot = makeState();
+        const message: RawWsMessage = {
+            event: "state",
+            gameId: TABLE_ID,
+            data: { gameId: TABLE_ID, gameState: snapshot, format: GameFormat.TOURNAMENT },
+        };
+        const result = classifyMessage(message, TABLE_ID);
+        if (result.kind !== "state") throw new Error("expected state");
+        expect(result.format).toBe(GameFormat.TOURNAMENT);
+    });
+
+    it("infers SIT_AND_GO from a non-zero startingStack when neither format nor tournamentId is sent", () => {
+        // The real cause of the "$0.000 blinds" bug: some tournament frames carry no
+        // format AND no tournamentId. Every cash table reports startingStack "0", so a
+        // positive starting stack is the reliable tell.
+        const snapshot = makeState({
+            gameOptions: { ...makeState().gameOptions, startingStack: "1500" },
+        });
+        const message: RawWsMessage = {
+            event: "state",
+            gameId: TABLE_ID,
+            data: { gameId: TABLE_ID, gameState: snapshot }, // no format, no tournamentId
+        };
+        const result = classifyMessage(message, TABLE_ID);
+        if (result.kind !== "state") throw new Error("expected state");
+        expect(result.format).toBe(GameFormat.SIT_AND_GO);
+    });
+
+    it("leaves format undefined for a cash table (startingStack 0, no format/tournamentId)", () => {
+        const snapshot = makeState({
+            gameOptions: { ...makeState().gameOptions, startingStack: "0" },
+        });
+        const message: RawWsMessage = {
+            event: "state",
+            gameId: TABLE_ID,
+            data: { gameId: TABLE_ID, gameState: snapshot },
+        };
+        const result = classifyMessage(message, TABLE_ID);
+        if (result.kind !== "state") throw new Error("expected state");
+        expect(result.format).toBeUndefined();
+    });
+
     it("ignores a state-bearing message for a different table", () => {
         const message: RawWsMessage = {
             event: "state",

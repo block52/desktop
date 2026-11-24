@@ -5,7 +5,7 @@ import type { JoinTableOptions } from "./types";
 import { withMoneyMoverRetry } from "../../utils/cosmos/client";
 import { goSignerEnabled, goBroadcast } from "./goSigner";
 import { parseUsdcToMicro } from "../../utils/currency";
-import { hasValue, isNullish } from "../../utils/guards";
+import { hasValue, isNullish } from "@block52/ui-sdk";
 
 /**
  * Resolves the concrete seat a join should claim.

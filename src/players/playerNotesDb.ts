@@ -95,13 +95,17 @@ export class PlayerNotesDb {
         return out;
     }
 
-    /** Addresses whose nickname or notes contain `text` (case-insensitive). */
+    /** Addresses whose nickname, notes, or a tag name contain `text` (case-insensitive). */
     search(text: string): string[] {
-        const q = `%${text.trim().toLowerCase()}%`;
         if (text.trim() === "") return [];
+        const q = `%${text.trim().toLowerCase()}%`;
         const rows = this.db
-            .prepare("SELECT address FROM player_notes WHERE lower(nickname) LIKE ? OR lower(notes) LIKE ?")
-            .all(q, q) as Array<{ address: string }>;
+            .prepare(
+                `SELECT address FROM player_notes WHERE lower(nickname) LIKE ? OR lower(notes) LIKE ?
+                 UNION
+                 SELECT pt.address FROM player_tags pt JOIN tags t ON t.id = pt.tag_id WHERE lower(t.name) LIKE ?`
+            )
+            .all(q, q, q) as Array<{ address: string }>;
         return rows.map(r => r.address);
     }
 

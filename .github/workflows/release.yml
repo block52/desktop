@@ -28,6 +28,13 @@ jobs:
       - run: yarn lint
       - run: yarn typecheck
       - run: yarn test
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: sidecar/go.mod
+          cache-dependency-path: sidecar/go.sum
+      - name: Go wallet sidecar tests
+        working-directory: sidecar
+        run: go test ./...
 
   build:
     needs: verify
@@ -40,7 +47,11 @@ jobs:
           - name: windows-x64
             os: windows-latest
           - name: linux-x64
-            os: ubuntu-latest
+            # Not ubuntu-latest (26.04): its rpm (4.20+) runs %install in a per-package build folder, and the spec
+            # template in electron-installer-redhat (3.4.0, and still 4.0.0) copies `usr/*` relative to the old one,
+            # so the .rpm fails with "cp: cannot stat 'usr/*'". 24.04's rpm still uses the old layout. Move back to
+            # ubuntu-latest once electron-installer-redhat handles rpm 4.20.
+            os: ubuntu-24.04
     runs-on: ${{ matrix.os }}
     name: build (${{ matrix.name }})
     # Holds the release secret. Protect it under Settings > Environments > release (required reviewers, and
@@ -60,6 +71,11 @@ jobs:
         if: runner.os == 'Linux'
         uses: ./.github/actions/linux-packaging-tools
       - uses: ./.github/actions/setup
+      # yarn make builds the Go wallet sidecar for this runner's platform (b52-wallet.exe on Windows).
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: sidecar/go.mod
+          cache-dependency-path: sidecar/go.sum
       # Only the build step sees the secret; dependency install scripts run without it.
       - run: yarn make
         env:

@@ -87,6 +87,17 @@ describe("PlayerNotesDb", () => {
         expect(db.search("")).toEqual([]);
     });
 
+    it("searches tag names, deduping against nickname/notes matches", () => {
+        db.setNickname(A, "Alice");
+        db.addTag(A, "whale");
+        db.addTag(B, "whale");
+        // Matches by tag only.
+        expect(db.search("whale").sort()).toEqual([A, B].sort());
+        // A matches by both nickname and tag but appears once.
+        db.addTag(A, "alice-fan");
+        expect(db.search("alice").sort()).toEqual([A].sort());
+    });
+
     it("exports and re-imports a full backup", () => {
         db.setNickname(A, "Alice");
         db.setNotes(A, "tight");

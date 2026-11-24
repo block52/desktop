@@ -3,6 +3,7 @@ import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { createInterface } from "node:readline";
 import path from "node:path";
 import { app } from "electron";
+import { sidecarBinaryName } from "./sidecarBinary";
 
 /**
  * Client for the Go wallet sidecar (`sidecar/`, built to a `b52-wallet` binary).
@@ -30,16 +31,13 @@ export interface SidecarBlock {
     numTxs: number;
 }
 
-function binaryName(): string {
-    return process.platform === "win32" ? "b52-wallet.exe" : "b52-wallet";
-}
-
 /** Dev: sidecar/dist/<bin> next to the repo. Packaged: bundled via forge extraResource. */
 function binaryPath(): string {
+    const name = sidecarBinaryName(process.platform);
     if (app.isPackaged) {
-        return path.join(process.resourcesPath, binaryName());
+        return path.join(process.resourcesPath, name);
     }
-    return path.join(app.getAppPath(), "sidecar", "dist", binaryName());
+    return path.join(app.getAppPath(), "sidecar", "dist", name);
 }
 
 export class WalletSidecar {

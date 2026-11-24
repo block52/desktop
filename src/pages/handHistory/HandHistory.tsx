@@ -121,7 +121,7 @@ const HandHistory: React.FC = () => {
                                     >
                                         <div className={styles.handText}>
                                             <span className={styles.handTitle}>
-                                                Hand #{hand.hand_number} · {shortId(hand.game_id)}
+                                                Hand #{hand.hand_number} · <span title={hand.game_id}>{shortId(hand.game_id)}</span>
                                             </span>
                                             <span className={styles.handMeta}>
                                                 {hand.estimated === true ? "" : `Seat ${hand.seat} · `}
@@ -186,7 +186,7 @@ const HandHistory: React.FC = () => {
                                 >
                                     <div className={styles.handText}>
                                         <span className={styles.handTitle}>
-                                            Hand #{hand.hand_number} · {shortId(hand.game_id)}
+                                            Hand #{hand.hand_number} · <span title={hand.game_id}>{shortId(hand.game_id)}</span>
                                         </span>
                                         <span className={styles.handMeta}>{formatWhen(hand.created_at, hand.block_height)}</span>
                                     </div>

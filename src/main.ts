@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import started from "electron-squirrel-startup";
 import { APP_ORIGIN, APP_SCHEME, isOwnResource, resolveAppFile } from "./appProtocol";
 import { buildContentSecurityPolicy, hostsFromUrls } from "./csp";
+import { registerBinariesIpc } from "./binaries/binariesIpc";
 import { registerIndexerIpc } from "./indexer/indexerIpc";
 import { registerPlayerNotesIpc } from "./players/playerNotesIpc";
 import { registerWalletIpc } from "./wallet/walletIpc";
@@ -35,7 +36,7 @@ const createWindow = () => {
     // macOS: no title bar, the traffic lights sit inside the app (the renderer draws a drag strip under them).
     ...(process.platform === "darwin" ? { titleBarStyle: "hidden" as const, trafficLightPosition: { x: 16, y: 10 } } : {}),
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
@@ -86,6 +87,9 @@ registerIndexerIpc();
 
 // Local player notes/nicknames/tags (SQLite in this process).
 registerPlayerNotesIpc();
+
+// Node binary versions + update check (pokerchaind, ws-server).
+registerBinariesIpc();
 
 app.whenReady().then(() => {
   const { lockWallet } = registerWalletIpc();

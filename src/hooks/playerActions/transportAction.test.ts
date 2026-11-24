@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NetworkEndpoints } from "../../context/NetworkContext";
 
-const { mockGetSigningClient, mockClearSigningClientCache } = vi.hoisted(() => ({
+const { mockGetSigningClient, mockClearSigningClientCache, mockGoBroadcast } = vi.hoisted(() => ({
     mockGetSigningClient: vi.fn(),
     mockClearSigningClientCache: vi.fn(),
+    mockGoBroadcast: vi.fn(),
 }));
 
 vi.mock("../../utils/cosmos/client", () => ({
@@ -13,6 +14,12 @@ vi.mock("../../utils/cosmos/client", () => ({
         /account sequence mismatch/i.test(err instanceof Error ? err.message : String(err ?? "")),
     SEQUENCE_RETRY_DELAY_MS: 0,
 }));
+
+// The real on/off rule (Go by default, VITE_GO_SIGNER=false for the SDK) with a fake sidecar.
+vi.mock("./goSigner", async () => {
+    const { goSignerOn } = await import("../../wallet/goSignerFlag");
+    return { goSignerEnabled: () => goSignerOn(import.meta.env.VITE_GO_SIGNER), goBroadcast: mockGoBroadcast };
+});
 
 import { executeTransportAction, isStaleIndexError, STALE_INDEX_MESSAGE } from "./transportAction";
 
@@ -32,8 +39,12 @@ describe("isStaleIndexError", () => {
     });
 });
 
-describe("executeTransportAction — stale-index rewrite", () => {
-    beforeEach(() => vi.clearAllMocks());
+describe("executeTransportAction — stale-index rewrite (SDK signer)", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.stubEnv("VITE_GO_SIGNER", "false");
+    });
+    afterEach(() => vi.unstubAllEnvs());
 
     it("rewrites the chain's raw 'Invalid action index' into the retryable prompt", async () => {
         mockSigningClient(vi.fn().mockRejectedValue(new Error("Invalid action index")));
@@ -56,8 +67,12 @@ describe("executeTransportAction — stale-index rewrite", () => {
     });
 });
 
-describe("executeTransportAction — sequence-mismatch recovery", () => {
-    beforeEach(() => vi.clearAllMocks());
+describe("executeTransportAction — sequence-mismatch recovery (SDK signer)", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.stubEnv("VITE_GO_SIGNER", "false");
+    });
+    afterEach(() => vi.unstubAllEnvs());
 
     const SEQ_ERR = new Error(
         "Broadcasting transaction failed with code 32 (codespace: sdk). Log: account sequence mismatch, expected 510, got 509: incorrect account sequence"
@@ -103,5 +118,29 @@ describe("executeTransportAction — sequence-mismatch recovery", () => {
         await expect(
             executeTransportAction("game-1", "sit-out", 0n, FAKE_NETWORK, "method=next-hand")
         ).rejects.toThrow(STALE_INDEX_MESSAGE);
+    });
+});
+
+describe("executeTransportAction — Go signer (default)", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.stubEnv("VITE_GO_SIGNER", "");
+    });
+    afterEach(() => vi.unstubAllEnvs());
+
+    it("signs and broadcasts through the Go sidecar, never the SDK client", async () => {
+        mockGoBroadcast.mockResolvedValue("0xgo");
+
+        const result = await executeTransportAction("game-1", "raise", 250n, FAKE_NETWORK, "note");
+
+        expect(result).toEqual({ hash: "0xgo", gameId: "game-1", action: "raise", amount: "250" });
+        expect(mockGoBroadcast).toHaveBeenCalledWith(FAKE_NETWORK, { kind: "action", gameId: "game-1", action: "raise", amount: 250n, data: "note" });
+        expect(mockGetSigningClient).not.toHaveBeenCalled();
+    });
+
+    it("rewrites a stale-index rejection from the sidecar into the retryable prompt", async () => {
+        mockGoBroadcast.mockRejectedValue(new Error("broadcast rejected: Invalid action index"));
+
+        await expect(executeTransportAction("game-1", "call", 0n, FAKE_NETWORK)).rejects.toThrow(STALE_INDEX_MESSAGE);
     });
 });

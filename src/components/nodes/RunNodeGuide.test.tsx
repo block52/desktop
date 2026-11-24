@@ -5,7 +5,10 @@ import { ToastProvider } from "@block52/ui-sdk";
 import RunNodeGuide, {
     appToml,
     buildSeeds,
+    GENESIS_SHA256,
+    GENESIS_URL,
     initCommands,
+    isLoopbackUrl,
     p2pConfig,
     startCommands,
     stateSyncConfig,
@@ -14,9 +17,8 @@ import RunNodeGuide, {
 
 const GUIDE = {
     chainVersion: "0.1.73",
-    genesisUrl: "https://node1.block52.xyz/genesis",
     seeds: "abc123@node1.block52.xyz:26656,def456@node.texashodl.net:26656",
-    rpcServers: "http://node1.block52.xyz:26657,http://node.texashodl.net:26657",
+    rpcServers: "https://node1.block52.xyz/rpc/,https://node.texashodl.net/rpc/",
     trustHeight: "505877",
     trustHash: "A1B2C3HASH"
 };
@@ -31,17 +33,24 @@ describe("command builders", () => {
         expect(versionCommand()).toBe("pokerchaind version");
     });
 
-    it("initCommands init the home dir and install genesis", () => {
-        const out = initCommands(GUIDE.genesisUrl);
+    it("initCommands download the official genesis from the mirror and verify its sha256 (#102)", () => {
+        const out = initCommands();
         expect(out).toContain("pokerchaind init <your-moniker> --chain-id pokerchain --home ~/.pokerchain");
-        expect(out).toContain(`curl -fSL "${GUIDE.genesisUrl}" -o ~/.pokerchain/config/genesis.json`);
-        expect(out).toContain("sha256sum ~/.pokerchain/config/genesis.json");
+        // The mirror URL, not a node's own /genesis (which hashes differently).
+        expect(out).toContain(`curl -fSL "${GENESIS_URL}" -o ~/.pokerchain/config/genesis.json`);
+        // The check compares against the built-in sha, so it actually verifies something. It runs from the
+        // config dir: sha256sum -c opens the listed path literally, and a quoted ~ is never expanded.
+        expect(out).toContain(`(cd ~/.pokerchain/config && echo "${GENESIS_SHA256}  genesis.json" | sha256sum -c -)`);
+        expect(out).not.toContain(`"${GENESIS_SHA256}  ~`);
+        expect(GENESIS_URL).toContain("pokerchain-releases");
     });
 
-    it("p2pConfig renders seeds and persistent peers", () => {
+    it("p2pConfig renders seeds, persistent peers and RPC CORS for the app (#102)", () => {
         const out = p2pConfig(GUIDE.seeds);
         expect(out).toContain(`seeds = "${GUIDE.seeds}"`);
         expect(out).toContain(`persistent_peers = "${GUIDE.seeds}"`);
+        expect(out).toContain("[rpc]");
+        expect(out).toContain("cors_allowed_origins = [\"*\"]");
     });
 
     it("stateSyncConfig renders live trust values", () => {
@@ -52,11 +61,29 @@ describe("command builders", () => {
         expect(out).toContain(`trust_hash = "${GUIDE.trustHash}"`);
     });
 
-    it("appToml renders pruning and engine settings", () => {
+    it("appToml renders the engine under [pvm] and enables the REST API for the app (#102)", () => {
         const out = appToml();
         expect(out).toContain("minimum-gas-prices = \"0usdc\"");
         expect(out).toContain("snapshot-interval = 1000");
+        // The engine must be under [pvm], not an [engine] section — otherwise the node panics at startup.
+        expect(out).toContain("[pvm]");
+        expect(out).toContain("pvm_url = \"\"");
         expect(out).toContain("embedded_engine = \"embedded\"");
+        // No [engine] section header (it may appear only in an explanatory comment).
+        expect(out.split("\n").some(line => line.trim() === "[engine]")).toBe(false);
+        // REST API on (init leaves it off) so the app can use the node on Localhost.
+        expect(out).toContain("[api]");
+        expect(out).toContain("enable = true");
+        expect(out).toContain("enabled-unsafe-cors = true");
+    });
+
+    it("appToml keeps ~two weeks of history for the explorer and hand replay (#111)", () => {
+        const out = appToml();
+        // State (hand replay) and blocks (explorer) both retained for ~226,000 blocks ≈ 14 days.
+        expect(out).toContain("pruning = \"custom\"");
+        expect(out).toContain("pruning-keep-recent = \"226000\"");
+        expect(out).toContain("pruning-interval = \"10\"");
+        expect(out).toContain("min-retain-blocks = 226000");
     });
 
     it("buildSeeds joins node ids at the default p2p port", () => {
@@ -65,8 +92,17 @@ describe("command builders", () => {
         );
     });
 
-    it("startCommands start the node", () => {
-        expect(startCommands()).toContain("pokerchaind start --home ~/.pokerchain");
+    it("startCommands start the node and show how to check it has caught up", () => {
+        const out = startCommands();
+        expect(out).toContain("pokerchaind start --home ~/.pokerchain");
+        expect(out).toContain("curl -s localhost:26657/status | jq .result.sync_info.catching_up");
+    });
+
+    it("isLoopbackUrl spots nodes on this machine", () => {
+        expect(isLoopbackUrl("http://localhost:26657/")).toBe(true);
+        expect(isLoopbackUrl("http://127.0.0.1:26657")).toBe(true);
+        expect(isLoopbackUrl("http://[::1]:26657")).toBe(true);
+        expect(isLoopbackUrl("https://node1.block52.xyz/rpc/")).toBe(false);
     });
 });
 
