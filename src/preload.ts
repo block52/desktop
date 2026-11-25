@@ -25,6 +25,7 @@ const wallet: WalletBridge = {
     removePassword: current => ipcRenderer.invoke("wallet:remove-password", current),
     setPgpKey: publicKey => ipcRenderer.invoke("wallet:set-pgp-key", publicKey),
     removePgpKey: () => ipcRenderer.invoke("wallet:remove-pgp-key"),
+    findPgpKey: (query, keyServer) => ipcRenderer.invoke("wallet:find-pgp-key", query, keyServer),
     setTouchId: enabled => ipcRenderer.invoke("wallet:set-touch-id", enabled),
     setAutoLock: minutes => ipcRenderer.invoke("wallet:set-auto-lock", minutes),
     reportActivity: () => ipcRenderer.send("wallet:activity"),

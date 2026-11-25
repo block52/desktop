@@ -1,11 +1,12 @@
-import { app, BrowserWindow, dialog, ipcMain, powerMonitor, safeStorage, systemPreferences } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, net, powerMonitor, safeStorage, systemPreferences } from "electron";
 import type { IpcMainEvent, IpcMainInvokeEvent } from "electron";
 import path from "node:path";
 import { WalletVault } from "./vault";
 import { WalletSigner } from "./signer";
 import { WalletSidecar } from "./goSidecar";
 import { goSignerOn } from "./goSignerFlag";
-import { createGpgTool } from "./pgp";
+import { createGpgTool, fingerprintOfArmored } from "./pgp";
+import { findPgpKey } from "./pgpKeyServer";
 import { EthWallet } from "./ethWallet";
 import { createEthChain } from "./ethChain";
 import { GASLESS_DEPOSITOR_ADDRESS, GASLESS_MIN_DEPOSIT, GASLESS_RELAYER_URL } from "../config/constants";
@@ -283,6 +284,12 @@ export function registerWalletIpc(): { lockWallet: () => void } {
         if (typeof publicKey !== "string") throw new Error("Invalid key.");
         await vault.setPgpKey(publicKey.trim());
         await armAutoLock();
+    });
+
+    handle("wallet:find-pgp-key", async (query: unknown, keyServer: unknown) => {
+        if (typeof query !== "string" || query.length > 300) throw new Error("Invalid search.");
+        if (keyServer !== null && (typeof keyServer !== "string" || keyServer.length > 300)) throw new Error("Invalid key server.");
+        return findPgpKey(query, keyServer, { fetch: (url, init) => net.fetch(url, init), fingerprintOf: armored => fingerprintOfArmored(armored) });
     });
 
     handle("wallet:remove-pgp-key", async () => {

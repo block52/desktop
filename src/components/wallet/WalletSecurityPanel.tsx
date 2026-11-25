@@ -8,6 +8,24 @@ interface WalletSecurityPanelProps {
 
 type Editing = "none" | "set" | "change" | "remove" | "pgp";
 
+const KEY_SERVER_STORAGE = "b52.pgpKeyServer";
+
+function savedKeyServer(): string {
+    try {
+        return window.localStorage.getItem(KEY_SERVER_STORAGE) ?? "";
+    } catch {
+        return "";
+    }
+}
+
+function saveKeyServer(url: string) {
+    try {
+        window.localStorage.setItem(KEY_SERVER_STORAGE, url);
+    } catch {
+        // Remembering the server is a convenience only.
+    }
+}
+
 const AUTO_LOCK_OPTIONS = [
     { minutes: 5, label: "5 minutes" },
     { minutes: 15, label: "15 minutes" },
@@ -23,6 +41,9 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
     const [next, setNext] = useState("");
     const [confirm, setConfirm] = useState("");
     const [pgpKey, setPgpKey] = useState("");
+    const [keySearch, setKeySearch] = useState("");
+    const [keyServer, setKeyServer] = useState(savedKeyServer);
+    const [found, setFound] = useState<{ fingerprint: string; server: string } | null>(null);
     const [error, setError] = useState("");
     const [isBusy, setIsBusy] = useState(false);
 
@@ -38,7 +59,26 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
         setNext("");
         setConfirm("");
         setPgpKey("");
+        setKeySearch("");
+        setFound(null);
         setError("");
+    };
+
+    const searchKeyServers = async () => {
+        setIsBusy(true);
+        setError("");
+        setFound(null);
+        try {
+            const server = keyServer.trim() === "" ? null : keyServer.trim();
+            const result = await bridge.findPgpKey(keySearch, server);
+            if (server !== null) saveKeyServer(server);
+            setPgpKey(result.armored);
+            setFound({ fingerprint: result.fingerprint, server: result.server });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "The key search did not work.");
+        } finally {
+            setIsBusy(false);
+        }
     };
 
     const run = async (action: () => Promise<void>, closes: boolean) => {
@@ -134,13 +174,46 @@ const WalletSecurityPanel: React.FC<WalletSecurityPanelProps> = ({ bridge }) => 
                 >
                     {editing === "pgp" && (
                         <>
+                            <div className={styles.stack}>
+                                <input
+                                    className={styles.textInput}
+                                    placeholder="Find your key: email or fingerprint"
+                                    spellCheck={false}
+                                    value={keySearch}
+                                    onChange={event => setKeySearch(event.target.value)}
+                                />
+                                <input
+                                    className={styles.textInput}
+                                    placeholder="Your key server (optional, https://…). keys.openpgp.org and keyserver.ubuntu.com are searched too"
+                                    spellCheck={false}
+                                    value={keyServer}
+                                    onChange={event => setKeyServer(event.target.value)}
+                                />
+                                <button
+                                    type="button"
+                                    className={`btn-ghost ${styles.ghostAction}`}
+                                    disabled={isBusy || keySearch.trim() === ""}
+                                    onClick={() => void searchKeyServers()}
+                                >
+                                    Search key servers
+                                </button>
+                            </div>
+                            {found !== null && (
+                                <p className={styles.noteText}>
+                                    Found {found.fingerprint.match(/.{1,4}/g)?.join(" ")} on {found.server.replace("https://", "")}. Anyone can upload a key for
+                                    any email, so check this fingerprint is yours before you save.
+                                </p>
+                            )}
                             <textarea
                                 className={styles.textInput}
                                 rows={8}
                                 spellCheck={false}
                                 placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----"
                                 value={pgpKey}
-                                onChange={event => setPgpKey(event.target.value)}
+                                onChange={event => {
+                                    setPgpKey(event.target.value);
+                                    setFound(null);
+                                }}
                             />
                             <p className={styles.noteText}>
                                 Paste your public key. The wallet key is encrypted to it; unlocking uses your own gpg, so your private key and passphrase
