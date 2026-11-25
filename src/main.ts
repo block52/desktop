@@ -10,6 +10,8 @@ import { registerPlayerNotesIpc } from "./players/playerNotesIpc";
 import { registerWalletIpc } from "./wallet/walletIpc";
 import { checkForUpdatesFromMenu, registerUpdateIpc } from "./updates/updateIpc";
 import { buildMenuTemplate } from "./appMenu";
+import { DEEP_LINK_SCHEME, findDeepLink, parseDeepLink } from "./deepLink";
+import { DeepLinkInbox } from "./deepLinkInbox";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -17,6 +19,51 @@ if (started) {
 }
 
 app.setName("Block52");
+
+// One window only: a second launch (the OS opening a block52:// link while the app is running) hands its link to this one.
+const hasInstanceLock = app.requestSingleInstanceLock();
+if (!hasInstanceLock) {
+  app.quit();
+}
+
+// block52://table/<id> and block52://tournament/<id> open the app on that page. A link can arrive before the window or
+// the page exists, so the inbox holds it until the page says it is listening (see src/deepLinkInbox.ts).
+const mainWindowOrNull = () => BrowserWindow.getAllWindows()[0] ?? null;
+const deepLinks = new DeepLinkInbox(
+  (route) => mainWindowOrNull()?.webContents.send("deeplink:open", route),
+  () => {
+    const window = mainWindowOrNull();
+    if (window === null) return;
+    if (window.isMinimized()) window.restore();
+    window.show();
+    window.focus();
+  },
+);
+
+// macOS delivers the link as an event, possibly before the app is ready.
+app.on("open-url", (event, url) => {
+  event.preventDefault();
+  const route = parseDeepLink(url);
+  if (route !== null) deepLinks.open(route);
+});
+
+// Windows and Linux start a second copy with the link on its command line; it quits and this one gets it here.
+app.on("second-instance", (_event, argv) => {
+  const route = findDeepLink(argv);
+  if (route !== null) deepLinks.open(route);
+  else mainWindowOrNull()?.focus();
+});
+
+// Register as the handler for the scheme. Only a packaged app: from source it would point the OS at electron itself.
+if (app.isPackaged) {
+  app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME);
+}
+
+// The app was started by a link.
+const startupLink = findDeepLink(process.argv);
+if (startupLink !== null) deepLinks.open(startupLink);
+
+ipcMain.handle("deeplink:ready", () => deepLinks.rendererReady());
 
 // The packaged app is served from app://block52 rather than file://, so it has a real origin that the
 // WalletConnect relay can be told to allow.
@@ -50,6 +97,7 @@ const createWindow = () => {
     if (isWebUrl(url)) void shell.openExternal(url);
     return { action: "deny" };
   });
+  mainWindow.webContents.on("did-start-loading", () => deepLinks.rendererGone());
   mainWindow.webContents.on("will-navigate", (event, url) => {
     if (url !== mainWindow.webContents.getURL()) event.preventDefault();
   });

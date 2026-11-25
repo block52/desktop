@@ -15,6 +15,10 @@ declare global {
                 /** The window menu asked to open a screen. Returns an unsubscribe function. */
                 onNavigate: (listener: (route: string) => void) => () => void;
             };
+            deepLink?: {
+                /** A block52:// link asked to open a page (a route). Returns an unsubscribe function. */
+                onOpen: (listener: (route: string) => void) => () => void;
+            };
             updates?: {
                 check: () => Promise<UpdateInfo | null>;
                 open: (version: string) => void;

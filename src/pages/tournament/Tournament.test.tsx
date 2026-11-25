@@ -114,6 +114,14 @@ describe("Tournament page", () => {
         expect(screen.getByText("player profile")).toBeTruthy();
     });
 
+    it("copies a block52:// link to the tournament", async () => {
+        const writeText = vi.fn(async () => undefined);
+        Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+        show();
+        fireEvent.click(screen.getByText("Copy app link"));
+        await waitFor(() => expect(writeText).toHaveBeenCalledWith(`block52://tournament/${ID}`));
+    });
+
     it("registers for the full cost and refreshes", async () => {
         show();
         fireEvent.click(screen.getByText("Register for $2.2"));
