@@ -5,7 +5,7 @@ import { useNetwork } from "../../context/NetworkContext";
 import { useTournament } from "../../hooks/useTournament";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import { getSigningClient } from "../../utils/cosmos/client";
-import { blindLines, entrantCount, isRegistered, startLabel, totalCost, tournamentIdOf, tournamentStatusLabel, usdc } from "../../utils/tournaments";
+import { blindLines, entrantCount, isRegistered, mySeat, startLabel, totalCost, tournamentIdOf, tournamentStatusLabel, usdc } from "../../utils/tournaments";
 import TournamentCountdown from "../../components/tournament/TournamentCountdown";
 import styles from "./Tournament.module.css";
 
@@ -40,6 +40,8 @@ const Tournament: React.FC = () => {
     const { options } = tournament;
     const blinds = blindLines(options);
     const registered = isRegistered(tournament, me);
+    const seat = mySeat(tournament, me);
+    const myTableId = seat !== null && seat.status === "playing" ? seat.tableId : null;
     const canRegister = tournament.status === "registering" && !registered && entrantCount(tournament) < options.maxEntrants;
 
     const register = async () => {
@@ -69,6 +71,22 @@ const Tournament: React.FC = () => {
                 <span className={styles.id}>{tournament.tournamentId}</span>
                 <CopyButton text={tournament.tournamentId} message="Tournament ID copied" title="Copy tournament ID" />
             </div>
+
+            {seat !== null && myTableId !== null && (
+                <div className={`pane-lite ${styles.seated}`}>
+                    <div className={styles.seatedText}>
+                        <span className={styles.seatedTitle}>You are seated</span>
+                        <span>
+                            {seat.ordinal !== null ? `Table ${seat.ordinal}` : "Your table"}
+                            {seat.seat !== null ? `, seat ${seat.seat}` : ""} · stack {seat.stack}
+                        </span>
+                    </div>
+                    <button type="button" className="btn-glow" onClick={() => navigate(`/table/${myTableId}`)}>
+                        Go to your table
+                    </button>
+                </div>
+            )}
+            {seat !== null && seat.status === "busted" && <p className={styles.note}>You were eliminated from this tournament.</p>}
 
             <div className={styles.grid}>
                 <Fact label="Starts" value={startLabel(options.startTime)} />
@@ -113,11 +131,14 @@ const Tournament: React.FC = () => {
                 <div className={`pane-lite ${styles.section}`}>
                     <span className="section-label">Tables</span>
                     {tournament.tables.filter(table => !table.broken).map(table => (
-                        <div key={table.tableId} className={styles.line}>
+                        <div key={table.tableId} className={table.tableId === myTableId ? `${styles.line} ${styles.mine}` : styles.line}>
                             <button type="button" className={styles.link} onClick={() => navigate(`/table/${table.tableId}`)}>
                                 Table {table.ordinal}
                             </button>
-                            <span>{table.players.length} players</span>
+                            <span>
+                                {table.tableId === myTableId && seat !== null && <strong className={styles.hereBadge}>You are here{seat.seat !== null ? ` · seat ${seat.seat}` : ""}</strong>}
+                                {table.players.length} players
+                            </span>
                         </div>
                     ))}
                 </div>
@@ -127,14 +148,18 @@ const Tournament: React.FC = () => {
                 <span className="section-label">Entrants ({entrantCount(tournament)})</span>
                 {tournament.entrants.length === 0 && <p className={styles.note}>Nobody has registered yet.</p>}
                 {tournament.entrants.map(entrant => (
-                    <div key={entrant.address} className={styles.line}>
+                    <div key={entrant.address} className={me !== null && entrant.address.toLowerCase() === me.toLowerCase() ? `${styles.line} ${styles.mine}` : styles.line}>
                         <span className={styles.address}>
                             <button type="button" className={`${styles.link} ${styles.mono}`} title="Open this player's profile" onClick={() => navigate(`/players/${entrant.address}`)}>
                                 {entrant.address}
                             </button>
                             {me !== null && entrant.address.toLowerCase() === me.toLowerCase() && " (you)"}
                         </span>
-                        <span>{entrant.status}</span>
+                        <span>
+                            {entrant.status === "playing" && entrant.tableId !== undefined && entrant.tableId !== ""
+                                ? `${tournament.tables.find(table => table.tableId === entrant.tableId)?.ordinal !== undefined ? `Table ${tournament.tables.find(table => table.tableId === entrant.tableId)?.ordinal}` : "Seated"}${entrant.seat !== undefined ? `, seat ${entrant.seat}` : ""}`
+                                : entrant.status}
+                        </span>
                     </div>
                 ))}
             </div>
