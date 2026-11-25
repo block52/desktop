@@ -21,6 +21,7 @@ function renderPanel(status: Partial<WalletStatus> = {}, overrides: Partial<Wall
         status: vi.fn(async () => raw ?? { ...STATUS, ...status }),
         setPgpKey: vi.fn(async () => undefined),
         removePgpKey: vi.fn(async () => undefined),
+        findPgpKey: vi.fn(async () => ({ armored: "FOUND KEY", fingerprint: "F68AA906B5BE601AC49EF83DC61F975DEBDEDC6B", server: "https://keys.openpgp.org" })),
         lock: vi.fn(async () => undefined),
         ...overrides,
     } as unknown as WalletBridge;
@@ -67,5 +68,24 @@ describe("WalletSecurityPanel", () => {
         const { pgpFingerprint: _fingerprint, pgpAvailable: _available, ...stale } = STATUS;
         renderPanel({}, {}, stale);
         expect(await screen.findByText("Security")).toBeTruthy();
+    });
+
+    it("fills the key from a key server and shows its fingerprint to confirm", async () => {
+        const bridge = renderPanel();
+        fireEvent.click(await screen.findByText("Add PGP key"));
+        fireEvent.change(screen.getByPlaceholderText("Find your key: email or fingerprint"), { target: { value: "me@example.com" } });
+        fireEvent.click(screen.getByText("Search key servers"));
+        await waitFor(() => expect(bridge.findPgpKey).toHaveBeenCalledWith("me@example.com", null));
+        expect(await screen.findByText(/F68A A906 B5BE 601A/)).toBeTruthy();
+        expect((screen.getByPlaceholderText("-----BEGIN PGP PUBLIC KEY BLOCK-----") as HTMLTextAreaElement).value).toBe("FOUND KEY");
+    });
+
+    it("shows the search error and leaves the key box alone", async () => {
+        const bridge = renderPanel({}, { findPgpKey: vi.fn(async () => Promise.reject(new Error("No key found on the key servers."))) });
+        fireEvent.click(await screen.findByText("Add PGP key"));
+        fireEvent.change(screen.getByPlaceholderText("Find your key: email or fingerprint"), { target: { value: "me@example.com" } });
+        fireEvent.click(screen.getByText("Search key servers"));
+        expect(await screen.findByText("No key found on the key servers.")).toBeTruthy();
+        expect(bridge.setPgpKey).not.toHaveBeenCalled();
     });
 });

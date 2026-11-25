@@ -63,6 +63,13 @@ export interface SignerNetwork {
     grpc?: string;
 }
 
+/** A key a key server returned. It is only a suggestion until the user has checked the fingerprint. */
+export interface FoundPgpKey {
+    armored: string;
+    fingerprint: string;
+    server: string;
+}
+
 export type WalletCredential = { password: string } | { touchId: true } | { pgp: true };
 
 /** A game action signed and broadcast in Go. Amounts are micro-USDC as numbers (within JS safe-int range). */
@@ -112,6 +119,8 @@ export interface WalletBridge {
     /** Also lets this PGP public key (armored) unlock the wallet. Without a password it becomes the only way in. */
     setPgpKey: (publicKey: string) => Promise<void>;
     removePgpKey: () => Promise<void>;
+    /** Looks a PGP public key up by email or fingerprint on the key server given, then on keys.openpgp.org and keyserver.ubuntu.com. */
+    findPgpKey: (query: string, keyServer: string | null) => Promise<FoundPgpKey>;
     setTouchId: (enabled: boolean) => Promise<void>;
     setAutoLock: (minutes: number) => Promise<void>;
     /** Tells the main process the user is still here, so the auto-lock timer restarts. */

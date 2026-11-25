@@ -67,6 +67,18 @@ export function fingerprintOf(colonListing: string): string {
 
 const BASE = ["--batch", "--no-tty", "--quiet"];
 
+/** The fingerprint of exactly one armored public key, read with a throwaway keyring that is never imported into. */
+export async function fingerprintOfArmored(armored: string, run: GpgRunner = runGpg): Promise<string> {
+    const home = await mkdtemp(path.join(os.tmpdir(), "b52-gpg-"));
+    try {
+        const listing = await run(["--homedir", home, ...BASE, "--with-colons", "--import-options", "show-only", "--import"], armored, QUICK_TIMEOUT_MS);
+        if (listing.code !== 0) throw new Error("Could not read that PGP key.");
+        return fingerprintOf(listing.stdout);
+    } finally {
+        await rm(home, { recursive: true, force: true });
+    }
+}
+
 export function createGpgTool(run: GpgRunner = runGpg): PgpTool {
     return {
         async isAvailable() {
