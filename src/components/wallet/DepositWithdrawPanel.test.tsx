@@ -82,7 +82,7 @@ describe("DepositWithdrawPanel", () => {
             expect(screen.getByRole("tab", { name: "Ethereum wallet" })).toBeTruthy();
             expect(screen.getByRole("tab", { name: "External Web3 wallet" })).toBeTruthy();
             expect(screen.getByText("From your Ethereum wallet")).toBeTruthy();
-            expect(screen.getByRole("button", { name: "Deposit to Block52" })).toBeTruthy();
+            expect(screen.getByRole("button", { name: "Bridge to Block52" })).toBeTruthy();
             expect(screen.queryByText(ETH.address as string)).toBeNull();
         } finally {
             window.electronAPI = undefined;
@@ -96,7 +96,7 @@ describe("DepositWithdrawPanel", () => {
         renderPanel();
         openExternalWallet();
 
-        expect(screen.getByText("Deposit")).toBeTruthy();
+        expect(screen.getByText("Bridge")).toBeTruthy();
         expect(screen.getByRole("button", { name: "USDC" }).getAttribute("aria-pressed")).toBe("true");
         expect(screen.getByRole("button", { name: "USDT" }).getAttribute("aria-pressed")).toBe("false");
         expect(screen.getByPlaceholderText("0.00")).toBeTruthy();
@@ -122,7 +122,7 @@ describe("DepositWithdrawPanel", () => {
         expect(screen.getByPlaceholderText("0.00")).toHaveProperty("value", "5");
     });
 
-    it("shows Approve when allowance is zero and Deposit once approved", () => {
+    it("shows Approve when allowance is zero and Bridge once approved", () => {
         mockWeb3(true, "0xABC");
         mockedUseWalletBalance.mockReturnValue({ balance: 5000000n } as never);
         mockedUseAllowance.mockReturnValue({ allowance: undefined } as never);
@@ -139,7 +139,7 @@ describe("DepositWithdrawPanel", () => {
                 <DepositWithdrawPanel {...BASE} />
             </ToastProvider>
         );
-        expect(screen.getByRole("button", { name: "Deposit" })).toBeTruthy();
+        expect(screen.getByRole("button", { name: "Bridge" })).toBeTruthy();
     });
 
     it("shows the withdraw card with amount, to-address, and bridge fee", () => {

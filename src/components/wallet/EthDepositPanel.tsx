@@ -4,8 +4,9 @@ import usdtLogo from "../../assets/crypto/usdt.svg";
 import { formatShort, formatUnits, parseUnits } from "../../config/ethTokens";
 import type { EthAccount } from "../../hooks/wallet/useEthAccount";
 import { ETH_DEPOSIT_TOKENS } from "../../wallet/types";
-import type { EthBalances, EthDepositToken } from "../../wallet/types";
+import type { EthBalances, EthDepositResult, EthDepositToken } from "../../wallet/types";
 import dialog from "../modal/TableDialog.module.css";
+import BridgeSent from "./BridgeSent";
 import styles from "./EthDepositPanel.module.css";
 
 const LOGOS: Record<EthDepositToken, string> = { USDC: usdcLogo, USDT: usdtLogo };
@@ -37,7 +38,7 @@ const EthDepositPanel: React.FC<EthDepositPanelProps> = ({ eth, onCompleted }) =
     const [amount, setAmount] = useState("");
     const [error, setError] = useState("");
     const [isSending, setIsSending] = useState(false);
-    const [sent, setSent] = useState(false);
+    const [sent, setSent] = useState<EthDepositResult | null>(null);
 
     const bridge = window.electronAPI?.wallet;
     if (!eth.available || bridge === undefined) {
@@ -52,10 +53,9 @@ const EthDepositPanel: React.FC<EthDepositPanelProps> = ({ eth, onCompleted }) =
         if (parsed === null) return;
         setIsSending(true);
         setError("");
-        setSent(false);
+        setSent(null);
         try {
-            await bridge.ethDeposit(token, parsed);
-            setSent(true);
+            setSent(await bridge.ethDeposit(token, parsed));
             setAmount("");
             onCompleted();
             await eth.refresh();
@@ -105,10 +105,10 @@ const EthDepositPanel: React.FC<EthDepositPanelProps> = ({ eth, onCompleted }) =
             </label>
             {eth.error !== "" && <p className={dialog.error}>{eth.error}</p>}
             {error !== "" && <p className={dialog.error}>{error}</p>}
-            {sent && <p className={dialog.body}>Sent. Your Block52 balance updates once the bridge has minted it.</p>}
+            {sent !== null && <BridgeSent approveHash={sent.approveHash} depositHash={sent.depositHash} />}
             <div className={dialog.actions}>
                 <button type="button" className={`btn-glow ${dialog.action}`} onClick={() => void send()} disabled={!canSend}>
-                    {isSending ? "Waiting for Ethereum…" : "Deposit to Block52"}
+                    {isSending ? "Waiting for Ethereum…" : "Bridge to Block52"}
                 </button>
             </div>
         </div>

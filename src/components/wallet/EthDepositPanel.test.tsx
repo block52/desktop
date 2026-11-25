@@ -6,6 +6,9 @@ import type { EthAccount } from "../../hooks/wallet/useEthAccount";
 import type { WalletBridge } from "../../wallet/types";
 import EthDepositPanel from "./EthDepositPanel";
 
+vi.mock("../../hooks/useBlockHeight", () => ({ useBlockHeight: () => ({ first: null, latest: null }) }));
+vi.mock("../../hooks/useAvgBlockTime", () => ({ useAvgBlockTime: () => ({ avgBlockTimeSeconds: null, isLoading: false }) }));
+
 const ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 
 function account(overrides: Partial<EthAccount> = {}): EthAccount {
@@ -57,7 +60,7 @@ describe("EthDepositPanel", () => {
         const eth = account();
         const onCompleted = renderPanel(eth);
         fireEvent.change(screen.getByPlaceholderText("0.00"), { target: { value: "10" } });
-        fireEvent.click(screen.getByText("Deposit to Block52"));
+        fireEvent.click(screen.getByText("Bridge to Block52"));
         await waitFor(() => expect(bridge.ethDeposit).toHaveBeenCalledWith("USDC", 10_000_000n));
         await waitFor(() => expect(onCompleted).toHaveBeenCalledOnce());
         expect(eth.refresh).toHaveBeenCalled();
@@ -79,7 +82,7 @@ describe("EthDepositPanel", () => {
         const bridge = install();
         renderPanel();
         fireEvent.change(screen.getByPlaceholderText("0.00"), { target: { value: "30" } });
-        expect((screen.getByText("Deposit to Block52") as HTMLButtonElement).disabled).toBe(true);
+        expect((screen.getByText("Bridge to Block52") as HTMLButtonElement).disabled).toBe(true);
         expect(bridge.ethDeposit).not.toHaveBeenCalled();
     });
 
@@ -87,7 +90,7 @@ describe("EthDepositPanel", () => {
         install({ ethDeposit: vi.fn(async () => Promise.reject(new Error("Error invoking remote method 'wallet:eth-deposit': Error: Cancelled."))) });
         renderPanel();
         fireEvent.change(screen.getByPlaceholderText("0.00"), { target: { value: "1" } });
-        fireEvent.click(screen.getByText("Deposit to Block52"));
+        fireEvent.click(screen.getByText("Bridge to Block52"));
         expect(await screen.findByText("Cancelled.")).toBeTruthy();
     });
 

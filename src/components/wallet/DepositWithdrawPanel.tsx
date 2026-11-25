@@ -139,10 +139,10 @@ const DepositCard: React.FC<{ cosmosAddress: string; eth: EthAccount; onConfirme
     if (isDone) {
         return (
             <div className={`pane-lite ${styles.card}`}>
-                <div className={styles.title}>Deposit</div>
+                <div className={styles.title}>Bridge</div>
                 <div className={styles.alertSuccess}>
-                    <p className={styles.alertTitle}>Deposit complete</p>
-                    <p className={styles.alertText}>b52USDC has been deposited and will appear in your balance shortly.</p>
+                    <p className={styles.alertTitle}>Bridge complete</p>
+                    <p className={styles.alertText}>b52USDC has been bridged and will appear in your balance shortly.</p>
                     {depositHash && <EtherscanTxLink hash={depositHash} />}
                 </div>
                 <button
@@ -152,7 +152,7 @@ const DepositCard: React.FC<{ cosmosAddress: string; eth: EthAccount; onConfirme
                         setAmount("");
                     }}
                 >
-                    Make another deposit
+                    Bridge more
                 </button>
             </div>
         );
@@ -173,7 +173,7 @@ const DepositCard: React.FC<{ cosmosAddress: string; eth: EthAccount; onConfirme
     if (method === "eth") {
         return (
             <div className={`pane-lite ${styles.card}`}>
-                <div className={styles.title}>Deposit</div>
+                <div className={styles.title}>Bridge</div>
                 {methodSwitch}
                 <EthDepositPanel eth={eth} onCompleted={() => void onConfirmed()} />
             </div>
@@ -182,7 +182,7 @@ const DepositCard: React.FC<{ cosmosAddress: string; eth: EthAccount; onConfirme
 
     return (
         <div className={`pane-lite ${styles.card}`}>
-            <div className={styles.title}>Deposit</div>
+            <div className={styles.title}>Bridge</div>
             {methodSwitch}
 
             <div className={styles.tokenRow}>
@@ -240,7 +240,7 @@ const DepositCard: React.FC<{ cosmosAddress: string; eth: EthAccount; onConfirme
                     onClick={handleDeposit}
                     disabled={amountBigInt <= 0n || isDepositing || isExceedingBalance}
                 >
-                    {isDepositing ? "Depositing…" : "Deposit"}
+                    {isDepositing ? "Bridging…" : "Bridge"}
                 </button>
             ) : (
                 <button
