@@ -10,6 +10,7 @@ import { useCopyToClipboard } from "@block52/ui-sdk";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import AvailableCard from "../components/wallet/AvailableCard";
 import ActivityPanel from "../components/wallet/ActivityPanel";
+import BridgeHistory from "../components/wallet/BridgeHistory";
 import DepositWithdrawPanel, { WalletTab } from "../components/wallet/DepositWithdrawPanel";
 import WalletKeysModal from "../components/wallet/WalletKeysModal";
 import ModalErrorBoundary from "../components/modal/ModalErrorBoundary";
@@ -212,6 +213,8 @@ const Wallet: React.FC = () => {
                     <>
                         <h2 className={styles.sectionTitle}>Activity</h2>
                         <ActivityPanel address={existingAddress} refreshToken={refreshToken} />
+                        <h2 className={styles.sectionTitle}>Bridge history</h2>
+                        <BridgeHistory address={existingAddress} refreshToken={refreshToken} />
                     </>
                 )}
 

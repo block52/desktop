@@ -4,8 +4,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { ToastProvider } from "@block52/ui-sdk";
 import type { EthAccount } from "../../hooks/wallet/useEthAccount";
 import type { WalletBridge } from "../../wallet/types";
+import { loadLocalDeposits } from "../../utils/bridgeHistory";
 import EthDepositPanel from "./EthDepositPanel";
 
+vi.mock("../../utils/cosmos/storage", () => ({ getCosmosAddress: () => "b521me" }));
 vi.mock("../../hooks/useBlockHeight", () => ({ useBlockHeight: () => ({ first: null, latest: null }) }));
 vi.mock("../../hooks/useAvgBlockTime", () => ({ useAvgBlockTime: () => ({ avgBlockTimeSeconds: null, isLoading: false }) }));
 
@@ -65,6 +67,17 @@ describe("EthDepositPanel", () => {
         await waitFor(() => expect(onCompleted).toHaveBeenCalledOnce());
         expect(eth.refresh).toHaveBeenCalled();
         expect(await screen.findByText(/Sent\./)).toBeTruthy();
+    });
+
+    it("keeps the deposit's Ethereum tx hash for the bridge history", async () => {
+        const hash = `0x${"e".repeat(64)}`;
+        window.localStorage.clear();
+        install({ ethDeposit: vi.fn(async () => ({ approveHash: null, depositHash: hash })) });
+        renderPanel();
+        fireEvent.change(screen.getByPlaceholderText("0.00"), { target: { value: "5" } });
+        fireEvent.click(screen.getByText("Bridge to Block52"));
+        await waitFor(() => expect(loadLocalDeposits("b521me")).toHaveLength(1));
+        expect(loadLocalDeposits("b521me")[0]).toMatchObject({ hash, amount: "5000000", token: "USDC" });
     });
 
     it("MAX fills the whole balance of the chosen token, and switching token clears it", () => {
