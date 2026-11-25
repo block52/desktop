@@ -54,6 +54,12 @@ describe("TournamentList", () => {
         expect(screen.getByText("tournament page")).toBeTruthy();
     });
 
+    it("gives the row buttons the pill shape", () => {
+        show(<TournamentList search="" />);
+        expect(screen.getByText("Register").className).toContain("btn-pill");
+        expect(screen.getByText("View").className).toContain("btn-pill");
+    });
+
     it("filters by id or status word", () => {
         show(<TournamentList search="finished" />);
         expect(screen.queryByText("Registering")).toBeNull();

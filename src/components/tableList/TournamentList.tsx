@@ -30,7 +30,7 @@ export const TournamentRow: React.FC<{ tournament: TournamentStateDTO }> = ({ to
                 {entrantCount(tournament)} / {options.maxEntrants} entrants <span className={styles.sub}>(min {options.minEntrants})</span>
             </span>
             <span>${totalCost(options)}</span>
-            <button type="button" className={`btn-ghost ${styles.action}`} onClick={event => { event.stopPropagation(); open(); }}>
+            <button type="button" className={`btn-ghost btn-pill ${styles.action}`} onClick={event => { event.stopPropagation(); open(); }}>
                 {tournament.status === "registering" ? "Register" : "View"}
             </button>
         </div>

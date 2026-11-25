@@ -114,6 +114,15 @@ describe("Tournament page", () => {
         expect(screen.getByText("player profile")).toBeTruthy();
     });
 
+    it("gives the Register and Go to your table buttons the pill shape", () => {
+        show();
+        expect(screen.getByText("Register for $2.2").className).toContain("btn-pill");
+        cleanup();
+        state.tournament = make({ status: "running", entrants: [{ address: ME, status: "playing", tableId: `${ID}-t1`, seat: 1, stack: "1" }] as TournamentStateDTO["entrants"] });
+        show();
+        expect(screen.getByText("Go to your table").className).toContain("btn-pill");
+    });
+
     it("registers for the full cost and refreshes", async () => {
         show();
         fireEvent.click(screen.getByText("Register for $2.2"));

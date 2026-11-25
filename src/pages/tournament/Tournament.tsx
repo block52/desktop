@@ -81,7 +81,7 @@ const Tournament: React.FC = () => {
                             {seat.seat !== null ? `, seat ${seat.seat}` : ""} · stack {seat.stack}
                         </span>
                     </div>
-                    <button type="button" className="btn-glow" onClick={() => navigate(`/table/${myTableId}`)}>
+                    <button type="button" className="btn-glow btn-pill" onClick={() => navigate(`/table/${myTableId}`)}>
                         Go to your table
                     </button>
                 </div>
@@ -104,7 +104,7 @@ const Tournament: React.FC = () => {
             {tournament.status === "registering" && (
                 <div className={`pane-lite ${styles.section}`}>
                     <div className={styles.actions}>
-                        <button type="button" className="btn-glow" disabled={!canRegister || isRegistering || me === null} onClick={() => void register()}>
+                        <button type="button" className="btn-glow btn-pill" disabled={!canRegister || isRegistering || me === null} onClick={() => void register()}>
                             {isRegistering ? "Registering…" : registered ? "You are registered" : `Register for $${totalCost(options)}`}
                         </button>
                         {me === null && <span className={styles.note}>Create or import a wallet to register.</span>}

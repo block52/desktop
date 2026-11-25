@@ -240,6 +240,29 @@ body {
   border-color: hsl(250 28% 22%);
 }
 
+/* The shape of a labeled pill button (38px, fully rounded, 13px semibold). The colour comes from .btn-glow or .btn-ghost. */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font: 600 13px Inter, system-ui, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn-pill.btn-glow {
+  border: 0;
+}
+
+.btn-pill:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .search-field {
   background: hsl(240 28% 9.5%);
   border: 1px solid hsl(245 22% 17%);
