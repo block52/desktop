@@ -5,6 +5,7 @@ import { useNetwork } from "../../context/NetworkContext";
 import { useTournament } from "../../hooks/useTournament";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import { getSigningClient } from "../../utils/cosmos/client";
+import { deepLinkFor } from "../../deepLink";
 import { blindLines, entrantCount, isRegistered, mySeat, startLabel, totalCost, tournamentIdOf, tournamentStatusLabel, usdc } from "../../utils/tournaments";
 import TournamentCountdown from "../../components/tournament/TournamentCountdown";
 import styles from "./Tournament.module.css";
@@ -70,6 +71,14 @@ const Tournament: React.FC = () => {
             <div className={styles.header}>
                 <span className={styles.id}>{tournament.tournamentId}</span>
                 <CopyButton text={tournament.tournamentId} message="Tournament ID copied" title="Copy tournament ID" />
+                <button
+                    type="button"
+                    className="btn-ghost btn-pill"
+                    title="Copies a block52:// link that opens this tournament in the app"
+                    onClick={() => void navigator.clipboard.writeText(deepLinkFor("tournament", tournament.tournamentId)).then(() => showSuccess("App link copied"))}
+                >
+                    Copy app link
+                </button>
             </div>
 
             {seat !== null && myTableId !== null && (

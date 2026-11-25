@@ -15,6 +15,7 @@ import Table from "./pages/table/Table";
 import Tournament from "./pages/tournament/Tournament";
 import Wallet from "./pages/Wallet";
 import { isMenuRoute } from "./menuRoutes";
+import { isDeepLinkRoute } from "./deepLink";
 import styles from "./router.module.css";
 
 /** Opens the screen the window menu picked. Anything that is not one of its own routes is ignored. */
@@ -23,6 +24,17 @@ const MenuNavigation: React.FC = () => {
     React.useEffect(() => {
         return window.electronAPI?.menu?.onNavigate(route => {
             if (isMenuRoute(route)) navigate(route);
+        });
+    }, [navigate]);
+    return null;
+};
+
+/** Opens the table or tournament a block52:// link points at. Only those two kinds of page can be opened this way. */
+const DeepLinkNavigation: React.FC = () => {
+    const navigate = useNavigate();
+    React.useEffect(() => {
+        return window.electronAPI?.deepLink?.onOpen(route => {
+            if (isDeepLinkRoute(route)) navigate(route);
         });
     }, [navigate]);
     return null;
@@ -82,6 +94,7 @@ const Router: React.FC = () => {
     return (
         <MemoryRouter initialEntries={["/"]}>
             <MenuNavigation />
+            <DeepLinkNavigation />
             <AppBackground />
             <Shell />
         </MemoryRouter>

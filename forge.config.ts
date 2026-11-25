@@ -17,6 +17,8 @@ const SIDECAR_BINARY = sidecarBinaryName(process.platform);
 
 const LINUX_ICON = "./assets/icon.png";
 const LINUX_DESCRIPTION = "Block52 poker desktop app";
+// Tells the desktop environment that this app opens block52:// links.
+const LINK_MIME_TYPE = ["x-scheme-handler/block52"];
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -25,6 +27,9 @@ const config: ForgeConfig = {
     // The executable inside every package. Without it the packager names it after productName while the
     // deb/rpm makers look for the package.json name, which fails the Linux build.
     executableName: "block52",
+    // macOS: lists block52:// in Info.plist so the OS opens links with this app (Windows and Linux are set up below
+    // and at runtime, see src/main.ts).
+    protocols: [{ name: "Block52", schemes: ["block52"] }],
     // The Go wallet sidecar binary, bundled next to the app (process.resourcesPath). Built by the
     // generateAssets hook below. src/wallet/goSidecar.ts resolves it there when packaged.
     extraResource: [`./sidecar/dist/${SIDECAR_BINARY}`],
@@ -65,9 +70,9 @@ const config: ForgeConfig = {
     // Linux: native packages for deb/rpm distros, plus a portable AppImage that runs anywhere.
     // Each Linux maker builds its own desktop entry and does not read packagerConfig.icon, so without an icon here the
     // launcher and panel show a default one (Electron's atom for the deb and rpm, none for the AppImage).
-    new MakerRpm({ options: { bin: "block52", icon: LINUX_ICON, productName: "Block52", genericName: "Poker", categories: ["Game"], description: LINUX_DESCRIPTION } }),
-    new MakerDeb({ options: { bin: "block52", icon: LINUX_ICON, productName: "Block52", genericName: "Poker", categories: ["Game"], description: LINUX_DESCRIPTION } }),
-    new MakerAppImage({ options: { bin: "block52", icon: LINUX_ICON, genericName: "Poker", categories: ["Game"] } }),
+    new MakerRpm({ options: { bin: "block52", icon: LINUX_ICON, productName: "Block52", genericName: "Poker", categories: ["Game"], description: LINUX_DESCRIPTION, mimeType: LINK_MIME_TYPE } }),
+    new MakerDeb({ options: { bin: "block52", icon: LINUX_ICON, productName: "Block52", genericName: "Poker", categories: ["Game"], description: LINUX_DESCRIPTION, mimeType: LINK_MIME_TYPE } }),
+    new MakerAppImage({ options: { bin: "block52", icon: LINUX_ICON, genericName: "Poker", categories: ["Game"], mimeType: LINK_MIME_TYPE } }),
   ],
   plugins: [
     new VitePlugin({

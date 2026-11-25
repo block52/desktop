@@ -176,6 +176,28 @@ For a public repository, create it under Settings → Environments, restrict dep
 require a reviewer, and keep `VITE_MAINNET_RPC_URL` there as an environment secret so only approved release
 builds can read it. The secret is exposed to the `yarn make` step only, not to dependency install scripts.
 
+## Links that open the app
+
+`block52://table/<game id>` and `block52://tournament/<tournament id>` open the app on that table or tournament,
+whether it is closed or already running (a second launch hands the link to the running window, so there is only
+ever one). Share a link with the **Copy app link** button on a tournament page. A tournament table's id looks like
+`<tournament id>-t2`, and `block52://table/<that id>` opens it.
+
+A link only ever shows a page. It cannot sit you down, buy in or sign anything, and anything that is not one of
+those two shapes (another host, extra path, a malformed id) is ignored. The parser is `src/deepLink.ts`.
+
+How each platform learns about the scheme:
+
+- **macOS:** `protocols` in `forge.config.ts` writes it into `Info.plist`; the link arrives as an `open-url` event.
+- **Windows:** the app registers itself at start (`app.setAsDefaultProtocolClient`, packaged builds only); the link
+  arrives on the command line of a second copy, which hands it over and quits.
+- **Linux:** the deb, rpm and AppImage desktop entries list `x-scheme-handler/block52` and take `%U`; the link arrives
+  on the command line the same way.
+
+To try it on Linux after installing a package: `xdg-open block52://tournament/<id>`. From source (`yarn start`) the
+OS is not told about the scheme, but you can start a second copy by hand with the link as its argument:
+`node_modules/electron/dist/electron . block52://tournament/<id>`.
+
 ## Updates
 
 The app checks this repository's latest published release at start and every few hours. When a newer version

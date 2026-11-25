@@ -49,6 +49,19 @@ contextBridge.exposeInMainWorld("electronAPI", {
             return () => ipcRenderer.removeListener("menu:navigate", handler);
         },
     },
+    deepLink: {
+        /** A block52:// link asked to open a page. Calls back with the route, including one that arrived before this page was ready. */
+        onOpen: (listener: (route: string) => void) => {
+            const handler = (_event: unknown, route: unknown) => {
+                if (typeof route === "string") listener(route);
+            };
+            ipcRenderer.on("deeplink:open", handler);
+            void ipcRenderer.invoke("deeplink:ready").then((route: unknown) => {
+                if (typeof route === "string") listener(route);
+            });
+            return () => ipcRenderer.removeListener("deeplink:open", handler);
+        },
+    },
     updates: {
         check: (): Promise<UpdateInfo | null> => ipcRenderer.invoke("update:check"),
         open: (version: string) => ipcRenderer.send("update:open", version),
