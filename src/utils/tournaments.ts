@@ -117,3 +117,35 @@ export function mySeat(tournament: TournamentStateDTO, address: string | null): 
     const table = tableId === null ? undefined : tournament.tables.find(candidate => candidate.tableId === tableId);
     return { status: entrant.status, tableId, seat: tableId !== null && entrant.seat !== undefined ? entrant.seat : null, ordinal: table === undefined ? null : table.ordinal, stack: entrant.stack };
 }
+
+export interface TimeLeft {
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+    totalSeconds: number;
+    done: boolean;
+}
+
+/** The time from `nowMs` to `startMs`, split for a countdown. Past or unset start times read as done. */
+export function timeLeft(startMs: number, nowMs: number): TimeLeft {
+    const totalSeconds = Math.max(0, Math.ceil((startMs - nowMs) / 1000));
+    return {
+        days: Math.floor(totalSeconds / 86_400),
+        hours: Math.floor((totalSeconds % 86_400) / 3600),
+        minutes: Math.floor((totalSeconds % 3600) / 60),
+        seconds: totalSeconds % 60,
+        totalSeconds,
+        done: totalSeconds === 0
+    };
+}
+
+/** How the countdown should feel: calm until the last hour, then building, then the final minute and the last ten seconds. */
+export type Urgency = "calm" | "soon" | "minute" | "final";
+
+export function urgencyOf(totalSeconds: number): Urgency {
+    if (totalSeconds <= 10) return "final";
+    if (totalSeconds <= 60) return "minute";
+    if (totalSeconds <= 3600) return "soon";
+    return "calm";
+}

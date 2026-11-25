@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TournamentStateDTO } from "@block52/poker-vm-sdk";
-import { mySeat, blindLines, createdTournamentIds, entrantCount, isRegistered, sortTournaments, totalCost, tournamentIdOf, usdc } from "./tournaments";
+import { mySeat, timeLeft, urgencyOf, blindLines, createdTournamentIds, entrantCount, isRegistered, sortTournaments, totalCost, tournamentIdOf, usdc } from "./tournaments";
 
 const ID = `0x${"ab".repeat(32)}`;
 
@@ -99,5 +99,28 @@ describe("mySeat", () => {
         expect(mySeat(running, "b521bbb")).toMatchObject({ status: "busted", tableId: null, seat: null, ordinal: null });
         expect(mySeat(running, "b521zzz")).toBeNull();
         expect(mySeat(running, null)).toBeNull();
+    });
+});
+
+describe("timeLeft", () => {
+    it("splits the wait and rounds a part-second up", () => {
+        expect(timeLeft(1_000 * (2 * 86_400 + 3 * 3600 + 4 * 60 + 5), 0)).toMatchObject({ days: 2, hours: 3, minutes: 4, seconds: 5, done: false });
+        expect(timeLeft(1_500, 0).totalSeconds).toBe(2);
+    });
+    it("is done at and after the start", () => {
+        expect(timeLeft(5_000, 5_000).done).toBe(true);
+        expect(timeLeft(5_000, 9_000)).toMatchObject({ totalSeconds: 0, done: true });
+    });
+});
+
+describe("urgencyOf", () => {
+    it("steps up as the start nears", () => {
+        expect(urgencyOf(7200)).toBe("calm");
+        expect(urgencyOf(3600)).toBe("soon");
+        expect(urgencyOf(61)).toBe("soon");
+        expect(urgencyOf(60)).toBe("minute");
+        expect(urgencyOf(11)).toBe("minute");
+        expect(urgencyOf(10)).toBe("final");
+        expect(urgencyOf(0)).toBe("final");
     });
 });

@@ -19,7 +19,11 @@ runs:
 
         # The installers people download. The Squirrel .nupkg and RELEASES feed are left out: nothing reads them,
         # because the app only shows a "new version" notice and never updates itself.
-        find "${{ inputs.directory }}" -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) -exec cp {} "$work" \;
+        # GitHub turns a space in an asset name into a dot (the Windows installer is "Block52-1.0.8 Setup.exe"), so name the
+        # copies that way up front; the notes and SHA256SUMS then match what people download.
+        while IFS= read -r -d '' file; do
+          cp "$file" "$work/$(basename "$file" | tr ' ' '.')"
+        done < <(find "${{ inputs.directory }}" -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) -print0)
         if [ -z "$(ls -A "$work")" ]; then
           echo "No installers found in ${{ inputs.directory }}" >&2
           exit 1
@@ -64,9 +68,9 @@ runs:
         } > "$work/notes.md"
 
         # --generate-notes appends GitHub's list of merged pull requests below the guide.
+        mapfile -d '' -t assets < <(find "$work" -type f ! -name notes.md -print0)
         gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --draft --generate-notes \
-          --title "Block52 ${version}" --notes-file "$work/notes.md" \
-          $(find "$work" -type f ! -name notes.md)
+          --title "Block52 ${version}" --notes-file "$work/notes.md" "${assets[@]}"
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
