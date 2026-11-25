@@ -1,4 +1,4 @@
-import type { TournamentOptionsDTO, TournamentStateDTO, TournamentStatus } from "@block52/poker-vm-sdk";
+import type { TournamentEntrantStatus, TournamentOptionsDTO, TournamentStateDTO, TournamentStatus } from "@block52/poker-vm-sdk";
 import { microToDecimal } from "./currency";
 
 const TOURNAMENT_ID = /^(0x[0-9a-fA-F]{64})(?:-t\d+)?$/;
@@ -95,4 +95,25 @@ export function blindLines(options: TournamentOptionsDTO): BlindLine[] {
     }
     if ("preset" in structure) return [{ key: "preset", label: "Preset", text: structure.preset.replace(/_/g, " ") }];
     return [{ key: "start", label: "Start", text: `${structure.startSmallBlind} / ${structure.startBigBlind} · ${structure.durationMinutes} min a level` }];
+}
+
+export interface MySeat {
+    status: TournamentEntrantStatus;
+    tableId: string | null;
+    /** The seat at that table, numbered as at the table itself. */
+    seat: number | null;
+    /** The table's number in the tournament (Table 1, Table 2…), when it is still known. */
+    ordinal: number | null;
+    stack: string;
+}
+
+/** Where this address sits in the tournament, or null when it is not an entrant. */
+export function mySeat(tournament: TournamentStateDTO, address: string | null): MySeat | null {
+    if (address === null) return null;
+    const mine = address.toLowerCase();
+    const entrant = tournament.entrants.find(candidate => candidate.address.toLowerCase() === mine);
+    if (entrant === undefined) return null;
+    const tableId = entrant.tableId !== undefined && entrant.tableId !== "" ? entrant.tableId : null;
+    const table = tableId === null ? undefined : tournament.tables.find(candidate => candidate.tableId === tableId);
+    return { status: entrant.status, tableId, seat: tableId !== null && entrant.seat !== undefined ? entrant.seat : null, ordinal: table === undefined ? null : table.ordinal, stack: entrant.stack };
 }

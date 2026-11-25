@@ -106,3 +106,44 @@
     align-items: center;
     gap: 12px;
 }
+
+/* Where you are: green, like a table you are seated at. */
+.seated {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    border-color: hsl(142 70% 40%);
+    background: linear-gradient(90deg, hsl(142 70% 40% / 0.18), transparent);
+}
+
+.seatedText {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.seatedTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: hsl(142 70% 65%);
+}
+
+.mine {
+    background: hsl(142 70% 40% / 0.14);
+    box-shadow: inset 3px 0 0 hsl(142 70% 50%);
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 6px;
+}
+
+.hereBadge {
+    margin-right: 10px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: hsl(142 70% 40% / 0.25);
+    color: hsl(142 70% 70%);
+}

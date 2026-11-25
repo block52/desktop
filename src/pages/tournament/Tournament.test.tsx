@@ -78,6 +78,34 @@ describe("Tournament page", () => {
         expect(screen.getByText("b521other")).toBeTruthy();
     });
 
+    it("tells a seated player where they sit, highlights that table, and goes to it", () => {
+        state.tournament = make({
+            status: "running",
+            entrants: [
+                { address: ME, status: "playing", tableId: `${ID}-t2`, seat: 5, stack: "4200" },
+                { address: "b521other", status: "playing", tableId: `${ID}-t1`, seat: 2, stack: "6000" }
+            ] as TournamentStateDTO["entrants"],
+            tables: [
+                { tableId: `${ID}-t1`, ordinal: 1, players: ["b521other"], broken: false, handNumber: 3, atBoundary: false },
+                { tableId: `${ID}-t2`, ordinal: 2, players: [ME], broken: false, handNumber: 3, atBoundary: false }
+            ]
+        });
+        show();
+        expect(screen.getByText("You are seated")).toBeTruthy();
+        expect(screen.getByText("Table 2, seat 5 · stack 4200")).toBeTruthy();
+        expect(screen.getByText("You are here · seat 5")).toBeTruthy();
+        expect(screen.getByText("Table 1, seat 2")).toBeTruthy();
+        fireEvent.click(screen.getByText("Go to your table"));
+        expect(screen.getByText("table page")).toBeTruthy();
+    });
+
+    it("says when you were eliminated, and shows no seat banner when not seated", () => {
+        state.tournament = make({ status: "running", entrants: [{ address: ME, status: "busted", stack: "0" }] as TournamentStateDTO["entrants"] });
+        show();
+        expect(screen.getByText("You were eliminated from this tournament.")).toBeTruthy();
+        expect(screen.queryByText("You are seated")).toBeNull();
+    });
+
     it("shows each entrant's whole address and opens their profile", () => {
         const address = `b521${"q".repeat(40)}`;
         state.tournament = make({ entrants: [{ address, status: "registered", stack: "0" }] as TournamentStateDTO["entrants"] });

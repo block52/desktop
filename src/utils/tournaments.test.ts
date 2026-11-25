@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TournamentStateDTO } from "@block52/poker-vm-sdk";
-import { blindLines, createdTournamentIds, entrantCount, isRegistered, sortTournaments, totalCost, tournamentIdOf, usdc } from "./tournaments";
+import { mySeat, blindLines, createdTournamentIds, entrantCount, isRegistered, sortTournaments, totalCost, tournamentIdOf, usdc } from "./tournaments";
 
 const ID = `0x${"ab".repeat(32)}`;
 
@@ -80,5 +80,24 @@ describe("blindLines", () => {
     it("describes a preset and a formula in one line", () => {
         expect(blindLines({ blindStructure: { preset: "hyper_turbo" } } as unknown as TournamentStateDTO["options"])[0].text).toBe("hyper turbo");
         expect(blindLines({ blindStructure: { progression: "double", startSmallBlind: "25", startBigBlind: "50", durationMinutes: 10 } } as unknown as TournamentStateDTO["options"])[0].text).toBe("25 / 50 · 10 min a level");
+    });
+});
+
+describe("mySeat", () => {
+    const running = {
+        ...tournament("running", [
+            { address: "b521AAA", status: "playing", tableId: "T-t2", seat: 5, stack: "4200" },
+            { address: "b521bbb", status: "busted", stack: "0" }
+        ] as TournamentStateDTO["entrants"]),
+        tables: [{ tableId: "T-t2", ordinal: 2, players: ["b521AAA"], broken: false, handNumber: 1, atBoundary: false }]
+    } as unknown as TournamentStateDTO;
+
+    it("finds the table, its number, the seat and the stack, ignoring address case", () => {
+        expect(mySeat(running, "b521aaa")).toEqual({ status: "playing", tableId: "T-t2", seat: 5, ordinal: 2, stack: "4200" });
+    });
+    it("has no table once busted, and nothing for a stranger or no wallet", () => {
+        expect(mySeat(running, "b521bbb")).toMatchObject({ status: "busted", tableId: null, seat: null, ordinal: null });
+        expect(mySeat(running, "b521zzz")).toBeNull();
+        expect(mySeat(running, null)).toBeNull();
     });
 });
