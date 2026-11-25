@@ -1,10 +1,12 @@
 .row {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) 110px minmax(0, 1.4fr) 110px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 3fr) 110px minmax(0, 1.3fr) 80px minmax(0, 0.8fr);
     gap: 12px;
     align-items: center;
     padding: 0 20px;
     min-height: 60px;
+    padding-top: 8px;
+    padding-bottom: 8px;
     border-bottom: 1px solid hsl(245 22% 17% / 0.6);
     cursor: pointer;
 }
@@ -29,10 +31,8 @@
 
 .id {
     font-family: ui-monospace, monospace;
-    font-size: 13px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 12px;
+    overflow-wrap: anywhere;
 }
 
 .sub {

@@ -59,6 +59,10 @@ Known intentional divergences — do not "fix" these when comparing:
 
 This repo follows its own existing style (`interface` for props, `function` declarations for utilities, `export default` components, `src/utils/`, flat `components/<domain>/` folders, relative imports) rather than the shared gates' stricter rules (type-only, arrow functions, named exports, no `utils/`, `components/<Name>/<Name>.tsx`, `@/` alias). Match the surrounding code; don't mix styles inside a file. Don't export a symbol that nothing else imports.
 
+## Addresses and ids are shown in full
+
+Never truncate a wallet address, transaction hash, game id or tournament id by default: no `0x1234…abcd`, no CSS ellipsis. Show the whole value (monospace, wrapping with `overflow-wrap: anywhere`) so it can be read, compared and copied. A shortened form is only for a place where the full value genuinely cannot fit (a table-seat pill, a toast) and the full value must then be one click away (tooltip, copy button or a detail page). Where an address belongs to a player, make it a link to `/players/:address`.
+
 ## Inherited Rules
 
 This project is part of the Block52 poker-vm monorepo. When integrating with the blockchain/game layer:

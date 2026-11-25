@@ -11,10 +11,6 @@ import styles from "./Tournament.module.css";
 const POLL_MS = 10_000;
 const LEVELS_SHOWN = 4;
 
-function short(address: string): string {
-    return address.length > 18 ? `${address.slice(0, 10)}…${address.slice(-6)}` : address;
-}
-
 const Fact: React.FC<{ label: string; value: string }> = ({ label, value }) => (
     <div className={styles.fact}>
         <span className={styles.factLabel}>{label}</span>
@@ -127,7 +123,12 @@ const Tournament: React.FC = () => {
                 {tournament.entrants.length === 0 && <p className={styles.note}>Nobody has registered yet.</p>}
                 {tournament.entrants.map(entrant => (
                     <div key={entrant.address} className={styles.line}>
-                        <span className={styles.mono}>{short(entrant.address)}{me !== null && entrant.address.toLowerCase() === me.toLowerCase() ? " (you)" : ""}</span>
+                        <span className={styles.address}>
+                            <button type="button" className={`${styles.link} ${styles.mono}`} title="Open this player's profile" onClick={() => navigate(`/players/${entrant.address}`)}>
+                                {entrant.address}
+                            </button>
+                            {me !== null && entrant.address.toLowerCase() === me.toLowerCase() && " (you)"}
+                        </span>
                         <span>{entrant.status}</span>
                     </div>
                 ))}
