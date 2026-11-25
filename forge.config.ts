@@ -15,6 +15,9 @@ import { sidecarBinaryName } from "./src/wallet/sidecarBinary";
 // The Go wallet sidecar for the platform being built on (b52-wallet.exe on Windows). The app looks for this same name.
 const SIDECAR_BINARY = sidecarBinaryName(process.platform);
 
+const LINUX_ICON = "./assets/icon.png";
+const LINUX_DESCRIPTION = "Block52 poker desktop app";
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
@@ -60,9 +63,11 @@ const config: ForgeConfig = {
     // (there is no tested macOS auto-update path yet, so the .dmg alone is fine for now).
     new MakerDMG({}, ["darwin"]),
     // Linux: native packages for deb/rpm distros, plus a portable AppImage that runs anywhere.
-    new MakerRpm({ options: { bin: "block52" } }),
-    new MakerDeb({ options: { bin: "block52" } }),
-    new MakerAppImage({ options: { bin: "block52" } }),
+    // Each Linux maker builds its own desktop entry and does not read packagerConfig.icon, so without an icon here the
+    // launcher and panel show a default one (Electron's atom for the deb and rpm, none for the AppImage).
+    new MakerRpm({ options: { bin: "block52", icon: LINUX_ICON, productName: "Block52", genericName: "Poker", categories: ["Game"], description: LINUX_DESCRIPTION } }),
+    new MakerDeb({ options: { bin: "block52", icon: LINUX_ICON, productName: "Block52", genericName: "Poker", categories: ["Game"], description: LINUX_DESCRIPTION } }),
+    new MakerAppImage({ options: { bin: "block52", icon: LINUX_ICON, genericName: "Poker", categories: ["Game"] } }),
   ],
   plugins: [
     new VitePlugin({
