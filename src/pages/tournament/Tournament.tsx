@@ -6,6 +6,7 @@ import { useTournament } from "../../hooks/useTournament";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import { getSigningClient } from "../../utils/cosmos/client";
 import { blindLines, entrantCount, isRegistered, startLabel, totalCost, tournamentIdOf, tournamentStatusLabel, usdc } from "../../utils/tournaments";
+import TournamentCountdown from "../../components/tournament/TournamentCountdown";
 import styles from "./Tournament.module.css";
 
 const POLL_MS = 10_000;
@@ -77,6 +78,10 @@ const Tournament: React.FC = () => {
                 <Fact label="Seats per table" value={String(options.seatsPerTable)} />
                 <Fact label="Prize pool" value={`$${usdc(tournament.prizePool)}`} />
             </div>
+
+            {tournament.status === "registering" && (
+                <TournamentCountdown startTime={options.startTime} entrants={entrantCount(tournament)} minEntrants={options.minEntrants} />
+            )}
 
             {tournament.status === "registering" && (
                 <div className={`pane-lite ${styles.section}`}>

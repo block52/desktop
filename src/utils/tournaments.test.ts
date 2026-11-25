@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TournamentStateDTO } from "@block52/poker-vm-sdk";
-import { blindLines, createdTournamentIds, entrantCount, isRegistered, sortTournaments, totalCost, tournamentIdOf, usdc } from "./tournaments";
+import { timeLeft, urgencyOf, blindLines, createdTournamentIds, entrantCount, isRegistered, sortTournaments, totalCost, tournamentIdOf, usdc } from "./tournaments";
 
 const ID = `0x${"ab".repeat(32)}`;
 
@@ -80,5 +80,28 @@ describe("blindLines", () => {
     it("describes a preset and a formula in one line", () => {
         expect(blindLines({ blindStructure: { preset: "hyper_turbo" } } as unknown as TournamentStateDTO["options"])[0].text).toBe("hyper turbo");
         expect(blindLines({ blindStructure: { progression: "double", startSmallBlind: "25", startBigBlind: "50", durationMinutes: 10 } } as unknown as TournamentStateDTO["options"])[0].text).toBe("25 / 50 · 10 min a level");
+    });
+});
+
+describe("timeLeft", () => {
+    it("splits the wait and rounds a part-second up", () => {
+        expect(timeLeft(1_000 * (2 * 86_400 + 3 * 3600 + 4 * 60 + 5), 0)).toMatchObject({ days: 2, hours: 3, minutes: 4, seconds: 5, done: false });
+        expect(timeLeft(1_500, 0).totalSeconds).toBe(2);
+    });
+    it("is done at and after the start", () => {
+        expect(timeLeft(5_000, 5_000).done).toBe(true);
+        expect(timeLeft(5_000, 9_000)).toMatchObject({ totalSeconds: 0, done: true });
+    });
+});
+
+describe("urgencyOf", () => {
+    it("steps up as the start nears", () => {
+        expect(urgencyOf(7200)).toBe("calm");
+        expect(urgencyOf(3600)).toBe("soon");
+        expect(urgencyOf(61)).toBe("soon");
+        expect(urgencyOf(60)).toBe("minute");
+        expect(urgencyOf(11)).toBe("minute");
+        expect(urgencyOf(10)).toBe("final");
+        expect(urgencyOf(0)).toBe("final");
     });
 });

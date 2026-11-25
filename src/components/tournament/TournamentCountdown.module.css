@@ -1,0 +1,141 @@
+.card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 20px;
+    text-align: center;
+    background: radial-gradient(ellipse at top, hsl(263 83% 58% / 0.16), transparent 70%);
+}
+
+.kicker {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: hsl(215 20% 65%);
+}
+
+.tiles {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.digits {
+    position: relative;
+    min-width: 76px;
+    padding: 12px 10px;
+    border-radius: 16px;
+    border: 1px solid hsl(263 40% 30%);
+    background: linear-gradient(180deg, hsl(240 26% 14%), hsl(240 26% 9%));
+    font: 700 40px/1 ui-monospace, "SF Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 6px 18px hsl(263 83% 30% / 0.25);
+    overflow: hidden;
+}
+
+/* A hairline across the middle, like a split-flap tile. */
+.digits::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: hsl(240 26% 4% / 0.7);
+}
+
+.digit {
+    display: inline-block;
+    animation: flip 0.45s ease-out;
+}
+
+.label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: hsl(215 20% 65%);
+}
+
+.message {
+    margin: 0;
+    font-size: 14px;
+    color: hsl(215 20% 75%);
+}
+
+/* The last hour: the tiles warm up. */
+.soon .digits {
+    border-color: hsl(263 83% 58%);
+    box-shadow: 0 6px 22px hsl(263 83% 50% / 0.45);
+}
+
+/* The last minute: they pulse. */
+.minute .digits {
+    border-color: hsl(38 95% 58%);
+    box-shadow: 0 0 22px hsl(38 95% 55% / 0.5);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+/* The last ten seconds: one big number. */
+.final .tiles > :not(:last-child) {
+    display: none;
+}
+
+.final .digits {
+    min-width: 120px;
+    font-size: 72px;
+    border-color: hsl(0 85% 62%);
+    box-shadow: 0 0 34px hsl(0 85% 60% / 0.6);
+    animation: pulse 0.5s ease-in-out infinite;
+}
+
+.go {
+    font-size: 30px;
+    font-weight: 700;
+    background: linear-gradient(90deg, hsl(263 90% 75%), hsl(38 95% 65%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes flip {
+    from {
+        transform: translateY(-40%) scaleY(0.4);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .digit,
+    .minute .digits,
+    .final .digits,
+    .go {
+        animation: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .digits {
+        min-width: 58px;
+        font-size: 30px;
+    }
+}
