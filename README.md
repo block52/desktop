@@ -156,7 +156,7 @@ GitHub Actions (`.github/workflows`):
 | **CI** | pull requests, pushes to `main` | lint, typecheck, tests, a full `yarn package` build, and a dependency audit |
 | **CodeQL** | pull requests, `main`, weekly | static security analysis |
 | **Cut release** | manual | bumps the version, commits, tags and starts the installer build |
-| **Release** | `v*` tag, or manual | builds macOS (arm64), Windows and Linux installers and drafts a GitHub release |
+| **Release** | `v*` tag, or manual | builds macOS (arm64 and Intel), Windows and Linux installers and drafts a GitHub release with a download guide and `SHA256SUMS` |
 
 Reusable steps live in `.github/actions` (Node and yarn setup, Linux packaging tools, draft release).
 Dependabot opens weekly update PRs.
