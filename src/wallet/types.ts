@@ -33,6 +33,7 @@ export const SIGNING_METHODS = [
     "listWithdrawalRequests",
     "registerNftAvatar",
     "createValidator",
+    "registerTournament",
 ] as const;
 
 export type SigningMethod = (typeof SIGNING_METHODS)[number];
