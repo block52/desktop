@@ -69,10 +69,15 @@
     border-bottom: none;
 }
 
+/* Addresses and ids are shown in full and wrap rather than being cut off. */
 .mono {
     font-family: ui-monospace, monospace;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+    text-align: left;
+}
+
+.address {
+    min-width: 0;
 }
 
 .link {

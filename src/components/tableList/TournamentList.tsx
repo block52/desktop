@@ -7,10 +7,6 @@ import { entrantCount, startLabel, totalCost, tournamentIdOf, tournamentStatusLa
 import tableStyles from "./TableList.module.css";
 import styles from "./TournamentList.module.css";
 
-function shortId(id: string): string {
-    return `${id.slice(0, 10)}…${id.slice(-6)}`;
-}
-
 /** A tournament matches by id or by status word ("registering", "running"…). */
 function matches(tournament: TournamentStateDTO, query: string): boolean {
     const q = query.trim().toLowerCase();
@@ -24,7 +20,7 @@ export const TournamentRow: React.FC<{ tournament: TournamentStateDTO }> = ({ to
     return (
         <div className={`row-hover ${styles.row}`} role="link" tabIndex={0} onClick={open} onKeyDown={event => event.key === "Enter" && open()}>
             <div className={styles.identity}>
-                <span className={styles.id}>{shortId(tournament.tournamentId)}</span>
+                <span className={styles.id}>{tournament.tournamentId}</span>
                 <span className={styles.sub}>{options.seatsPerTable}-handed · starts {startLabel(options.startTime)}</span>
             </div>
             <span className={`${styles.badge} ${tournament.status === "registering" ? styles.registering : tournament.status === "running" ? styles.running : ""}`}>

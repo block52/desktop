@@ -51,6 +51,7 @@ function show(path = `/tournament/${ID}`) {
                 <Routes>
                     <Route path="/tournament/:id" element={<Tournament />} />
                     <Route path="/table/:id" element={<p>table page</p>} />
+                    <Route path="/players/:address" element={<p>player profile</p>} />
                 </Routes>
             </MemoryRouter>
         </ToastProvider>
@@ -75,6 +76,14 @@ describe("Tournament page", () => {
         expect(screen.getByText("$2 + $0.2 fee")).toBeTruthy();
         expect(screen.getByText("turbo")).toBeTruthy();
         expect(screen.getByText("b521other")).toBeTruthy();
+    });
+
+    it("shows each entrant's whole address and opens their profile", () => {
+        const address = `b521${"q".repeat(40)}`;
+        state.tournament = make({ entrants: [{ address, status: "registered", stack: "0" }] as TournamentStateDTO["entrants"] });
+        show();
+        fireEvent.click(screen.getByText(address));
+        expect(screen.getByText("player profile")).toBeTruthy();
     });
 
     it("registers for the full cost and refreshes", async () => {
