@@ -12,6 +12,7 @@ import HandDistribution from "./pages/handDistribution/HandDistribution";
 import Nodes from "./pages/nodes/Nodes";
 import TechNotes from "./pages/techNotes/TechNotes";
 import Table from "./pages/table/Table";
+import Tournament from "./pages/tournament/Tournament";
 import Wallet from "./pages/Wallet";
 import { isMenuRoute } from "./menuRoutes";
 import styles from "./router.module.css";
@@ -55,6 +56,7 @@ const Shell: React.FC = () => {
                             <Route path="/nodes" element={<Nodes />} />
                             <Route path="/tech-notes" element={<TechNotes />} />
                             <Route path="/table/:id" element={<Table onOpenNav={() => setDrawerOpen(true)} />} />
+                            <Route path="/tournament/:id" element={<Tournament />} />
                             <Route path="/wallet" element={<Wallet />} />
                         </Routes>
                     </main>

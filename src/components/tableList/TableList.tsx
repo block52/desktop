@@ -16,6 +16,8 @@ import { deleteTable, forceCloseTable } from "../../hooks/playerActions/closeTab
 import { CopyButton } from "@block52/ui-sdk";
 import { getCosmosAddress } from "../../utils/cosmos/storage";
 import { SlidingTabs } from "@block52/ui-sdk";
+import { tournamentIdOf } from "../../utils/tournaments";
+import TournamentList, { TournamentLookupHint } from "./TournamentList";
 import styles from "./TableList.module.css";
 
 function microToUsdc(micro: string): string {
@@ -57,7 +59,7 @@ function formatBuyIn(game: GameWithFormat): string {
     return `$${microToUsdc(game.minBuyIn)} – $${microToUsdc(game.maxBuyIn)}`;
 }
 
-type FormatFilter = "all" | "cash" | "sit-and-go" | "mine";
+type FormatFilter = "all" | "cash" | "sit-and-go" | "tournament" | "mine";
 type StatusFilter = "all" | TableLiveStatus;
 
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
@@ -146,6 +148,7 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                         { value: "all", label: "All", count: rawGames.length },
                         { value: "cash", label: "Cash", count: cashCount },
                         { value: "sit-and-go", label: "Sit & Go", count: sngCount },
+                        { value: "tournament", label: "Tournaments" },
                         { value: "mine", label: "Mine", count: mineCount }
                     ]}
                     value={formatFilter}
@@ -164,6 +167,15 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
             </button>
         </div>
     );
+
+    if (formatFilter === "tournament") {
+        return (
+            <div className={styles.container}>
+                {headerRow}
+                <TournamentList search={search} />
+            </div>
+        );
+    }
 
     if (isLoading) {
         return (
@@ -215,7 +227,9 @@ const TableList: React.FC<TableListProps> = ({ search }) => {
                     <span />
                 </div>
 
-                {games.length === 0 ? (
+                {games.length === 0 && tournamentIdOf(search) !== null ? (
+                    <TournamentLookupHint id={tournamentIdOf(search) as string} />
+                ) : games.length === 0 ? (
                     <div className={styles.stateBox}>
                         <div className={styles.emptyIcon}>
                             <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
