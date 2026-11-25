@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import usdcLogo from "../../assets/crypto/usdc.svg";
 import usdtLogo from "../../assets/crypto/usdt.svg";
+import { getCosmosAddress } from "../../utils/cosmos/storage";
+import { saveLocalDeposit } from "../../utils/bridgeHistory";
 import { formatShort, formatUnits, parseUnits } from "../../config/ethTokens";
 import type { EthAccount } from "../../hooks/wallet/useEthAccount";
 import { ETH_DEPOSIT_TOKENS } from "../../wallet/types";
@@ -55,7 +57,11 @@ const EthDepositPanel: React.FC<EthDepositPanelProps> = ({ eth, onCompleted }) =
         setError("");
         setSent(null);
         try {
-            setSent(await bridge.ethDeposit(token, parsed));
+            const result = await bridge.ethDeposit(token, parsed);
+            const owner = getCosmosAddress();
+            // The deposit mints to this wallet's own Block52 address; keep its Ethereum tx hash for the bridge history.
+            if (owner !== null) saveLocalDeposit(owner, { hash: result.depositHash, amount: parsed.toString(), token, time: Date.now() });
+            setSent(result);
             setAmount("");
             onCompleted();
             await eth.refresh();

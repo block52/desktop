@@ -4,6 +4,8 @@ import styles from "./EtherscanTxLink.module.css";
 
 interface EtherscanTxLinkProps {
     hash: string;
+    /** Show the whole hash instead of a shortened one. */
+    full?: boolean;
 }
 
 const TX_HASH = /^0x[0-9a-fA-F]{64}$/;
@@ -17,13 +19,13 @@ function openLink(url: string): void {
 }
 
 /** An Ethereum mainnet transaction: the shortened hash and a button that opens it on Etherscan in the system browser. */
-const EtherscanTxLink: React.FC<EtherscanTxLinkProps> = ({ hash }) => {
+const EtherscanTxLink: React.FC<EtherscanTxLinkProps> = ({ hash, full = false }) => {
     if (!TX_HASH.test(hash)) return <p className={styles.hash}>Tx: {hash.slice(0, 18)}…</p>;
 
     return (
         <div className={styles.row}>
             <span className={styles.hash}>
-                Tx: {hash.slice(0, 10)}…{hash.slice(-6)}
+                Tx: {full ? hash : `${hash.slice(0, 10)}…${hash.slice(-6)}`}
             </span>
             <Tooltip
                 card
