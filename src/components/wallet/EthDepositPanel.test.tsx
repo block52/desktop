@@ -6,6 +6,9 @@ import type { EthAccount } from "../../hooks/wallet/useEthAccount";
 import type { WalletBridge } from "../../wallet/types";
 import EthDepositPanel from "./EthDepositPanel";
 
+vi.mock("../../hooks/useBlockHeight", () => ({ useBlockHeight: () => ({ first: null, latest: null }) }));
+vi.mock("../../hooks/useAvgBlockTime", () => ({ useAvgBlockTime: () => ({ avgBlockTimeSeconds: null, isLoading: false }) }));
+
 const ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 
 function account(overrides: Partial<EthAccount> = {}): EthAccount {
