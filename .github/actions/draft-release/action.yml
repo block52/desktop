@@ -1,5 +1,5 @@
 name: Draft release
-description: Create a draft GitHub release for the current tag with every installer found in a directory
+description: Create a draft GitHub release for the current tag, with a download guide, every installer and a SHA256SUMS file
 
 inputs:
   directory:
@@ -13,8 +13,60 @@ runs:
   using: composite
   steps:
     - run: |
-        find "${{ inputs.directory }}" -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.nupkg" -o -name "RELEASES" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) -print0 \
-          | xargs -0 gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --draft --generate-notes --title "Block52 ${GITHUB_REF_NAME}"
+        set -euo pipefail
+        version="${GITHUB_REF_NAME#v}"
+        work="$(mktemp -d)"
+
+        # The installers people download. The Squirrel .nupkg and RELEASES feed are left out: nothing reads them,
+        # because the app only shows a "new version" notice and never updates itself.
+        find "${{ inputs.directory }}" -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) -exec cp {} "$work" \;
+        if [ -z "$(ls -A "$work")" ]; then
+          echo "No installers found in ${{ inputs.directory }}" >&2
+          exit 1
+        fi
+
+        (cd "$work" && sha256sum -- * > SHA256SUMS)
+
+        # One line per file that exists, so a missing platform never leaves a dead link in the notes.
+        list() {
+          local pattern="$1" label="$2" found=0
+          for f in "$work"/$pattern; do
+            [ -e "$f" ] || continue
+            echo "- $label: \`$(basename "$f")\`"
+            found=1
+          done
+          return 0
+        }
+        {
+          echo "Block52 desktop ${version}: the poker client for macOS, Windows and Linux."
+          echo
+          echo "Download the file for your computer, install it, and open Block52."
+          echo
+          list "*-arm64.dmg" "macOS, Apple silicon (M1 and later)"
+          list "*-x64.dmg" "macOS, Intel"
+          list "*.exe" "Windows"
+          list "*.AppImage" "Linux, any distribution"
+          list "*.deb" "Linux, Debian and Ubuntu"
+          list "*.rpm" "Linux, Fedora and RHEL"
+          echo
+          echo "**macOS:** the app is not notarized yet. Open the .dmg, drag Block52 to Applications, then right-click it and choose Open the first time."
+          echo
+          echo "**Windows:** the installer is not signed with a developer certificate. When SmartScreen says it protected your PC, click More info, then Run anyway."
+          echo
+          echo "**Linux:** make the AppImage executable (\`chmod +x\`) and run it."
+          echo
+          echo "The app checks for new releases and shows a notice with a Download button; it never installs anything by itself."
+          echo
+          echo "\`SHA256SUMS\` lists the checksum of every file. Check one with \`sha256sum -c SHA256SUMS --ignore-missing\` (Linux), \`shasum -a 256 -c SHA256SUMS --ignore-missing\` (macOS) or \`certutil -hashfile <file> SHA256\` (Windows)."
+          echo
+          echo "## What changed"
+          echo
+        } > "$work/notes.md"
+
+        # --generate-notes appends GitHub's list of merged pull requests below the guide.
+        gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --draft --generate-notes \
+          --title "Block52 ${version}" --notes-file "$work/notes.md" \
+          $(find "$work" -type f ! -name notes.md)
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}

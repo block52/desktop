@@ -1,6 +1,6 @@
 name: Release
 
-# Builds the macOS, Windows and Linux installers.
+# Builds the macOS (Apple silicon and Intel), Windows and Linux installers.
 #   - push a tag like v1.0.1 (must match package.json "version") to build and draft a GitHub release
 #   - or run it manually from the Actions tab to build the installers as downloadable artifacts only
 on:
@@ -44,6 +44,9 @@ jobs:
         include:
           - name: macos-arm64
             os: macos-latest
+          # Intel Macs: the sidecar and the app are built per architecture on their own runner.
+          - name: macos-x64
+            os: macos-15-intel
           - name: windows-x64
             os: windows-latest
           - name: linux-x64
