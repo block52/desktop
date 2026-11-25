@@ -108,7 +108,7 @@ const EthDepositPanel: React.FC<EthDepositPanelProps> = ({ eth, onCompleted }) =
             {sent && <p className={dialog.body}>Sent. Your Block52 balance updates once the bridge has minted it.</p>}
             <div className={dialog.actions}>
                 <button type="button" className={`btn-glow ${dialog.action}`} onClick={() => void send()} disabled={!canSend}>
-                    {isSending ? "Waiting for Ethereum…" : "Deposit to Block52"}
+                    {isSending ? "Waiting for Ethereum…" : "Bridge to Block52"}
                 </button>
             </div>
         </div>
